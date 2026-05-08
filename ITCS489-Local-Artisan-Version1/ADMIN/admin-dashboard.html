@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="shop.html">Shop</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="dashboard-section">
+    <div class="container">
+        <div class="dashboard-container">
+            <div class="sidebar">
+                <h3>Admin Panel</h3>
+                <nav>
+                    <ul>
+                        <li><a href="#" onclick="showSection('overview')" class="active">Overview</a></li>
+                        <li><a href="#" onclick="showSection('users')">Users</a></li>
+                        <li><a href="#" onclick="showSection('artisans')">Artisans</a></li>
+                        <li><a href="#" onclick="showSection('products')">All Products</a></li>
+                        <li><a href="#" onclick="showSection('orders')">All Orders</a></li>
+                        <li><a href="#" onclick="showSection('auctions')">All Auctions</a></li>
+                        <li><a href="#" onclick="showSection('categories')">Categories</a></li>
+                        <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="dashboard-content">
+                <div id="overview-section">
+                    <div class="stats-grid">
+                        <div class="stat-card"><h4>Total Users</h4><p id="stat-users">0</p></div>
+                        <div class="stat-card"><h4>Total Artisans</h4><p id="stat-artisans">0</p></div>
+                        <div class="stat-card"><h4>Total Products</h4><p id="stat-products">0</p></div>
+                        <div class="stat-card"><h4>Total Orders</h4><p id="stat-orders">0</p></div>
+                        <div class="stat-card"><h4>Total Revenue</h4><p id="stat-revenue">$0</p></div>
+                    </div>
+                </div>
+                
+                <div id="users-section" style="display: none;">
+                    <h3>All Users</h3>
+                    <div id="users-list"></div>
+                </div>
+                
+                <div id="artisans-section" style="display: none;">
+                    <h3>All Artisans</h3>
+                    <div id="artisans-list"></div>
+                </div>
+                
+                <div id="products-section" style="display: none;">
+                    <h3>All Products</h3>
+                    <div id="products-list"></div>
+                </div>
+                
+                <div id="orders-section" style="display: none;">
+                    <h3>All Orders</h3>
+                    <div id="orders-list"></div>
+                </div>
+                
+                <div id="auctions-section" style="display: none;">
+                    <h3>All Auctions</h3>
+                    <div id="auctions-list"></div>
+                </div>
+                
+                <div id="categories-section" style="display: none;">
+                    <h3>Manage Categories</h3>
+                    <form id="add-category-form">
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1;">
+                            <button type="submit" class="btn-primary">Add Category</button>
+                        </div>
+                    </form>
+                    <div id="categories-list"></div>
+                </div>
+                
+                <div id="reports-section" style="display: none;">
+                    <h3>Platform Reports</h3>
+                    <div id="reports-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="js/main.js"></script>
+<script>
+    function showSection(section) {
+        document.querySelectorAll('.dashboard-content > div').forEach(div => div.style.display = 'none');
+        document.getElementById(`${section}-section`).style.display = 'block';
+        
+        if (section === 'users') loadAllUsers();
+        if (section === 'artisans') loadAllArtisans();
+        if (section === 'products') loadAllProducts();
+        if (section === 'orders') loadAllOrders();
+        if (section === 'auctions') loadAllAuctions();
+        if (section === 'categories') loadCategories();
+        if (section === 'reports') loadReports();
+    }
+    
+    async function loadStats() {
+        try {
+            const response = await fetch('api.php?request=admin_stats');
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('stat-users').textContent = data.stats.users || 0;
+                document.getElementById('stat-artisans').textContent = data.stats.artisans || 0;
+                document.getElementById('stat-products').textContent = data.stats.products || 0;
+                document.getElementById('stat-orders').textContent = data.stats.orders || 0;
+                document.getElementById('stat-revenue').textContent = `$${data.stats.revenue || 0}`;
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+    
+    async function loadAllUsers() {
+        const container = document.getElementById('users-list');
+        try {
+            const response = await fetch('api.php?request=admin_get_users');
+            const data = await response.json();
+            if (data.success && data.users) {
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.users.map(u => `
+                                    <tr>
+                                        <td>${u.fullname}</td>
+                                        <td>${u.email}</td>
+                                        <td>${u.role}</td>
+                                        <td>${u.is_active ? 'Active' : 'Inactive'}</td>
+                                        <td>
+                                            <button onclick="toggleUserStatus(${u.id})">${u.is_active ? 'Disable' : 'Enable'}</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading users</p>';
+        }
+    }
+    
+    async function loadAllProducts() {
+        const container = document.getElementById('products-list');
+        try {
+            const response = await fetch('api.php?request=get_products');
+            const data = await response.json();
+            if (data.success && data.products) {
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Artisan</th><th>Price</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.products.map(p => `
+                                    <tr>
+                                        <td>${p.name}</td>
+                                        <td>${p.artisan}</td>
+                                        <td>$${p.price}</td>
+                                        <td><button onclick="deleteProduct(${p.id})">Delete</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading products</p>';
+        }
+    }
+    
+    async function loadAllOrders() {
+        const container = document.getElementById('orders-list');
+        try {
+            const response = await fetch('api.php?request=admin_get_orders');
+            const data = await response.json();
+            if (data.success && data.orders) {
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.orders.map(o => `
+                                    <tr>
+                                        <td>${o.order_number}</td>
+                                        <td>${o.customer_name}</td>
+                                        <td>$${o.total_amount}</td>
+                                        <td>
+                                            <select onchange="updateOrderStatus(${o.id}, this.value)">
+                                                <option ${o.status === 'pending' ? 'selected' : ''}>pending</option>
+                                                <option ${o.status === 'processing' ? 'selected' : ''}>processing</option>
+                                                <option ${o.status === 'shipped' ? 'selected' : ''}>shipped</option>
+                                                <option ${o.status === 'delivered' ? 'selected' : ''}>delivered</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading orders</p>';
+        }
+    }
+    
+    function loadReports() {
+        const container = document.getElementById('reports-content');
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card"><h4>Monthly Sales</h4><p>$12,450</p></div>
+                <div class="stat-card"><h4>Top Artisan</h4><p>Maria Lopez</p></div>
+                <div class="stat-card"><h4>Best Selling</h4><p>Ceramic Vase</p></div>
+            </div>
+            <canvas id="sales-chart" style="max-width: 100%; height: 300px; margin-top: 30px;"></canvas>
+        `;
+    }
+    
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAuth();
+        const user = getCurrentUser();
+        if (!user || user.role !== 'admin') window.location.href = 'index.html';
+        loadStats();
+    });
+</script>
+<script src="../shared/utils.js"></script>
+<script src="admin.js"></script>
+<script src="../shared/main.js"></script>
+</body>
+</html>

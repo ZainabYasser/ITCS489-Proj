@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus" style="font-size: 48px; color: #8B5E3C;"></i>
+            <h3>Create Account</h3>
+            <p>Join ArtisanCo as a customer</p>
+        </div>
+        
+        <form id="register-form">
+            <input type="hidden" name="role" value="customer">
+            <div class="form-group">
+                <input type="text" id="fullname" placeholder="Full Name" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirm_password" placeholder="Confirm Password" required>
+            </div>
+            <button type="submit" class="auth-btn">Register</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+            <p style="margin-top: 10px;">Are you an artisan? <a href="register_artisan.html">Register as Artisan</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/ITCS489-Local-Artisan-Version1/api.php';
+    
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const fullname = document.getElementById('fullname').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        
+        if (!fullname || !email || !password) {
+            alert('Please fill in all fields');
+            return;
+        }
+        
+        if (password !== confirm) {
+            alert('Passwords do not match!');
+            return;
+        }
+        
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE}?request=register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fullname: fullname, 
+                    email: email, 
+                    password: password, 
+                    role: 'customer' 
+                })
+            });
+            
+            const data = await response.json();
+            console.log('Register response:', data);
+            
+            if (data.success) {
+                alert('Registration successful! Please login.');
+                window.location.href = 'login.html';
+            } else {
+                alert(data.message || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        }
+    });
+</script>
+<script src="../shared/utils.js"></script>
+<script src="auth.js"></script>
+<script src="../shared/main.js"></script>
+</body>
+</html>

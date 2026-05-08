@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become an Artisan - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-hands-helping" style="font-size: 48px; color: #8B5E3C;"></i>
+            <h3>Become an Artisan</h3>
+            <p>Start selling your handmade creations</p>
+        </div>
+        
+        <form id="register-artisan-form">
+            <input type="hidden" name="role" value="artisan">
+            <div class="form-group">
+                <input type="text" id="fullname" placeholder="Full Name" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="shop_name" placeholder="Shop/Business Name" required>
+            </div>
+            <div class="form-group">
+                <textarea id="bio" placeholder="Tell us about yourself and your craft..." rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <input type="text" id="location" placeholder="Location (City, Country)">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirm_password" placeholder="Confirm Password" required>
+            </div>
+            <button type="submit" class="auth-btn">Register as Artisan</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+            <p style="margin-top: 10px;">Want to just shop? <a href="register.html">Register as Customer</a></p>
+        </div>
+    </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+    document.getElementById('register-artisan-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        
+        if (password !== confirm) {
+            alert('Passwords do not match!');
+            return;
+        }
+        
+        registerArtisan(e);
+    });
+</script>
+<script src="../shared/utils.js"></script>
+<script src="../auth&user/auth.js"></script>
+<script src="artisan.js"></script>
+<script src="../shared/main.js"></script>
+</body>
+</html>
