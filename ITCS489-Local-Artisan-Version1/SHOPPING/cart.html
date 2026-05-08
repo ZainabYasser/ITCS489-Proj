@@ -6,7 +6,7 @@
     <title>Shopping Cart - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <style>
         .currency-switcher {
             position: relative;
@@ -143,15 +143,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="../index.html">Home</a></li>
                     <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
+                    <li><a href="../STATIC/about.html">About</a></li>
+                    <li><a href="../STATIC/contact.html">Contact</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
@@ -170,8 +170,8 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="../AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="../AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -194,29 +194,6 @@
                 <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
                 <p>Connecting you with local artisans.</p>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Customer Service</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping Info</a></li>
-                    <li><a href="#">Returns</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>For Artisans</h4>
-                <ul>
-                    <li><a href="register_artisan.html">Become an Artisan</a></li>
-                </ul>
-            </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
@@ -224,303 +201,9 @@
     </div>
 </footer>
 
-<script>
-    // Currency rates
-    const currencyRates = {
-        BHD: { symbol: 'BD', rate: 1, code: 'BHD' },
-        SAR: { symbol: '﷼', rate: 9.96, code: 'SAR' },
-        USD: { symbol: '$', rate: 2.65, code: 'USD' },
-        AED: { symbol: 'د.إ', rate: 9.74, code: 'AED' }
-    };
-    
-    let currentCurrency = 'BHD';
-    
-    // Product database
-    const productDatabase = {
-        1: { id: 1, name: "Handmade Ceramic Vase", artisan: "Fatima Al Khalifa", priceBHD: 45, image: "https://picsum.photos/id/30/80/80" },
-        2: { id: 2, name: "Silver Pearl Earrings", artisan: "Ahmed Al Zayani", priceBHD: 29.99, image: "https://picsum.photos/id/20/80/80" },
-        3: { id: 3, name: "Handwoven Wool Scarf", artisan: "Noor Al Awadhi", priceBHD: 35, image: "https://picsum.photos/id/96/80/80" },
-        4: { id: 4, name: "Abstract Oil Painting", artisan: "Yousef Al Doseri", priceBHD: 120, image: "https://picsum.photos/id/22/80/80" },
-        5: { id: 5, name: "Olive Wood Bowl", artisan: "Khalid Al Musallam", priceBHD: 55, image: "https://picsum.photos/id/101/80/80" },
-        6: { id: 6, name: "Arabic Calligraphy", artisan: "Mariam Al Safi", priceBHD: 89, image: "https://picsum.photos/id/104/80/80" },
-        7: { id: 7, name: "Blue Ceramic Tea Set", artisan: "Fatima Al Khalifa", priceBHD: 75, image: "https://picsum.photos/id/119/80/80" },
-        8: { id: 8, name: "Gold Bracelet", artisan: "Ahmed Al Zayani", priceBHD: 149, image: "https://picsum.photos/id/34/80/80" }
-    };
-    
-    // Change currency
-    function changeCurrency(currencyCode, symbol, rate) {
-        currentCurrency = currencyCode;
-        localStorage.setItem('preferredCurrency', currencyCode);
-        document.getElementById('current-currency').textContent = currencyCode;
-        showToast(`Currency changed to ${symbol} ${currencyCode}`, 'success');
-        loadCart();
-    }
-    
-    // Load saved currency
-    function loadCurrencyPreference() {
-        const saved = localStorage.getItem('preferredCurrency');
-        if (saved && currencyRates[saved]) {
-            currentCurrency = saved;
-            document.getElementById('current-currency').textContent = currentCurrency;
-        }
-        loadCart();
-    }
-    
-    // Increase quantity - gets current value from the DOM
-    function increaseQuantity(productId) {
-        const qtySpan = document.getElementById(`qty-${productId}`);
-        let currentQty = parseInt(qtySpan.textContent);
-        const newQty = currentQty + 1;
-        updateCartItem(productId, newQty);
-    }
-    
-    // Decrease quantity - gets current value from the DOM
-    function decreaseQuantity(productId) {
-        const qtySpan = document.getElementById(`qty-${productId}`);
-        let currentQty = parseInt(qtySpan.textContent);
-        
-        if (currentQty > 1) {
-            const newQty = currentQty - 1;
-            updateCartItem(productId, newQty);
-        } else {
-            if (confirm('Remove this item from cart?')) {
-                removeFromCart(productId);
-            }
-        }
-    }
-    
-    // Update cart item quantity and recalculate
-    function updateCartItem(productId, newQuantity) {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const itemIndex = cart.findIndex(i => i.id === productId);
-        
-        if (itemIndex !== -1) {
-            cart[itemIndex].quantity = newQuantity;
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // Update UI elements
-            const qtySpan = document.getElementById(`qty-${productId}`);
-            if (qtySpan) {
-                qtySpan.textContent = newQuantity;
-            }
-            
-            // Update item subtotal
-            updateItemSubtotal(productId, newQuantity);
-            
-            // Update order summary
-            updateOrderSummary();
-        }
-        
-        updateCartCount();
-    }
-    
-    // Update individual item subtotal
-    function updateItemSubtotal(productId, quantity) {
-        const product = productDatabase[productId];
-        if (!product) return;
-        
-        const rate = currencyRates[currentCurrency].rate;
-        const symbol = currencyRates[currentCurrency].symbol;
-        const subtotalBHD = product.priceBHD * quantity;
-        const subtotalConverted = (subtotalBHD * rate).toFixed(2);
-        
-        const subtotalElement = document.getElementById(`subtotal-${productId}`);
-        if (subtotalElement) {
-            subtotalElement.textContent = `${symbol} ${subtotalConverted}`;
-        }
-    }
-    
-    // Update order summary totals
-    function updateOrderSummary() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const rate = currencyRates[currentCurrency].rate;
-        const symbol = currencyRates[currentCurrency].symbol;
-        
-        let totalBHD = 0;
-        
-        for (const item of cart) {
-            const product = productDatabase[item.id];
-            if (product) {
-                totalBHD += product.priceBHD * item.quantity;
-            }
-        }
-        
-        const shippingBHD = totalBHD > 0 ? 5 : 0;
-        const grandTotalBHD = totalBHD + shippingBHD;
-        const totalConverted = (totalBHD * rate).toFixed(2);
-        const grandConverted = (grandTotalBHD * rate).toFixed(2);
-        
-        const subtotalElement = document.getElementById('summary-subtotal');
-        const totalElement = document.getElementById('summary-total');
-        
-        if (subtotalElement) subtotalElement.textContent = `${symbol} ${totalConverted}`;
-        if (totalElement) totalElement.textContent = `${symbol} ${grandConverted}`;
-    }
-    
-    // Load and display cart
-    function loadCart() {
-        const container = document.getElementById('cart-container');
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const rate = currencyRates[currentCurrency].rate;
-        const symbol = currencyRates[currentCurrency].symbol;
-        
-        if (cart.length === 0) {
-            container.innerHTML = `
-                <div class="empty-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h3>Your cart is empty</h3>
-                    <p>Looks like you haven't added any items yet</p>
-                    <a href="shop.html" class="btn-primary">Continue Shopping</a>
-                </div>
-            `;
-            updateCartCount();
-            return;
-        }
-        
-        let cartHTML = '<div class="cart-layout"><div class="cart-items-list">';
-        let totalBHD = 0;
-        
-        for (const item of cart) {
-            const product = productDatabase[item.id];
-            if (product) {
-                const subtotalBHD = product.priceBHD * item.quantity;
-                totalBHD += subtotalBHD;
-                const priceConverted = (product.priceBHD * rate).toFixed(2);
-                const subtotalConverted = (subtotalBHD * rate).toFixed(2);
-                
-                cartHTML += `
-                    <div class="cart-item" id="cart-item-${item.id}">
-                        <div class="cart-item-image">
-                            <img src="${product.image}" alt="${product.name}">
-                        </div>
-                        <div class="cart-item-info">
-                            <h4>${product.name}</h4>
-                            <p class="artisan-name">by ${product.artisan}</p>
-                            <small class="unit-price">Unit: ${symbol} ${priceConverted}</small>
-                        </div>
-                        <div class="cart-item-price">
-                            ${symbol} ${priceConverted}
-                        </div>
-                        <div class="cart-item-quantity">
-                            <button onclick="decreaseQuantity(${item.id})">-</button>
-                            <span id="qty-${item.id}">${item.quantity}</span>
-                            <button onclick="increaseQuantity(${item.id})">+</button>
-                        </div>
-                        <div class="cart-item-subtotal" id="subtotal-${item.id}">
-                            ${symbol} ${subtotalConverted}
-                        </div>
-                        <button class="remove-item" onclick="removeFromCart(${item.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-            }
-        }
-        
-        const shippingBHD = totalBHD > 0 ? 5 : 0;
-        const grandTotalBHD = totalBHD + shippingBHD;
-        const totalConverted = (totalBHD * rate).toFixed(2);
-        const shippingConverted = (shippingBHD * rate).toFixed(2);
-        const grandConverted = (grandTotalBHD * rate).toFixed(2);
-        
-        cartHTML += `
-                </div>
-                <div class="summary-card">
-                    <h3>Order Summary</h3>
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span id="summary-subtotal">${symbol} ${totalConverted}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <span>${symbol} ${shippingConverted}</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span id="summary-total">${symbol} ${grandConverted}</span>
-                    </div>
-                    <button class="checkout-btn" onclick="proceedToCheckout()">Proceed to Checkout</button>
-                    <a href="shop.html" class="continue-shopping">Continue Shopping</a>
-                </div>
-            </div>
-        `;
-        
-        container.innerHTML = cartHTML;
-        updateCartCount();
-    }
-    
-    // Remove item from cart
-    function removeFromCart(productId) {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        cart = cart.filter(item => item.id !== productId);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        loadCart();
-        updateCartCount();
-        showToast('Item removed from cart', 'success');
-    }
-    
-    // Proceed to checkout
-    function proceedToCheckout() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        if (cart.length === 0) {
-            showToast('Your cart is empty', 'error');
-            return;
-        }
-        window.location.href = 'checkout.html';
-    }
-    
-    // Update cart count badge
-    function updateCartCount() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const cartCountElements = document.querySelectorAll('.cart-count');
-        cartCountElements.forEach(el => {
-            el.textContent = count;
-            el.style.display = count > 0 ? 'inline-block' : 'none';
-        });
-    }
-    
-    // Show toast notification
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-    
-    // Check authentication
-    function checkAuth() {
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        
-        if (user) {
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (registerBtn) registerBtn.style.display = 'none';
-            if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        }
-    }
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-        loadCurrencyPreference();
-        updateCartCount();
-        checkAuth();
-    });
-    
-    // Make functions global
-    window.changeCurrency = changeCurrency;
-    window.increaseQuantity = increaseQuantity;
-    window.decreaseQuantity = decreaseQuantity;
-    window.updateCartItem = updateCartItem;
-    window.removeFromCart = removeFromCart;
-    window.proceedToCheckout = proceedToCheckout;
-</script>
-<script src="../shared/utils.js"></script>
-<script src="../shared/addToCart.js"></script>
-<script src="shop.js"></script>
-<script src="../shared/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="../SHARED/addToCart.js"></script>
+<script src="cart.js"></script>
+<script src="../SHARED/main.js"></script>
 </body>
 </html>

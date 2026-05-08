@@ -6,9 +6,8 @@
     <title>Contact Us - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <style>
-        /* Enhanced contact form styles */
         .contact-wrapper {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -233,24 +232,24 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
                     <li><a href="about.html">About</a></li>
                     <li><a href="contact.html" class="active">Contact</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="cart.html" class="cart-icon">
+                <a href="../SHOPPING/cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="../AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="../AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -263,7 +262,6 @@
         <p style="text-align: center; max-width: 600px; margin: -30px auto 40px; color: #666;">We'd love to hear from you! Send us a message and we'll respond within 24 hours.</p>
         
         <div class="contact-wrapper">
-            <!-- Contact Information -->
             <div class="contact-info">
                 <h3><i class="fas fa-headset" style="color: #8B5E3C; margin-right: 10px;"></i> Customer Support</h3>
                 
@@ -315,7 +313,6 @@
                 </div>
             </div>
             
-            <!-- Contact Form -->
             <div class="contact-form-card">
                 <h3>Send us a Message</h3>
                 <p>Fill out the form below and we'll get back to you as soon as possible.</p>
@@ -323,17 +320,17 @@
                 <form id="contact-form">
                     <div class="form-group-modern">
                         <label><i class="fas fa-user"></i> Your Name</label>
-                        <input type="text" placeholder="Enter your full name" required>
+                        <input type="text" id="contact-name" placeholder="Enter your full name" required>
                     </div>
                     
                     <div class="form-group-modern">
                         <label><i class="fas fa-envelope"></i> Email Address</label>
-                        <input type="email" placeholder="Enter your email address" required>
+                        <input type="email" id="contact-email" placeholder="Enter your email address" required>
                     </div>
                     
                     <div class="form-group-modern">
                         <label><i class="fas fa-tag"></i> Subject</label>
-                        <select>
+                        <select id="contact-subject">
                             <option value="">Select a subject</option>
                             <option>General Inquiry</option>
                             <option>Order Support</option>
@@ -346,7 +343,7 @@
                     
                     <div class="form-group-modern">
                         <label><i class="fas fa-pencil-alt"></i> Message</label>
-                        <textarea placeholder="Tell us how we can help you..."></textarea>
+                        <textarea id="contact-message" placeholder="Tell us how we can help you..." rows="4"></textarea>
                     </div>
                     
                     <button type="submit" class="submit-btn">
@@ -356,7 +353,6 @@
             </div>
         </div>
         
-        <!-- FAQ Section (replaces map) -->
         <div class="faq-section">
             <h2>Frequently Asked Questions</h2>
             <p style="color: #666; margin-bottom: 20px;">Quick answers to common questions</p>
@@ -397,8 +393,8 @@
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
+                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
                     <li><a href="about.html">About Us</a></li>
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
@@ -415,7 +411,7 @@
             <div class="footer-section">
                 <h4>For Artisans</h4>
                 <ul>
-                    <li><a href="register_artisan.html">Become an Artisan</a></li>
+                    <li><a href="../ARTISAN/register_artisan.html">Become an Artisan</a></li>
                     <li><a href="#">Seller Guidelines</a></li>
                     <li><a href="#">Resources</a></li>
                 </ul>
@@ -427,24 +423,8 @@
     </div>
 </footer>
 
-<script src="js/main.js"></script>
-<script>
-    document.getElementById('contact-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        showToast('Message sent successfully! We\'ll get back to you soon.', 'success');
-        this.reset();
-    });
-    
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-</script>
-<script src="../shared/utils.js"></script>
-<script src="admin.js"></script>
-<script src="../shared/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="info.js"></script>
+<script src="../SHARED/main.js"></script>
 </body>
 </html>

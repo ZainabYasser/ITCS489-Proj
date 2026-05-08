@@ -15,7 +15,7 @@ async function loadCart() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     
     try {
-        const response = await fetch(API_URL + 'get_cart');
+        const response = await fetch('../api.php?request=get_cart');
         const data = await response.json();
         
         if (data.success && data.cart && data.cart.length > 0) {
@@ -51,10 +51,11 @@ function displayCartItems(cart) {
         itemsHTML += `
             <div class="cart-item" id="cart-item-${item.id}">
                 <div class="cart-item-image">
-                    <img src="${item.image_url || 'https://via.placeholder.com/80x80'}" alt="${item.name}">
+                    <img src="${item.image_url || 'https://placehold.co/80x80/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}">
                 </div>
                 <div class="cart-item-info">
                     <h4>${item.name}</h4>
+                    <p class="artisan-name">by ${item.artisan_name || 'Local Artisan'}</p>
                 </div>
                 <div class="cart-item-price">${priceFormatted}</div>
                 <div class="cart-item-quantity">
@@ -91,7 +92,7 @@ async function updateCartItem(cartId, newQuantity) {
     }
     
     try {
-        const response = await fetch(API_URL + 'update_cart', {
+        const response = await fetch('../api.php?request=update_cart', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cart_id: cartId, quantity: newQuantity })
@@ -110,7 +111,7 @@ async function updateCartItem(cartId, newQuantity) {
 
 async function removeFromCart(cartId) {
     try {
-        const response = await fetch(API_URL + 'update_cart', {
+        const response = await fetch('../api.php?request=update_cart', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cart_id: cartId, quantity: 0 })
@@ -132,7 +133,7 @@ async function updateCartCount() {
     if (!user) return;
     
     try {
-        const response = await fetch(API_URL + 'get_cart');
+        const response = await fetch('../api.php?request=get_cart');
         const data = await response.json();
         const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
         
