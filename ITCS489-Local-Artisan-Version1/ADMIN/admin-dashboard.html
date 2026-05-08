@@ -6,31 +6,113 @@
     <title>Admin Dashboard - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo a {
+            text-decoration: none;
+        }
+        
+        .logo h2 {
+            color: #1a1a1a;
+            font-size: 24px;
+        }
+        
+        .logo span {
+            color: #8B5E3C;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .dashboard-section {
+            padding: 40px 0;
+        }
+        
         .dashboard-container {
             display: grid;
             grid-template-columns: 280px 1fr;
             gap: 30px;
-            min-height: 500px;
         }
+        
         .sidebar {
-            background: #f9f6f3;
+            background: white;
             padding: 25px;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            align-self: start;
         }
+        
         .sidebar h3 {
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #8B5E3C;
+            color: #1a1a1a;
         }
+        
         .sidebar nav ul {
             list-style: none;
-            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .sidebar nav ul li {
-            margin-bottom: 10px;
-        }
+        
         .sidebar nav ul li a {
             display: block;
             padding: 10px 15px;
@@ -40,51 +122,93 @@
             transition: all 0.3s ease;
             cursor: pointer;
         }
+        
         .sidebar nav ul li a:hover,
         .sidebar nav ul li a.active {
             background: #8B5E3C;
             color: white;
         }
+        
         .dashboard-content {
             background: white;
             padding: 25px;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
+        
         .stat-card {
             background: #f9f6f3;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 25px 20px;
+            border-radius: 12px;
             text-align: center;
+            transition: transform 0.3s ease;
         }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
         .stat-card p {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #8B5E3C;
         }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
         .data-table {
             width: 100%;
             border-collapse: collapse;
         }
+        
         .data-table th,
         .data-table td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
+        
         .data-table th {
             background: #f9f6f3;
+            font-weight: 600;
         }
+        
+        button, .btn-primary {
+            background: #8B5E3C;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover, .btn-primary:hover {
+            background: #6d4529;
+        }
+        
         .loading {
             text-align: center;
             padding: 40px;
         }
+        
         .spinner {
             width: 40px;
             height: 40px;
@@ -94,10 +218,29 @@
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-inactive {
+            background: #dc3545;
+            color: white;
+        }
+        
         .toast {
             position: fixed;
             bottom: 20px;
@@ -106,19 +249,61 @@
             border-radius: 8px;
             color: white;
             z-index: 9999;
+            animation: slideIn 0.3s ease;
         }
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+        
+        .toast.success {
+            background: #28a745;
         }
-        .status-active { background: #28a745; color: white; }
-        .status-inactive { background: #dc3545; color: white; }
-        .status-ended { background: #6c757d; color: white; }
-        .table-container {
-            overflow-x: auto;
+        
+        .toast.error {
+            background: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .dashboard-content h3 {
+            margin-bottom: 20px;
+            color: #1a1a1a;
+            font-size: 20px;
+        }
+        
+        footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: 40px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -137,14 +322,14 @@
                 </ul>
             </nav>
             <div class="nav-icons">
-                <span id="user-greeting" style="margin-right: 15px;"></span>
-                <button class="logout-btn" id="logout-btn" style="background:#dc3545; color:white; border:none; padding:8px 20px; border-radius:25px; cursor:pointer;">Logout</button>
+                <span id="user-greeting" style="margin-right: 15px; color: #666;"></span>
+                <button class="logout-btn" id="logout-btn">Logout</button>
             </div>
         </div>
     </div>
 </header>
 
-<section class="dashboard-section" style="padding: 40px 0;">
+<section class="dashboard-section">
     <div class="container">
         <div class="dashboard-container">
             <div class="sidebar">
@@ -203,8 +388,8 @@
                     <h3>Manage Categories</h3>
                     <form id="add-category-form">
                         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                            <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            <button type="submit" style="background: #8B5E3C; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Add Category</button>
+                            <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <button type="submit" style="background: #8B5E3C; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Add Category</button>
                         </div>
                     </form>
                     <div id="categories-list"></div>
@@ -219,20 +404,503 @@
     </div>
 </section>
 
-<!-- CORRECT SCRIPT ORDER - DELETE any inline duplicate functions -->
-<script src="../SHARED/utils.js"></script>
-<script src="../SHARED/main.js"></script>
-<script src="admin.js"></script>
+<footer>
+    <div class="container">
+        <div class="footer-bottom">
+            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 
-<!-- Only initialization code - NO duplicate functions -->
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // The admin.js handles everything
-        // This is just a backup to ensure stats load
-        if (typeof loadStats === 'function') {
-            loadStats();
+    // ===== API URL Function =====
+    function getApiUrl() {
+        return '../PHP/api.php?request=';
+    }
+    
+    // ===== Utility Functions =====
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    function formatPrice(price) {
+        return '$' + parseFloat(price).toFixed(2);
+    }
+    
+    function getCurrentUser() {
+        return JSON.parse(localStorage.getItem('user') || 'null');
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // ===== ADMIN STATS =====
+    async function loadStats() {
+        try {
+            const response = await fetch(getApiUrl() + 'admin_stats');
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('stat-users').textContent = data.stats.users || 0;
+                document.getElementById('stat-artisans').textContent = data.stats.artisans || 0;
+                document.getElementById('stat-products').textContent = data.stats.products || 0;
+                document.getElementById('stat-orders').textContent = data.stats.orders || 0;
+                document.getElementById('stat-revenue').textContent = formatPrice(data.stats.revenue || 0);
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
         }
+    }
+    
+    // ===== SECTION NAVIGATION =====
+    function showSection(section) {
+        document.querySelectorAll('.dashboard-content > div').forEach(div => div.style.display = 'none');
+        const sectionToShow = document.getElementById(`${section}-section`);
+        if (sectionToShow) sectionToShow.style.display = 'block';
+        
+        document.querySelectorAll('.sidebar nav ul li a').forEach(link => link.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
+        
+        if (section === 'users') loadAllUsers();
+        if (section === 'artisans') loadAllArtisans();
+        if (section === 'products') loadAllProducts();
+        if (section === 'orders') loadAllOrders();
+        if (section === 'auctions') loadAllAuctions();
+        if (section === 'categories') loadCategories();
+        if (section === 'reports') loadReports();
+    }
+    
+    // ===== USERS =====
+    async function loadAllUsers() {
+        const container = document.getElementById('users-list');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const response = await fetch(getApiUrl() + 'admin_get_users');
+            const data = await response.json();
+            if (data.success && data.users) {
+                if (data.users.length === 0) {
+                    container.innerHTML = '<p>No users found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.users.map(u => `
+                                    <tr>
+                                        <td>${escapeHtml(u.fullname)}</td>
+                                        <td>${escapeHtml(u.email)}</td>
+                                        <td>${u.role}</td>
+                                        <td><span class="status-badge ${u.is_active ? 'status-active' : 'status-inactive'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                                        <td><button onclick="toggleUserStatus(${u.id}, ${u.is_active})" style="background:${u.is_active ? '#dc3545' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">${u.is_active ? 'Disable' : 'Enable'}</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading users</p>';
+        }
+    }
+    
+    async function toggleUserStatus(userId, currentStatus) {
+        if (!confirm(`Are you sure you want to ${currentStatus ? 'disable' : 'enable'} this user?`)) return;
+        try {
+            const response = await fetch(getApiUrl() + 'admin_toggle_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, is_active: !currentStatus })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`User ${!currentStatus ? 'enabled' : 'disabled'} successfully`, 'success');
+                loadAllUsers();
+                loadStats();
+            }
+        } catch (error) {
+            showToast('Error updating user status', 'error');
+        }
+    }
+    
+    // ===== ARTISANS =====
+    async function loadAllArtisans() {
+        const container = document.getElementById('artisans-list');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        try {
+            const response = await fetch(getApiUrl() + 'admin_get_artisans');
+            const data = await response.json();
+            if (data.success && data.artisans) {
+                if (data.artisans.length === 0) {
+                    container.innerHTML = '<p>No artisans found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Shop Name</th><th>Products</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.artisans.map(a => `
+                                    <tr>
+                                        <td>${escapeHtml(a.fullname)}</td>
+                                        <td>${escapeHtml(a.email)}</td>
+                                        <td>${escapeHtml(a.shop_name || '-')}</td>
+                                        <td>${a.product_count || 0}</td>
+                                        <td><span class="status-badge ${a.is_active ? 'status-active' : 'status-inactive'}">${a.is_active ? 'Active' : 'Inactive'}</span></td>
+                                        <td><button onclick="toggleArtisanStatus(${a.id}, ${a.is_active})" style="background:${a.is_active ? '#dc3545' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">${a.is_active ? 'Disable' : 'Enable'}</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading artisans</p>';
+        }
+    }
+    
+    async function toggleArtisanStatus(userId, currentStatus) {
+        if (!confirm(`Are you sure you want to ${currentStatus ? 'disable' : 'enable'} this artisan?`)) return;
+        try {
+            const response = await fetch(getApiUrl() + 'admin_toggle_artisan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, is_active: !currentStatus })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`Artisan ${!currentStatus ? 'enabled' : 'disabled'} successfully`, 'success');
+                loadAllArtisans();
+                loadStats();
+            }
+        } catch (error) {
+            showToast('Error updating artisan status', 'error');
+        }
+    }
+    
+    // ===== PRODUCTS =====
+    async function loadAllProducts() {
+        const container = document.getElementById('products-list');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        try {
+            const response = await fetch(getApiUrl() + 'get_products');
+            const data = await response.json();
+            if (data.success && data.products) {
+                if (data.products.length === 0) {
+                    container.innerHTML = '<p>No products found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>Name</th><th>Artisan</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.products.map(p => `
+                                    <tr>
+                                        <td>${p.id}</td>
+                                        <td>${escapeHtml(p.name)}</td>
+                                        <td>${escapeHtml(p.artisan_name || 'Unknown')}</td>
+                                        <td>${formatPrice(p.price)}</td>
+                                        <td>${p.stock || 0}</td>
+                                        <td><button onclick="adminDeleteProduct(${p.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Delete</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading products</p>';
+        }
+    }
+    
+    async function adminDeleteProduct(productId) {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+        try {
+            const response = await fetch(getApiUrl() + 'admin_delete_product', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Product deleted successfully', 'success');
+                loadAllProducts();
+                loadStats();
+            }
+        } catch (error) {
+            showToast('Error deleting product', 'error');
+        }
+    }
+    
+    // ===== ORDERS =====
+    async function loadAllOrders() {
+        const container = document.getElementById('orders-list');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        try {
+            const response = await fetch(getApiUrl() + 'admin_get_orders');
+            const data = await response.json();
+            if (data.success && data.orders) {
+                if (data.orders.length === 0) {
+                    container.innerHTML = '<p>No orders found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.orders.map(o => `
+                                    <tr>
+                                        <td>${o.order_number}</td>
+                                        <td>${escapeHtml(o.customer_name)}</td>
+                                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                                        <td>${formatPrice(o.total_amount)}</td>
+                                        <td>
+                                            <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:5px; border-radius:5px;">
+                                                <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                                <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                                                <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                        </td>
+                                        <td><button onclick="viewOrderDetails(${o.id})" style="background:#8B5E3C; color:white; border:none; padding:5px 10px; border-radius:5px;">View</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading orders</p>';
+        }
+    }
+    
+    async function updateOrderStatus(orderId, status) {
+        try {
+            const response = await fetch(getApiUrl() + 'admin_update_order_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, status: status })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`Order status updated to ${status}`, 'success');
+                loadAllOrders();
+            }
+        } catch (error) {
+            showToast('Error updating order status', 'error');
+        }
+    }
+    
+    function viewOrderDetails(orderId) {
+        showToast(`View order #${orderId} - Coming soon`, 'info');
+    }
+    
+    // ===== AUCTIONS =====
+    async function loadAllAuctions() {
+        const container = document.getElementById('auctions-list');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        try {
+            const response = await fetch(getApiUrl() + 'admin_get_auctions');
+            const data = await response.json();
+            if (data.success && data.auctions) {
+                if (data.auctions.length === 0) {
+                    container.innerHTML = '<p>No auctions found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Product</th><th>Artisan</th><th>Starting Bid</th><th>Current Bid</th><th>End Date</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.auctions.map(a => `
+                                    <tr>
+                                        <td>${escapeHtml(a.product_name)}</td>
+                                        <td>${escapeHtml(a.artisan_name)}</td>
+                                        <td>${formatPrice(a.starting_bid)}</td>
+                                        <td><strong>${formatPrice(a.current_bid)}</strong></td>
+                                        <td>${new Date(a.end_time).toLocaleString()}</td>
+                                        <td><span class="status-badge ${new Date(a.end_time) > new Date() ? 'status-active' : 'status-inactive'}">${new Date(a.end_time) > new Date() ? 'Active' : 'Ended'}</span></td>
+                                        <td>${new Date(a.end_time) > new Date() ? `<button onclick="cancelAuction(${a.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Cancel</button>` : '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading auctions</p>';
+        }
+    }
+    
+    async function cancelAuction(auctionId) {
+        if (!confirm('Cancel this auction?')) return;
+        try {
+            const response = await fetch(getApiUrl() + 'admin_cancel_auction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auction_id: auctionId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Auction cancelled', 'success');
+                loadAllAuctions();
+            }
+        } catch (error) {
+            showToast('Error cancelling auction', 'error');
+        }
+    }
+    
+    // ===== CATEGORIES =====
+    async function loadCategories() {
+        const container = document.getElementById('categories-list');
+        try {
+            const response = await fetch(getApiUrl() + 'get_categories');
+            const data = await response.json();
+            if (data.success && data.categories) {
+                if (data.categories.length === 0) {
+                    container.innerHTML = '<p>No categories found</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>Name</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${data.categories.map(c => `
+                                    <tr>
+                                        <td>${c.id}</td>
+                                        <td>${escapeHtml(c.name)}</td>
+                                        <td><button onclick="deleteCategory(${c.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Delete</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p>Error loading categories</p>';
+        }
+        
+        const form = document.getElementById('add-category-form');
+        if (form) {
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('category-name')?.value;
+                if (!name) return;
+                try {
+                    const response = await fetch(getApiUrl() + 'admin_add_category', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast('Category added', 'success');
+                        document.getElementById('category-name').value = '';
+                        loadCategories();
+                    }
+                } catch (error) {
+                    showToast('Error adding category', 'error');
+                }
+            };
+        }
+    }
+    
+    async function deleteCategory(categoryId) {
+        if (!confirm('Delete this category?')) return;
+        try {
+            const response = await fetch(getApiUrl() + 'admin_delete_category', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category_id: categoryId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Category deleted', 'success');
+                loadCategories();
+            }
+        } catch (error) {
+            showToast('Error deleting category', 'error');
+        }
+    }
+    
+    // ===== REPORTS =====
+    function loadReports() {
+        const container = document.getElementById('reports-content');
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card"><h4>Monthly Sales</h4><p id="monthly-sales">$0</p></div>
+                <div class="stat-card"><h4>Top Artisan</h4><p id="top-artisan">N/A</p></div>
+                <div class="stat-card"><h4>Best Selling</h4><p id="best-selling">N/A</p></div>
+            </div>
+        `;
+        loadReportData();
+    }
+    
+    async function loadReportData() {
+        try {
+            const response = await fetch(getApiUrl() + 'admin_reports');
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('monthly-sales').textContent = formatPrice(data.monthly_sales || 0);
+                document.getElementById('top-artisan').textContent = data.top_artisan || 'N/A';
+                document.getElementById('best-selling').textContent = data.best_selling || 'N/A';
+            }
+        } catch (error) {
+            console.error('Error loading reports:', error);
+        }
+    }
+    
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = getCurrentUser();
+        if (!user || user.role !== 'admin') {
+            window.location.href = '../AUTH/login.html';
+            return;
+        }
+        document.getElementById('user-greeting').textContent = `Hello, ${user.fullname}`;
+        
+        document.getElementById('logout-btn').onclick = () => {
+            fetch(getApiUrl() + 'logout', { method: 'POST' })
+                .then(() => {
+                    localStorage.removeItem('user');
+                    window.location.href = '../AUTH/login.html';
+                });
+        };
+        
+        loadStats();
+        showSection('overview');
     });
+    
+    window.showSection = showSection;
+    window.toggleUserStatus = toggleUserStatus;
+    window.toggleArtisanStatus = toggleArtisanStatus;
+    window.adminDeleteProduct = adminDeleteProduct;
+    window.updateOrderStatus = updateOrderStatus;
+    window.viewOrderDetails = viewOrderDetails;
+    window.cancelAuction = cancelAuction;
+    window.deleteCategory = deleteCategory;
 </script>
 </body>
 </html>

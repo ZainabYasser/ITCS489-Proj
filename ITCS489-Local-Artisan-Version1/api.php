@@ -703,7 +703,305 @@ if ($request == 'get_artisan_auctions') {
     exit();
 }
 
+// ============ ADMIN FUNCTIONS ============
 
+// Check if user is admin
+function isAdmin() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+}
+
+// ===== ADMIN STATS =====
+if ($request == 'admin_stats') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $stats = [];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'customer'");
+    $stats['users'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'artisan'");
+    $stats['artisans'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM products");
+    $stats['products'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM orders");
+    $stats['orders'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $stmt = $pdo->query("SELECT SUM(total_amount) as total FROM orders WHERE status = 'delivered'");
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stats['revenue'] = $result['total'] ?? 0;
+    
+    echo json_encode(['success' => true, 'stats' => $stats]);
+    exit();
+}
+
+// ===== ADMIN GET ALL USERS =====
+if ($request == 'admin_get_users') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $stmt = $pdo->query("SELECT id, fullname, email, role, is_active, created_at FROM users ORDER BY created_at DESC");
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'users' => $users]);
+    exit();
+}
+
+// ===== ADMIN TOGGLE USER STATUS =====
+if ($request == 'admin_toggle_user') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $userId = $input['user_id'] ?? 0;
+    $isActive = $input['is_active'] ?? 1;
+    
+    $stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?");
+    $stmt->execute([$isActive ? 1 : 0, $userId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN GET ALL ARTISANS =====
+if ($request == 'admin_get_artisans') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $stmt = $pdo->query("
+        SELECT u.id, u.fullname, u.email, u.is_active, ap.shop_name,
+               (SELECT COUNT(*) FROM products WHERE artisan_id = u.id) as product_count
+        FROM users u
+        LEFT JOIN artisan_profiles ap ON u.id = ap.user_id
+        WHERE u.role = 'artisan'
+        ORDER BY u.created_at DESC
+    ");
+    $artisans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'artisans' => $artisans]);
+    exit();
+}
+
+// ===== ADMIN TOGGLE ARTISAN STATUS =====
+if ($request == 'admin_toggle_artisan') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $userId = $input['user_id'] ?? 0;
+    $isActive = $input['is_active'] ?? 1;
+    
+    $stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?");
+    $stmt->execute([$isActive ? 1 : 0, $userId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN GET ALL ORDERS =====
+if ($request == 'admin_get_orders') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $stmt = $pdo->query("
+        SELECT o.*, u.fullname as customer_name 
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC
+    ");
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'orders' => $orders]);
+    exit();
+}
+
+// ===== ADMIN UPDATE ORDER STATUS =====
+if ($request == 'admin_update_order_status') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $orderId = $input['order_id'] ?? 0;
+    $status = $input['status'] ?? '';
+    
+    $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+    $stmt->execute([$status, $orderId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN DELETE PRODUCT =====
+if ($request == 'admin_delete_product') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $productId = $input['product_id'] ?? 0;
+    
+    // Delete from related tables first
+    $pdo->prepare("DELETE FROM cart WHERE product_id = ?")->execute([$productId]);
+    $pdo->prepare("DELETE FROM wishlist WHERE product_id = ?")->execute([$productId]);
+    $pdo->prepare("DELETE FROM order_items WHERE product_id = ?")->execute([$productId]);
+    
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
+    $stmt->execute([$productId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN GET ALL AUCTIONS =====
+if ($request == 'admin_get_auctions') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $stmt = $pdo->query("
+        SELECT a.*, p.name as product_name, u.fullname as artisan_name
+        FROM auctions a
+        JOIN products p ON a.product_id = p.id
+        JOIN users u ON p.artisan_id = u.id
+        ORDER BY a.created_at DESC
+    ");
+    $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'auctions' => $auctions]);
+    exit();
+}
+
+// ===== ADMIN CANCEL AUCTION =====
+if ($request == 'admin_cancel_auction') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    
+    $stmt = $pdo->prepare("UPDATE auctions SET is_active = 0 WHERE id = ?");
+    $stmt->execute([$auctionId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== GET CATEGORIES =====
+if ($request == 'get_categories') {
+    $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'categories' => $categories]);
+    exit();
+}
+
+// ===== ADMIN ADD CATEGORY =====
+if ($request == 'admin_add_category') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $name = trim($input['name'] ?? '');
+    
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Category name is required']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (?)");
+    $stmt->execute([$name]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN DELETE CATEGORY =====
+if ($request == 'admin_delete_category') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $categoryId = $input['category_id'] ?? 0;
+    
+    // Set products in this category to NULL first
+    $pdo->prepare("UPDATE products SET category_id = NULL WHERE category_id = ?")->execute([$categoryId]);
+    
+    $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+    $stmt->execute([$categoryId]);
+    
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// ===== ADMIN REPORTS =====
+if ($request == 'admin_reports') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    // Monthly sales
+    $stmt = $pdo->query("SELECT SUM(total_amount) as total FROM orders WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE()) AND status = 'delivered'");
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $monthly_sales = $result['total'] ?? 0;
+    
+    // Top artisan
+    $stmt = $pdo->query("
+        SELECT u.fullname, SUM(oi.price * oi.quantity) as total_sales
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        JOIN users u ON p.artisan_id = u.id
+        GROUP BY p.artisan_id
+        ORDER BY total_sales DESC
+        LIMIT 1
+    ");
+    $top = $stmt->fetch(PDO::FETCH_ASSOC);
+    $top_artisan = $top['fullname'] ?? 'N/A';
+    
+    // Best selling product
+    $stmt = $pdo->query("
+        SELECT p.name, SUM(oi.quantity) as total_sold
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        GROUP BY oi.product_id
+        ORDER BY total_sold DESC
+        LIMIT 1
+    ");
+    $best = $stmt->fetch(PDO::FETCH_ASSOC);
+    $best_selling = $best['name'] ?? 'N/A';
+    
+    echo json_encode([
+        'success' => true,
+        'monthly_sales' => $monthly_sales,
+        'top_artisan' => $top_artisan,
+        'best_selling' => $best_selling
+    ]);
+    exit();
+}
 
 // ============ DEFAULT ============
 echo json_encode(['success' => false, 'message' => 'Unknown request: ' . $request]);
