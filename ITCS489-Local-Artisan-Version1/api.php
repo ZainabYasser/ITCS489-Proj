@@ -536,6 +536,175 @@ if ($request == 'remove_from_wishlist') {
     exit();
 }
 
+// ============ AUCTION FUNCTIONS ============
+
+// Get all active auctions
+if ($request == 'get_auctions') {
+    $stmt = $pdo->prepare("SELECT a.*, p.name, p.image_url, u.fullname as artisan_name,
+                          (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                          FROM auctions a
+                          JOIN products p ON a.product_id = p.id
+                          JOIN users u ON p.artisan_id = u.id
+                          WHERE a.is_active = 1 AND a.end_time > NOW()
+                          ORDER BY a.end_time ASC");
+    $stmt->execute();
+    $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'auctions' => $auctions]);
+    exit();
+}
+
+// Get single auction by ID
+if ($request == 'get_auction') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    $stmt = $pdo->prepare("SELECT a.*, p.name, p.description, p.image_url, u.fullname as artisan_name
+                           FROM auctions a
+                           JOIN products p ON a.product_id = p.id
+                           JOIN users u ON p.artisan_id = u.id
+                           WHERE a.id = ?");
+    $stmt->execute([$id]);
+    $auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($auction) {
+        echo json_encode(['success' => true, 'auction' => $auction]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Auction not found']);
+    }
+    exit();
+}
+
+// Place a bid
+if ($request == 'place_bid') {
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Please login to place a bid']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    $bidAmount = $input['bid_amount'] ?? 0;
+    $userId = $_SESSION['user_id'];
+    
+    // Get auction details
+    $stmt = $pdo->prepare("SELECT * FROM auctions WHERE id = ? AND is_active = 1 AND end_time > NOW()");
+    $stmt->execute([$auctionId]);
+    $auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$auction) {
+        echo json_encode(['success' => false, 'message' => 'Auction is not active or has ended']);
+        exit();
+    }
+    
+    // Validate bid amount
+    if ($bidAmount <= $auction['current_bid']) {
+        echo json_encode(['success' => false, 'message' => 'Bid must be higher than current bid of ' . $auction['current_bid']]);
+        exit();
+    }
+    
+    $minIncrement = $auction['min_increment'] ?? 5;
+    $minAllowed = $auction['current_bid'] + $minIncrement;
+    if ($bidAmount < $minAllowed) {
+        echo json_encode(['success' => false, 'message' => 'Minimum bid is ' . $minAllowed]);
+        exit();
+    }
+    
+    try {
+        $pdo->beginTransaction();
+        
+        // Record the bid
+        $stmt = $pdo->prepare("INSERT INTO bids (auction_id, user_id, bid_amount) VALUES (?, ?, ?)");
+        $stmt->execute([$auctionId, $userId, $bidAmount]);
+        
+        // Update auction current bid
+        $stmt = $pdo->prepare("UPDATE auctions SET current_bid = ?, current_bidder_id = ? WHERE id = ?");
+        $stmt->execute([$bidAmount, $userId, $auctionId]);
+        
+        $pdo->commit();
+        
+        echo json_encode(['success' => true, 'current_bid' => $bidAmount, 'message' => 'Bid placed successfully']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Failed to place bid: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+// Get bid history for an auction
+if ($request == 'get_bid_history') {
+    $auctionId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    $stmt = $pdo->prepare("SELECT b.*, u.fullname as bidder_name 
+                           FROM bids b
+                           JOIN users u ON b.user_id = u.id
+                           WHERE b.auction_id = ?
+                           ORDER BY b.bid_time DESC");
+    $stmt->execute([$auctionId]);
+    $bids = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'bids' => $bids]);
+    exit();
+}
+
+// Create auction (for artisans)
+if ($request == 'create_auction') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Only artisans can create auctions']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $productId = $input['product_id'] ?? 0;
+    $startBid = $input['start_bid'] ?? 0;
+    $endTime = $input['end_time'] ?? '';
+    $minIncrement = $input['min_increment'] ?? 5;
+    
+    if (!$productId || $startBid <= 0 || empty($endTime)) {
+        echo json_encode(['success' => false, 'message' => 'Product ID, starting bid, and end time are required']);
+        exit();
+    }
+    
+    // Verify product belongs to this artisan
+    $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$productId, $_SESSION['user_id']]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Product not found or does not belong to you']);
+        exit();
+    }
+    
+    try {
+        $stmt = $pdo->prepare("INSERT INTO auctions (product_id, start_bid, current_bid, min_increment, start_time, end_time) 
+                               VALUES (?, ?, ?, ?, NOW(), ?)");
+        $stmt->execute([$productId, $startBid, $startBid, $minIncrement, $endTime]);
+        
+        echo json_encode(['success' => true, 'message' => 'Auction created successfully']);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to create auction: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+// Get artisan's auctions
+if ($request == 'get_artisan_auctions') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("SELECT a.*, p.name as product_name 
+                           FROM auctions a
+                           JOIN products p ON a.product_id = p.id
+                           WHERE p.artisan_id = ?
+                           ORDER BY a.created_at DESC");
+    $stmt->execute([$_SESSION['user_id']]);
+    $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'auctions' => $auctions]);
+    exit();
+}
+
+
+
 // ============ DEFAULT ============
 echo json_encode(['success' => false, 'message' => 'Unknown request: ' . $request]);
 ?>
