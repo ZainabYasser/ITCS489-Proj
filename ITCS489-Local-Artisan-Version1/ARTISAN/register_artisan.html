@@ -6,7 +6,7 @@
     <title>Become an Artisan - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="auth-page">
 
@@ -45,13 +45,17 @@
         </form>
         
         <div class="auth-footer">
-            <p>Already have an account? <a href="login.html">Login here</a></p>
-            <p style="margin-top: 10px;">Want to just shop? <a href="register.html">Register as Customer</a></p>
+            <p>Already have an account? <a href="../AUTH/login.html">Login here</a></p>
+            <p style="margin-top: 10px;">Want to just shop? <a href="../AUTH/register.html">Register as Customer</a></p>
         </div>
     </div>
 </div>
 
-<script src="js/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="../AUTH/auth.js"></script>
+<script src="artisan.js"></script>
+<script src="../SHARED/main.js"></script>
+
 <script>
     document.getElementById('register-artisan-form').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -66,9 +70,5 @@
         registerArtisan(e);
     });
 </script>
-<script src="../shared/utils.js"></script>
-<script src="../auth&user/auth.js"></script>
-<script src="artisan.js"></script>
-<script src="../shared/main.js"></script>
 </body>
 </html>
