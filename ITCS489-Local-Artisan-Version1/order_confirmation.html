@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .confirmation-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .check-icon {
+            width: 80px;
+            height: 80px;
+            background: #28a745;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .check-icon i {
+            font-size: 40px;
+            color: white;
+        }
+        .order-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #8B5E3C;
+            background: #f9f6f3;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            margin: 20px 0;
+        }
+        .order-details {
+            background: #f9f6f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e8e2d9;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        @media (max-width: 768px) {
+            .confirmation-card {
+                padding: 30px 20px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="auction.html">Auctions</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section style="padding: 80px 0; min-height: 60vh;">
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="check-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <h1>Order Confirmed!</h1>
+            <p>Thank you for your purchase. Your order has been received.</p>
+            
+            <div class="order-number" id="order-number-display">
+                #000001
+            </div>
+            
+            <div class="order-details" id="order-details">
+                <!-- Dynamic content loaded by JavaScript -->
+            </div>
+            
+            <p>A confirmation email has been sent to your email address.</p>
+            
+            <div class="btn-group">
+                <a href="account.html" class="btn-primary">View My Orders</a>
+                <a href="shop.html" class="btn-secondary">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
+                <p>Connecting you with local artisans.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="auction.html">Auctions</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Shipping Info</a></li>
+                    <li><a href="#">Returns</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>For Artisans</h4>
+                <ul>
+                    <li><a href="register_artisan.html">Become an Artisan</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script>
+    // Display order information
+    function displayOrderConfirmation() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderNumber = urlParams.get('order');
+        
+        // Get saved order details from localStorage
+        const savedOrder = localStorage.getItem('lastOrder');
+        let orderDetails = savedOrder ? JSON.parse(savedOrder) : null;
+        
+        // Use URL parameter or saved order
+        const displayOrderNumber = orderNumber || (orderDetails?.orderNumber || '000001');
+        const orderDate = orderDetails?.date ? new Date(orderDetails.date).toLocaleDateString() : new Date().toLocaleDateString();
+        const orderTotal = orderDetails?.total || 'BD 0.00';
+        const itemCount = orderDetails?.items || 0;
+        const customerName = orderDetails?.customerName || 'Valued Customer';
+        
+        // Update order number display
+        document.getElementById('order-number-display').innerHTML = `#${displayOrderNumber}`;
+        
+        // Build order details HTML
+        const detailsHTML = `
+            <div class="detail-row">
+                <span><strong>Order Number:</strong></span>
+                <span>#${displayOrderNumber}</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Date:</strong></span>
+                <span>${orderDate}</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Customer:</strong></span>
+                <span>${customerName}</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Items:</strong></span>
+                <span>${itemCount} item(s)</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Total Amount:</strong></span>
+                <span style="color: #8B5E3C; font-weight: 700;">${orderTotal}</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Payment Status:</strong></span>
+                <span style="color: #28a745;">Completed ✓</span>
+            </div>
+            <div class="detail-row">
+                <span><strong>Order Status:</strong></span>
+                <span>Processing</span>
+            </div>
+        `;
+        
+        document.getElementById('order-details').innerHTML = detailsHTML;
+    }
+    
+    // Update cart count
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'inline-block' : 'none';
+        });
+    }
+    
+    // Check authentication
+    function checkAuth() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        if (user) {
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (registerBtn) registerBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        displayOrderConfirmation();
+        updateCartCount();
+        checkAuth();
+    });
+</script>
+</body>
+</html>
