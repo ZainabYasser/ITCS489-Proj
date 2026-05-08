@@ -1,7 +1,3 @@
-// =============================================
-// ADDTOCART.JS - Add to Cart Function
-// =============================================
-
 async function addToCart(productId, quantity = 1) {
     const user = getCurrentUser();
     if (!user) {
@@ -30,5 +26,4 @@ async function addToCart(productId, quantity = 1) {
     }
 }
 
-// Make functions global
 window.addToCart = addToCart;
