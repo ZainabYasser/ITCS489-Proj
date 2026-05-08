@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="../SHOPPING/cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </a>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section style="padding: 60px 0;">
+    <div class="container">
+        <h1 class="section-title">My Wishlist</h1>
+        <div id="wishlist-container" class="product-grid">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
+                <p>Connecting you with local artisans.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="../shared/utils.js"></script>
+<script src="auth.js"></script>
+<script src="../shared/main.js"></script>
+<script src="wishlist.js"></script>
+
+<script>
+    async function loadWishlist() {
+        const container = document.getElementById('wishlist-container');
+        
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const response = await fetch('../api.php?request=get_wishlist');
+            const data = await response.json();
+            
+            if (data.success && data.wishlist && data.wishlist.length > 0) {
+                container.innerHTML = data.wishlist.map(item => `
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="${item.image_url || 'https://placehold.co/300x250/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}">
+                            <span class="product-category">Wishlist</span>
+                        </div>
+                        <div class="product-info">
+                            <h3>${item.name}</h3>
+                            <p class="artisan-name">by ${item.artisan_name || 'Local Artisan'}</p>
+                            <p class="product-price">BD ${parseFloat(item.price).toFixed(2)}</p>
+                            <div class="product-actions">
+                                <button class="add-to-cart" onclick="addToCart(${item.product_id})">Add to Cart</button>
+                                <button class="wishlist-btn" onclick="removeFromWishlist(${item.product_id})">
+                                    <i class="fas fa-heart" style="color: #e91e63;"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-center">Your wishlist is empty. <a href="../SHOPPING/shop.html">Browse products</a></p>';
+            }
+        } catch (error) {
+            console.error('Error loading wishlist:', error);
+            container.innerHTML = '<p class="text-center">Error loading wishlist</p>';
+        }
+    }
+    
+    async function removeFromWishlist(productId) {
+        try {
+            const response = await fetch('../api.php?request=remove_from_wishlist', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Removed from wishlist', 'success');
+                loadWishlist();
+            } else {
+                showToast(data.message || 'Error removing from wishlist', 'error');
+            }
+        } catch (error) {
+            console.error('Remove from wishlist error:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAuth();
+        updateCartCount();
+        loadWishlist();
+    });
+</script>
+</body>
+</html>

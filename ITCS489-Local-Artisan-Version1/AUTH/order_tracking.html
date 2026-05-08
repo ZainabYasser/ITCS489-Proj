@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order - ArtisanCo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="../SHOPPING/cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </a>
+                <button class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section style="padding: 60px 0;">
+    <div class="container">
+        <h1 class="section-title">Track Your Order</h1>
+        <div class="tracking-form" style="max-width: 500px; margin: 0 auto;">
+            <input type="text" id="order-number" placeholder="Enter Order Number">
+            <button class="btn-primary" onclick="trackOrder()">Track</button>
+        </div>
+        <div id="tracking-result" style="margin-top: 40px;"></div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
+                <p>Connecting you with local artisans.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="../shared/utils.js"></script>
+<script src="auth.js"></script>
+<script src="order_tracking.js"></script>
+<script src="../shared/main.js"></script>
+
+<script>
+    async function trackOrder() {
+        const orderNumber = document.getElementById('order-number').value;
+        const resultDiv = document.getElementById('tracking-result');
+        
+        if (!orderNumber) {
+            alert('Please enter order number');
+            return;
+        }
+        
+        resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const response = await fetch(`../api.php?request=get_order&order_number=${orderNumber}`);
+            const data = await response.json();
+            
+            if (data.success && data.order) {
+                const order = data.order;
+                const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
+                const currentStep = statusOrder.indexOf(order.status) + 1;
+                const progressPercent = (currentStep / 4) * 100;
+                
+                resultDiv.innerHTML = `
+                    <div style="background: #f9f6f3; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+                        <h3>Order: ${order.order_number}</h3>
+                        <div style="display: flex; justify-content: space-between; margin: 30px 0; flex-wrap: wrap;">
+                            <div style="${currentStep >= 1 ? 'color: #28a745;' : ''}">
+                                <i class="fas ${currentStep >= 1 ? 'fa-check-circle' : 'fa-circle'}"></i> Order Placed
+                            </div>
+                            <div style="${currentStep >= 2 ? 'color: #28a745;' : ''}">
+                                <i class="fas ${currentStep >= 2 ? 'fa-check-circle' : 'fa-circle'}"></i> Processing
+                            </div>
+                            <div style="${currentStep >= 3 ? 'color: #28a745;' : ''}">
+                                <i class="fas ${currentStep >= 3 ? 'fa-check-circle' : 'fa-circle'}"></i> Shipped
+                            </div>
+                            <div style="${currentStep >= 4 ? 'color: #28a745;' : ''}">
+                                <i class="fas ${currentStep >= 4 ? 'fa-check-circle' : 'fa-circle'}"></i> Delivered
+                            </div>
+                        </div>
+                        <div style="height: 4px; background: #ddd; border-radius: 2px;">
+                            <div style="width: ${progressPercent}%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
+                        </div>
+                        <p style="margin-top: 20px;">
+                            <strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}<br>
+                            <strong>Total Amount:</strong> BD ${parseFloat(order.total_amount).toFixed(2)}<br>
+                            <strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString()}<br>
+                            <strong>Shipping Address:</strong> ${order.shipping_address || 'N/A'}, ${order.shipping_city || ''}
+                        </p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="background: #f9f6f3; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; text-align: center;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #dc3545;"></i>
+                        <h3>Order Not Found</h3>
+                        <p>Order #${orderNumber} could not be found.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Track order error:', error);
+            resultDiv.innerHTML = `
+                <div style="background: #f9f6f3; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; text-align: center;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #dc3545;"></i>
+                    <h3>Error</h3>
+                    <p>Could not track order. Please try again later.</p>
+                </div>
+            `;
+        }
+    }
+</script>
+</body>
+</html>

@@ -29,17 +29,24 @@ async function registerArtisan(event) {
     }
     
     try {
-        const response = await fetch(API_URL + 'register_artisan', {
+        const response = await fetch('../api.php?request=register_artisan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fullname, email, password, shop_name, bio, location })
+            body: JSON.stringify({ 
+                fullname: fullname, 
+                email: email, 
+                password: password, 
+                shop_name: shop_name, 
+                bio: bio, 
+                location: location 
+            })
         });
         
         const data = await response.json();
         
         if (data.success) {
             showToast('Artisan registration successful! Please login.', 'success');
-            setTimeout(() => window.location.href = 'login.html', 1500);
+            setTimeout(() => window.location.href = '../AUTH/login.html', 1500);
         } else {
             showToast(data.message || 'Registration failed', 'error');
         }
@@ -51,5 +58,4 @@ async function registerArtisan(event) {
     }
 }
 
-// Make functions global
 window.registerArtisan = registerArtisan;
