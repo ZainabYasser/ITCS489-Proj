@@ -28,7 +28,7 @@ async function register(event) {
     }
     
     try {
-        const response = await fetch(API_URL + 'register', {
+        const response = await fetch('../api.php?request=register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fullname, email, password, role: 'customer' })
@@ -62,7 +62,7 @@ async function login(event) {
     }
     
     try {
-        const response = await fetch(API_URL + 'login', {
+        const response = await fetch('../api.php?request=login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -77,11 +77,11 @@ async function login(event) {
             
             setTimeout(() => {
                 if (data.user.role === 'admin') {
-                    window.location.href = 'admin-dashboard.html';
+                    window.location.href = '../ADMIN/admin-dashboard.html';
                 } else if (data.user.role === 'artisan') {
-                    window.location.href = 'artisan-dashboard.html';
+                    window.location.href = '../ARTISAN/artisan-dashboard.html';
                 } else {
-                    window.location.href = 'index.html';
+                    window.location.href = '../index.html';
                 }
             }, 1000);
         } else {
@@ -97,14 +97,14 @@ async function login(event) {
 
 async function logout() {
     try {
-        await fetch(API_URL + 'logout', { method: 'POST' });
+        await fetch('../api.php?request=logout', { method: 'POST' });
         localStorage.removeItem('user');
         currentUser = null;
         showToast('Logged out successfully', 'success');
-        setTimeout(() => window.location.href = 'index.html', 1000);
+        setTimeout(() => window.location.href = '../index.html', 1000);
     } catch (error) {
         console.error('Logout error:', error);
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
     }
 }
 
@@ -115,7 +115,7 @@ async function checkAuth() {
     }
     
     try {
-        const response = await fetch(API_URL + 'check_auth');
+        const response = await fetch('../api.php?request=check_auth');
         const data = await response.json();
         if (data.success && data.user) {
             currentUser = data.user;
@@ -133,15 +133,18 @@ function updateUIForUser() {
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
     const logoutBtn = document.getElementById('logout-btn');
+    const accountLink = document.getElementById('account-link');
     
     if (currentUser) {
         if (loginBtn) loginBtn.style.display = 'none';
         if (registerBtn) registerBtn.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        if (accountLink) accountLink.style.display = 'flex';
     } else {
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (registerBtn) registerBtn.style.display = 'inline-block';
         if (logoutBtn) logoutBtn.style.display = 'none';
+        if (accountLink) accountLink.style.display = 'none';
     }
 }
 
@@ -155,4 +158,3 @@ window.login = login;
 window.logout = logout;
 window.checkAuth = checkAuth;
 window.getCurrentUser = getCurrentUser;
-window.currentUser = currentUser;

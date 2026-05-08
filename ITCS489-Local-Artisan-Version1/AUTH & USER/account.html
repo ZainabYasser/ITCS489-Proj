@@ -6,7 +6,7 @@
     <title>My Account - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
@@ -14,17 +14,17 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../shop.html">Shop</a></li>
+                    <li><a href="../auction.html">Auctions</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="cart.html" class="cart-icon">
+                <a href="../cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
@@ -113,14 +113,16 @@
     </div>
 </footer>
 
-<script src="js/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="auth.js"></script>
+<script src="../SHARED/main.js"></script>
 <script>
     function showTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.getElementById(`${tabName}-tab`).classList.add('active');
         
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
     }
 
     async function loadOrders() {
@@ -132,8 +134,10 @@
             return;
         }
         
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
         try {
-            const response = await fetch('api.php?request=get_orders');
+            const response = await fetch('../api.php?request=get_orders');
             const data = await response.json();
             
             if (data.success && data.orders && data.orders.length > 0) {
@@ -148,7 +152,7 @@
                                     <tr>
                                         <td>${order.order_number}</td>
                                         <td>${new Date(order.created_at).toLocaleDateString()}</td>
-                                        <td>$${order.total_amount}</td>
+                                        <td>BD ${parseFloat(order.total_amount).toFixed(2)}</td>
                                         <td><span class="status-badge status-${order.status}">${order.status}</span></td>
                                         <td><button onclick="viewOrder('${order.order_number}')">View</button></td>
                                     </tr>
@@ -158,9 +162,10 @@
                     </div>
                 `;
             } else {
-                container.innerHTML = '<p>No orders yet. <a href="shop.html">Start shopping</a></p>';
+                container.innerHTML = '<p>No orders yet. <a href="../shop.html">Start shopping</a></p>';
             }
         } catch (error) {
+            console.error('Error loading orders:', error);
             container.innerHTML = '<p>Error loading orders</p>';
         }
     }
@@ -168,8 +173,10 @@
     async function loadWishlist() {
         const container = document.getElementById('wishlist-container');
         
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
         try {
-            const response = await fetch('api.php?request=get_wishlist');
+            const response = await fetch('../api.php?request=get_wishlist');
             const data = await response.json();
             
             if (data.success && data.wishlist && data.wishlist.length > 0) {
@@ -178,11 +185,11 @@
                         ${data.wishlist.map(item => `
                             <div class="product-card">
                                 <div class="product-image">
-                                    <img src="https://via.placeholder.com/300x250?text=${item.name}" alt="${item.name}">
+                                    <img src="${item.image_url || 'https://placehold.co/300x250/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}">
                                 </div>
                                 <div class="product-info">
                                     <h3>${item.name}</h3>
-                                    <p class="product-price">$${item.price}</p>
+                                    <p class="product-price">BD ${parseFloat(item.price).toFixed(2)}</p>
                                     <div class="product-actions">
                                         <button class="add-to-cart" onclick="addToCart(${item.product_id})">Add to Cart</button>
                                         <button class="wishlist-btn" onclick="removeFromWishlist(${item.product_id})"><i class="fas fa-heart"></i></button>
@@ -193,16 +200,17 @@
                     </div>
                 `;
             } else {
-                container.innerHTML = '<p>Your wishlist is empty. <a href="shop.html">Browse products</a></p>';
+                container.innerHTML = '<p>Your wishlist is empty. <a href="../shop.html">Browse products</a></p>';
             }
         } catch (error) {
+            console.error('Error loading wishlist:', error);
             container.innerHTML = '<p>Error loading wishlist</p>';
         }
     }
 
     async function removeFromWishlist(productId) {
         try {
-            const response = await fetch('api.php?request=remove_from_wishlist', {
+            const response = await fetch('../api.php?request=remove_from_wishlist', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product_id: productId })
@@ -212,9 +220,12 @@
             if (data.success) {
                 showToast('Removed from wishlist', 'success');
                 loadWishlist();
+            } else {
+                showToast(data.message || 'Error removing from wishlist', 'error');
             }
         } catch (error) {
-            showToast('Error removing from wishlist', 'error');
+            console.error('Remove from wishlist error:', error);
+            showToast('Network error. Please try again.', 'error');
         }
     }
 
@@ -226,27 +237,49 @@
         }
         
         const resultDiv = document.getElementById('tracking-result');
-        resultDiv.innerHTML = `
-            <div class="tracking-info" style="background: #f9f6f3; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                <h4>Order: ${orderNumber}</h4>
-                <div class="tracking-steps" style="margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <div><i class="fas fa-check-circle" style="color: green;"></i> Order Placed</div>
-                        <div><i class="fas fa-circle"></i> Processing</div>
-                        <div><i class="fas fa-circle"></i> Shipped</div>
-                        <div><i class="fas fa-circle"></i> Delivered</div>
-                    </div>
-                    <div class="progress-bar" style="height: 4px; background: #ddd; border-radius: 2px;">
-                        <div style="width: 25%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
-                    </div>
-                    <p style="margin-top: 20px;">Estimated delivery: 5-7 business days</p>
-                </div>
-            </div>
-        `;
+        resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        fetch(`../api.php?request=get_order&order_number=${orderNumber}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.order) {
+                    const order = data.order;
+                    const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
+                    const currentStep = statusOrder.indexOf(order.status) + 1;
+                    const progressPercent = (currentStep / 4) * 100;
+                    
+                    resultDiv.innerHTML = `
+                        <div class="tracking-info" style="background: #f9f6f3; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                            <h4>Order: ${order.order_number}</h4>
+                            <div class="tracking-steps" style="margin-top: 20px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap;">
+                                    <div style="${currentStep >= 1 ? 'color: #28a745;' : ''}"><i class="fas ${currentStep >= 1 ? 'fa-check-circle' : 'fa-circle'}"></i> Order Placed</div>
+                                    <div style="${currentStep >= 2 ? 'color: #28a745;' : ''}"><i class="fas ${currentStep >= 2 ? 'fa-check-circle' : 'fa-circle'}"></i> Processing</div>
+                                    <div style="${currentStep >= 3 ? 'color: #28a745;' : ''}"><i class="fas ${currentStep >= 3 ? 'fa-check-circle' : 'fa-circle'}"></i> Shipped</div>
+                                    <div style="${currentStep >= 4 ? 'color: #28a745;' : ''}"><i class="fas ${currentStep >= 4 ? 'fa-check-circle' : 'fa-circle'}"></i> Delivered</div>
+                                </div>
+                                <div class="progress-bar" style="height: 4px; background: #ddd; border-radius: 2px;">
+                                    <div style="width: ${progressPercent}%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
+                            </div>
+                            <p style="margin-top: 20px;">
+                                <strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}<br>
+                                <strong>Total Amount:</strong> BD ${parseFloat(order.total_amount).toFixed(2)}<br>
+                                <strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString()}
+                            </p>
+                        </div>
+                    </div>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Order #${orderNumber} not found.</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Track order error:', error);
+                resultDiv.innerHTML = '<p style="color: red;">Error tracking order. Please try again.</p>';
+            });
     }
 
     function viewOrder(orderNumber) {
-        window.location.href = `order_tracking.html?order=${orderNumber}`;
+        window.location.href = `../order_tracking.html?order=${orderNumber}`;
     }
 
     function showToast(message, type) {
@@ -263,14 +296,14 @@
         loadOrders();
         loadWishlist();
         
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showToast('Profile updated!', 'success');
-        });
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showToast('Profile updated!', 'success');
+            });
+        }
     });
 </script>
-<script src="../shared/utils.js"></script>
-<script src="auth.js"></script>
-<script src="../shared/main.js"></script>
 </body>
 </html>
