@@ -6,7 +6,7 @@
     <title>Product Details - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <style>
         .currency-switcher {
             position: relative;
@@ -71,15 +71,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="../index.html">Home</a></li>
                     <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
+                    <li><a href="../STATIC/about.html">About</a></li>
+                    <li><a href="../STATIC/contact.html">Contact</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
@@ -98,8 +98,8 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="../AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="../AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -121,29 +121,6 @@
                 <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
                 <p>Connecting you with local artisans.</p>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Customer Service</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping Info</a></li>
-                    <li><a href="#">Returns</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>For Artisans</h4>
-                <ul>
-                    <li><a href="register_artisan.html">Become an Artisan</a></li>
-                </ul>
-            </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
@@ -151,109 +128,9 @@
     </div>
 </footer>
 
-<script src="js/main.js"></script>
-<script>
-    const currencyRates = {
-        BHD: { symbol: 'BD', rate: 1, code: 'BHD' },
-        SAR: { symbol: '﷼', rate: 9.96, code: 'SAR' },
-        USD: { symbol: '$', rate: 2.65, code: 'USD' },
-        AED: { symbol: 'د.إ', rate: 9.74, code: 'AED' }
-    };
-    let currentCurrency = 'BHD';
-    
-    const productsData = {
-        1: { id: 1, name: "Handmade Ceramic Vase", artisan: "Fatima Al Khalifa", category: "Pottery", priceBHD: 45, description: "Beautiful handmade ceramic vase, perfect for home decor. Each piece is unique and crafted with love.", image: "https://picsum.photos/id/30/500/500", stock: 10 },
-        2: { id: 2, name: "Silver Pearl Earrings", artisan: "Ahmed Al Zayani", category: "Jewellery", priceBHD: 29.99, description: "Elegant silver earrings with genuine pearls. Handcrafted with attention to detail.", image: "https://picsum.photos/id/20/500/500", stock: 15 },
-        3: { id: 3, name: "Handwoven Wool Scarf", artisan: "Noor Al Awadhi", category: "Textiles", priceBHD: 35, description: "Soft, warm, handwoven wool scarf. Perfect for cold weather.", image: "https://picsum.photos/id/96/500/500", stock: 8 },
-        4: { id: 4, name: "Abstract Oil Painting", artisan: "Yousef Al Doseri", category: "Painting", priceBHD: 120, description: "Original abstract oil painting on canvas. Signed by the artist.", image: "https://picsum.photos/id/22/500/500", stock: 3 }
-    };
-    
-    function changeCurrency(currencyCode, symbol, rate) {
-        currentCurrency = currencyCode;
-        localStorage.setItem('preferredCurrency', currencyCode);
-        document.getElementById('current-currency').textContent = currencyCode;
-        showToast(`Currency changed to ${symbol} ${currencyCode}`, 'success');
-        loadProductDetail();
-    }
-    
-    function loadCurrencyPreference() {
-        const saved = localStorage.getItem('preferredCurrency');
-        if (saved && currencyRates[saved]) {
-            currentCurrency = saved;
-            document.getElementById('current-currency').textContent = currentCurrency;
-        }
-        loadProductDetail();
-    }
-    
-    function loadProductDetail() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        const product = productsData[productId] || productsData[1];
-        const rate = currencyRates[currentCurrency].rate;
-        const symbol = currencyRates[currentCurrency].symbol;
-        const convertedPrice = (product.priceBHD * rate).toFixed(2);
-        
-        const container = document.getElementById('product-detail-container');
-        container.innerHTML = `
-            <div class="product-detail-layout">
-                <div class="product-gallery">
-                    <div class="main-image"><img src="${product.image}" alt="${product.name}" id="main-image"></div>
-                    <div class="thumbnail-images">
-                        <img src="${product.image}" onclick="changeImage(this.src)">
-                        <img src="https://picsum.photos/id/30/80/80" onclick="changeImage(this.src)">
-                        <img src="https://picsum.photos/id/26/80/80" onclick="changeImage(this.src)">
-                    </div>
-                </div>
-                <div class="product-info-detail">
-                    <h1>${product.name}</h1>
-                    <div class="product-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><span>(15 reviews)</span></div>
-                    <p class="product-price-detail">${symbol} ${convertedPrice}</p>
-                    <p class="product-description">${product.description}</p>
-                    <div class="artisan-info"><strong><i class="fas fa-user"></i> Artisan: ${product.artisan}</strong><p>Passionate about creating unique handmade pieces.</p></div>
-                    <div class="quantity-selector">
-                        <button onclick="decrementQuantity()">-</button>
-                        <input type="number" id="quantity" value="1" min="1" max="${product.stock}">
-                        <button onclick="incrementQuantity()">+</button>
-                    </div>
-                    <div class="product-actions-detail">
-                        <button class="add-to-cart-btn" onclick="addToCartDetail(${product.id})"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
-                        <button class="wishlist-btn-detail" onclick="addToWishlist(${product.id})"><i class="far fa-heart"></i> Wishlist</button>
-                    </div>
-                </div>
-            </div>
-            <div class="reviews-section"><h3>Customer Reviews</h3><div id="reviews-container"><div class="review-card"><strong>Sarah Johnson</strong><div class="rating">★★★★☆</div><p>Beautiful piece! Exactly as described.</p></div></div>
-            <div class="add-review"><h4>Write a Review</h4><select id="rating"><option value="5">★★★★★ (5)</option><option value="4">★★★★☆ (4)</option></select><textarea id="review-comment" rows="3" placeholder="Share your experience..."></textarea><button class="btn-primary" onclick="submitReview(${product.id})">Submit Review</button></div></div>
-        `;
-    }
-    
-    function addToCartDetail(productId) {
-        const quantity = parseInt(document.getElementById('quantity')?.value || 1);
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const existing = cart.find(item => item.id === productId);
-        if (existing) { existing.quantity += quantity; } 
-        else { cart.push({ id: productId, quantity: quantity }); }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        showToast('Added to cart!', 'success');
-    }
-    
-    function incrementQuantity() { const input = document.getElementById('quantity'); if (input) input.value = parseInt(input.value) + 1; }
-    function decrementQuantity() { const input = document.getElementById('quantity'); if (input && parseInt(input.value) > 1) input.value = parseInt(input.value) - 1; }
-    function changeImage(src) { document.getElementById('main-image').src = src; }
-    function submitReview(productId) { showToast('Review submitted! Thank you!', 'success'); document.getElementById('review-comment').value = ''; }
-    function showToast(message, type) { const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
-    
-    document.addEventListener('DOMContentLoaded', () => { loadCurrencyPreference(); updateCartCount(); checkAuth(); });
-    window.changeCurrency = changeCurrency;
-    window.addToCartDetail = addToCartDetail;
-    window.incrementQuantity = incrementQuantity;
-    window.decrementQuantity = decrementQuantity;
-    window.changeImage = changeImage;
-    window.submitReview = submitReview;
-</script>
-<script src="../shared/utils.js"></script>
-<script src="../shared/addToCart.js"></script>
-<script src="shop.js"></script>
-<script src="../shared/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="../SHARED/addToCart.js"></script>
+<script src="product.js"></script>
+<script src="../SHARED/main.js"></script>
 </body>
 </html>
