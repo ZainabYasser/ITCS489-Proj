@@ -62,7 +62,7 @@ function displayCheckoutForm(cart) {
         itemsHTML += `
             <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e8e2d9;">
                 <div>
-                    <strong>${item.name}</strong>
+                    <strong>${escapeHtml(item.name)}</strong>
                     <small style="display: block; color: #666;">x${item.quantity}</small>
                 </div>
                 <div>${symbol} ${subtotalConverted}</div>
@@ -76,57 +76,60 @@ function displayCheckoutForm(cart) {
     const shippingConverted = (shippingBHD * rate).toFixed(2);
     const grandConverted = (grandTotalBHD * rate).toFixed(2);
     
+    // Get user data for pre-filling if available
+    const user = getCurrentUser();
+    
     container.innerHTML = `
-        <div class="checkout-layout">
+        <div class="checkout-layout" style="display: grid; grid-template-columns: 1fr 380px; gap: 40px;">
             <div class="checkout-form">
                 <form id="checkout-form">
-                    <div class="form-section">
-                        <h3><i class="fas fa-user"></i> Shipping Information</h3>
-                        <input type="text" id="fullname" placeholder="Full Name" required>
-                        <input type="email" id="email" placeholder="Email Address" required>
-                        <input type="text" id="address" placeholder="Street Address" required>
-                        <input type="text" id="city" placeholder="City" required>
-                        <input type="text" id="phone" placeholder="Phone Number" required>
+                    <div class="form-section" style="background: #f9f6f3; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-user"></i> Shipping Information</h3>
+                        <input type="text" id="fullname" placeholder="Full Name" value="${escapeHtml(user?.fullname || '')}" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <input type="email" id="email" placeholder="Email Address" value="${escapeHtml(user?.email || '')}" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <input type="text" id="address" placeholder="Street Address" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <input type="text" id="city" placeholder="City" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <input type="tel" id="phone" placeholder="Phone Number" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
                     </div>
                     
-                    <div class="form-section">
-                        <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
-                        <div class="payment-methods">
-                            <div class="payment-method-card" id="payment-credit_card" onclick="selectPaymentMethod('credit_card')">
-                                <i class="fab fa-cc-visa"></i>
-                                <i class="fab fa-cc-mastercard"></i>
-                                <span>Credit Card</span>
+                    <div class="form-section" style="background: #f9f6f3; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-credit-card"></i> Payment Method</h3>
+                        <div class="payment-methods" style="display: flex; gap: 20px; margin: 15px 0; flex-wrap: wrap;">
+                            <div class="payment-method-card" id="payment-credit_card" onclick="selectPaymentMethod('credit_card')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <i class="fab fa-cc-visa" style="font-size: 32px;"></i>
+                                <i class="fab fa-cc-mastercard" style="font-size: 32px;"></i>
+                                <div>Credit Card</div>
                             </div>
-                            <div class="payment-method-card" id="payment-debit_card" onclick="selectPaymentMethod('debit_card')">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Debit Card</span>
+                            <div class="payment-method-card" id="payment-debit_card" onclick="selectPaymentMethod('debit_card')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <i class="fas fa-credit-card" style="font-size: 32px;"></i>
+                                <div>Debit Card</div>
                             </div>
-                            <div class="payment-method-card" id="payment-apple_pay" onclick="selectPaymentMethod('apple_pay')">
-                                <i class="fab fa-apple"></i>
-                                <span>Apple Pay</span>
+                            <div class="payment-method-card" id="payment-apple_pay" onclick="selectPaymentMethod('apple_pay')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <i class="fab fa-apple" style="font-size: 32px;"></i>
+                                <div>Apple Pay</div>
                             </div>
                         </div>
                         
                         <div id="card-details-section">
-                            <div class="card-details">
-                                <input type="text" id="card_number" placeholder="Card Number">
-                                <div class="card-row">
-                                    <input type="text" id="expiry" placeholder="MM/YY">
-                                    <input type="text" id="cvc" placeholder="CVC">
+                            <div class="card-details" style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+                                <input type="text" id="card_number" placeholder="Card Number" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <input type="text" id="expiry" placeholder="MM/YY" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                                    <input type="text" id="cvc" placeholder="CVC" style="padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
                                 </div>
-                                <input type="text" id="card_name" placeholder="Cardholder Name">
+                                <input type="text" id="card_name" placeholder="Cardholder Name" style="width: 100%; padding: 12px; margin-top: 15px; border: 1px solid #ddd; border-radius: 8px;">
                             </div>
                         </div>
                     </div>
                     
-                    <button type="submit" class="place-order-btn">
+                    <button type="submit" class="place-order-btn" style="width: 100%; background: #8B5E3C; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
                         <i class="fas fa-check-circle"></i> Place Order - ${symbol} ${grandConverted}
                     </button>
                 </form>
             </div>
             
-            <div class="order-summary">
-                <h3><i class="fas fa-receipt"></i> Order Summary</h3>
+            <div class="order-summary" style="background: #f9f6f3; padding: 25px; border-radius: 10px; position: sticky; top: 100px;">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-receipt"></i> Order Summary</h3>
                 ${itemsHTML}
                 <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
                     <span>Subtotal</span>
@@ -153,25 +156,32 @@ function selectPaymentMethod(method) {
     
     document.querySelectorAll('.payment-method-card').forEach(card => {
         card.classList.remove('selected');
+        card.style.borderColor = '#e8e2d9';
+        card.style.background = 'white';
     });
-    document.getElementById(`payment-${method}`).classList.add('selected');
+    const selectedCard = document.getElementById(`payment-${method}`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        selectedCard.style.borderColor = '#8B5E3C';
+        selectedCard.style.background = '#f9f6f3';
+    }
     
     const cardDetails = document.getElementById('card-details-section');
     if (method === 'apple_pay') {
-        cardDetails.style.display = 'none';
+        if (cardDetails) cardDetails.style.display = 'none';
     } else {
-        cardDetails.style.display = 'block';
+        if (cardDetails) cardDetails.style.display = 'block';
     }
 }
 
 async function placeOrder(e) {
     e.preventDefault();
     
-    const fullname = document.getElementById('fullname').value;
-    const email = document.getElementById('email').value;
-    const address = document.getElementById('address').value;
-    const city = document.getElementById('city').value;
-    const phone = document.getElementById('phone').value;
+    const fullname = document.getElementById('fullname')?.value;
+    const email = document.getElementById('email')?.value;
+    const address = document.getElementById('address')?.value;
+    const city = document.getElementById('city')?.value;
+    const phone = document.getElementById('phone')?.value;
     
     if (!fullname || !email || !address || !city || !phone) {
         showToast('Please fill in all shipping fields', 'error');
@@ -189,6 +199,12 @@ async function placeOrder(e) {
             return;
         }
     }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('.place-order-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
     
     try {
         const response = await fetch('../api.php?request=place_order', {
@@ -211,11 +227,22 @@ async function placeOrder(e) {
             }, 1500);
         } else {
             showToast(data.message || 'Order failed', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         }
     } catch (error) {
         console.error('Place order error:', error);
         showToast('Network error. Please try again.', 'error');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Make functions global

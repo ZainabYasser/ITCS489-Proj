@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updateCartCount();
     
     // Update UI based on login status
-    updateAuthUI();
+    await updateAuthUI();
     
     // Set up logout button
     const logoutBtn = document.getElementById('logout-btn');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function updateAuthUI() {
+async function updateAuthUI() {
     const user = getCurrentUser();
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
@@ -30,7 +30,7 @@ function updateAuthUI() {
         if (loginBtn) loginBtn.style.display = 'none';
         if (registerBtn) registerBtn.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        if (userGreeting) userGreeting.textContent = `Hello, ${user.fullname}`;
+        if (userGreeting) userGreeting.textContent = `Hello, ${user.fullname || user.name || 'User'}`;
     } else {
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (registerBtn) registerBtn.style.display = 'inline-block';
@@ -41,19 +41,33 @@ function updateAuthUI() {
 
 async function logout() {
     try {
-        await fetch(getApiUrl() + 'logout', { method: 'POST' });
+        const response = await fetch('../api.php?request=logout', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        
         localStorage.removeItem('user');
+        sessionStorage.clear();
+        
         showToast('Logged out successfully', 'success');
-        window.location.href = '../STATIC/index.html';
+        
+        // Redirect to home page
+        setTimeout(() => {
+            window.location.href = '../index.html';
+        }, 1000);
     } catch (error) {
-        window.location.href = '../STATIC/index.html';
+        console.error('Logout error:', error);
+        // Force logout even if API fails
+        localStorage.removeItem('user');
+        window.location.href = '../index.html';
     }
 }
 
 function checkAuth() {
     const user = getCurrentUser();
     if (!user) {
-        window.location.href = '../AUTH & USER/login.html';
+        window.location.href = '../AUTH/login.html';
         return false;
     }
     return true;
