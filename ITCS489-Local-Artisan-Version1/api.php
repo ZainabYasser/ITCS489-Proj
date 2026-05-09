@@ -1003,6 +1003,85 @@ if ($request == 'admin_reports') {
     exit();
 }
 
+// ============ REVIEW FUNCTIONS ============
+
+if ($request == 'get_reviews') {
+    $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
+    
+    $stmt = $pdo->prepare("
+        SELECT r.*, u.fullname 
+        FROM reviews r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.product_id = ? AND r.status = 'approved'
+        ORDER BY r.created_at DESC
+    ");
+    $stmt->execute([$productId]);
+    $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'reviews' => $reviews]);
+    exit();
+}
+
+if ($request == 'add_review') {
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Please login to leave a review']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $productId = $input['product_id'] ?? 0;
+    $rating = $input['rating'] ?? 5;
+    $comment = trim($input['comment'] ?? '');
+    
+    if (empty($comment)) {
+        echo json_encode(['success' => false, 'message' => 'Please enter a review comment']);
+        exit();
+    }
+    
+    if ($rating < 1 || $rating > 5) {
+        echo json_encode(['success' => false, 'message' => 'Invalid rating']);
+        exit();
+    }
+    
+    // Check if user has purchased this product
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'delivered'
+    ");
+    $stmt->execute([$_SESSION['user_id'], $productId]);
+    $hasPurchased = $stmt->fetchColumn() > 0;
+    
+    // For now, allow reviews even without purchase (for testing)
+    // In production, you might want to enforce: if (!$hasPurchased) { error }
+    
+    // Check if user already reviewed this product
+    $stmt = $pdo->prepare("SELECT id FROM reviews WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$_SESSION['user_id'], $productId]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'You have already reviewed this product']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("
+        INSERT INTO reviews (product_id, user_id, rating, comment, status, created_at) 
+        VALUES (?, ?, ?, ?, 'approved', NOW())
+    ");
+    $stmt->execute([$productId, $_SESSION['user_id'], $rating, $comment]);
+    
+    // Update product average rating
+    $stmt = $pdo->prepare("
+        UPDATE products 
+        SET average_rating = (SELECT AVG(rating) FROM reviews WHERE product_id = ?),
+            review_count = (SELECT COUNT(*) FROM reviews WHERE product_id = ?)
+        WHERE id = ?
+    ");
+    $stmt->execute([$productId, $productId, $productId]);
+    
+    echo json_encode(['success' => true, 'message' => 'Review submitted successfully!']);
+    exit();
+}
+
 // ============ DEFAULT ============
 echo json_encode(['success' => false, 'message' => 'Unknown request: ' . $request]);
 ?>
