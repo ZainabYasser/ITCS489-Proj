@@ -1,15 +1,16 @@
 <?php
 echo "<h1>📊 Database Connection Test</h1>";
 
-// Direct database connection (no functions needed)
+// Direct database connection
 $host = 'localhost';
+$port = '3307';  // ← Added port 3307
 $dbname = 'artisan_cooperative';
 $username = 'root';
 $password = '';
 
 try {
-    // Connect directly to database
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    // Connect with port 3307
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     echo "<p style='color:green; font-weight:bold;'>✅ Database connection successful!</p>";
@@ -26,7 +27,7 @@ try {
     echo "<h3>👤 Users in Database:</h3>";
     if (count($users) > 0) {
         echo "<table border='1' cellpadding='8' style='border-collapse: collapse;'>";
-        echo "<tr style='background:#f5f0eb;'><th>ID</th><th>Name</th><th>Email</th><th>Role</th>tr";
+        echo "<tr style='background:#f5f0eb;'><th>ID</th><th>Name</th><th>Email</th><th>Role</th></tr>";
         foreach ($users as $user) {
             echo "<tr>";
             echo "<td>" . $user['id'] . "</td>";
