@@ -10,7 +10,6 @@
 </head>
 <body>
 
-<!-- Header -->
 <header>
     <div class="container">
         <div class="navbar">
@@ -48,19 +47,19 @@
                         </a>
                     </div>
                 </div>
+                <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
                 <a href="cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Hero Section -->
 <section class="hero">
     <div class="container">
         <div class="hero-content">
@@ -74,7 +73,6 @@
     </div>
 </section>
 
-<!-- Categories Section -->
 <section class="categories">
     <div class="container">
         <h2 class="section-title">Shop by Category</h2>
@@ -113,7 +111,6 @@
     </div>
 </section>
 
-<!-- Featured Products -->
 <section class="featured-products" style="padding: 60px 0; background: #f9f6f3;">
     <div class="container">
         <h2 class="section-title">Featured Products</h2>
@@ -122,7 +119,6 @@
         </div>
     </div>
 </section>
-
 
 <section class="artisan-spotlight" style="padding: 80px 0;">
     <div class="container">
@@ -214,6 +210,46 @@
 </footer>
 
 <script src="js/main.js"></script>
-<script src="script "></script>
+<script>
+    // Check login status and update UI
+    function updateUserInterface() {
+        const user = localStorage.getItem('user');
+        const userGreeting = document.getElementById('user-greeting');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        if (user) {
+            const userData = JSON.parse(user);
+            if (userGreeting) userGreeting.textContent = 'Welcome, ' + userData.fullname + '! 👋';
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (registerBtn) registerBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        } else {
+            if (userGreeting) userGreeting.textContent = '';
+            if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (registerBtn) registerBtn.style.display = 'inline-block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+        }
+    }
+    
+    // Logout function
+    function setupLogout() {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function() {
+                fetch('api.php?request=logout', { method: 'POST' });
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            };
+        }
+    }
+    
+    // Run when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateUserInterface();
+        setupLogout();
+    });
+</script>
 </body>
 </html>
