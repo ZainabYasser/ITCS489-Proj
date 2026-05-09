@@ -858,5 +858,29 @@
         }
     });
 </script>
+<script>
+    // Override logout button directly
+    const logoutBtn = document.querySelector('.logout-btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = function(e) {
+            e.preventDefault();
+            console.log('Manual logout handler triggered');
+            
+            fetch('../api.php?request=logout', { method: 'POST' })
+                .then(() => {
+                    localStorage.removeItem('user');
+                    sessionStorage.clear();
+                    showToast('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/LocalArtisanITCS489project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/index.html';
+                    }, 1000);
+                })
+                .catch(() => {
+                    localStorage.removeItem('user');
+                    window.location.href = '/LocalArtisanITCS489project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/index.html';
+                });
+        };
+    }
+</script>
 </body>
 </html>
