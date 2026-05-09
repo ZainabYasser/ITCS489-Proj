@@ -186,5 +186,21 @@
 <script src="../SHARED/addToCart.js"></script>
 <script src="shop.js"></script>
 <script src="../SHARED/main.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load currency preference first
+        if (typeof loadCurrencyPreference === 'function') {
+            loadCurrencyPreference();
+        }
+        // Then load products
+        if (typeof loadProducts === 'function') {
+            loadProducts();
+        }
+        // Update cart count
+        if (typeof updateCartCount === 'function') {
+            updateCartCount();
+        }
+    });
+</script>
 </body>
 </html>

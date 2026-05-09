@@ -43,7 +43,9 @@ function displayProducts() {
     const paginatedProducts = filteredProducts.slice(start, start + productsPerPage);
     
     container.innerHTML = paginatedProducts.map(product => {
+        // Use formatPrice function from utils.js (already handles currency)
         const priceFormatted = formatPrice(product.price);
+        
         return `
             <div class="product-card">
                 <div class="product-image">
@@ -53,9 +55,9 @@ function displayProducts() {
                     <span class="product-category">${product.category_name || 'Handmade'}</span>
                 </div>
                 <div class="product-info">
-                    <h3>${product.name}</h3>
-                    <p class="artisan-name">by ${product.artisan_name || 'Local Artisan'}</p>
-                    <p class="product-price">${priceFormatted}</p>
+                    <h3>${escapeHtml(product.name)}</h3>
+                    <p class="artisan-name">by ${escapeHtml(product.artisan_name || 'Local Artisan')}</p>
+                    <p class="product-price" data-original-price="${product.price}">${priceFormatted}</p>
                     <div class="product-actions">
                         <button class="add-to-cart" onclick="addToCart(${product.id})">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
@@ -76,6 +78,11 @@ function updatePagination() {
     const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
     const pageInfo = document.getElementById('page-info');
     if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+    
+    const prevBtn = document.querySelector('.pagination button:first-child');
+    const nextBtn = document.querySelector('.pagination button:last-child');
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 }
 
 function nextPage() {
@@ -115,6 +122,9 @@ function applyFilters() {
     
     currentPage = 1;
     displayProducts();
+    
+    const resultCount = filteredProducts.length;
+    if (typeof showToast === 'function') showToast(`Found ${resultCount} products`, 'info');
 }
 
 function resetFilters() {
@@ -125,7 +135,17 @@ function resetFilters() {
     filteredProducts = [...allProducts];
     currentPage = 1;
     displayProducts();
-    showToast('All filters reset', 'success');
+    if (typeof showToast === 'function') showToast('All filters reset', 'success');
+}
+
+function addToWishlist(productId) {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Please login to add to wishlist', 'error');
+        window.location.href = '../AUTH/login.html';
+        return;
+    }
+    showToast('Added to wishlist!', 'success');
 }
 
 // Make functions global
@@ -135,3 +155,4 @@ window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.prevPage = prevPage;
 window.nextPage = nextPage;
+window.addToWishlist = addToWishlist;
