@@ -839,24 +839,23 @@
         }
     };
     
-    // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
-        checkAuth();
-        updateCartCount();
-        updateWelcomeMessage();
-        
-        // Use the overridden functions
-        loadOrders();
-        if (typeof loadWishlist === 'function') {
-            loadWishlist();
-        }
-        loadProfile();
-        
-        const profileForm = document.getElementById('profile-form');
-        if (profileForm) {
-            profileForm.addEventListener('submit', updateProfile);
-        }
-    });
+    // checkAuth();  // ← COMMENT THIS OUT OR DELETE IT
+    updateCartCount();
+    updateWelcomeMessage();
+    
+    // Use the overridden functions
+    loadOrders();
+    if (typeof loadWishlist === 'function') {
+        loadWishlist();
+    }
+    loadProfile();
+    
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', updateProfile);
+    }
+});
 </script>
 <script>
     // Override logout button directly
