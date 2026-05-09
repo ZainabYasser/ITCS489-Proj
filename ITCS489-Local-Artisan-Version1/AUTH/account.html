@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <style>
+        /* Enhanced Account Page Specific Styles */
+        
         /* Account Hero Section */
         .account-hero {
             background: linear-gradient(135deg, var(--bg-warm) 0%, var(--bg-warm-dark) 100%);
@@ -74,6 +76,7 @@
             border-radius: 40px;
             transition: all 0.3s ease;
             color: var(--text-gray);
+            position: relative;
         }
         
         .account-tabs .tab-btn i {
@@ -131,13 +134,14 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
+            transition: var(--transition);
         }
         
         .card-header a:hover {
             text-decoration: underline;
         }
         
-        /* Profile Form */
+        /* Profile Form Enhanced */
         .profile-form {
             max-width: 600px;
         }
@@ -176,6 +180,10 @@
             box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
         }
         
+        .form-group-modern input:hover {
+            border-color: var(--primary-light);
+        }
+        
         .update-btn {
             background: var(--primary);
             color: white;
@@ -194,9 +202,10 @@
         .update-btn:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
         }
         
-        /* Order Cards */
+        /* Order Cards (instead of table) */
         .orders-grid {
             display: flex;
             flex-direction: column;
@@ -243,10 +252,25 @@
             font-weight: 600;
         }
         
-        .status-delivered { background: #28a74520; color: #28a745; }
-        .status-processing, .status-pending { background: #ffc10720; color: #ff9800; }
-        .status-shipped { background: #17a2b820; color: #17a2b8; }
-        .status-cancelled { background: #dc354520; color: #dc3545; }
+        .status-delivered {
+            background: #28a74520;
+            color: #28a745;
+        }
+        
+        .status-processing, .status-pending {
+            background: #ffc10720;
+            color: #ff9800;
+        }
+        
+        .status-shipped {
+            background: #17a2b820;
+            color: #17a2b8;
+        }
+        
+        .status-cancelled {
+            background: #dc354520;
+            color: #dc3545;
+        }
         
         .order-details {
             display: flex;
@@ -383,6 +407,7 @@
             padding: 8px;
             border-radius: 8px;
             cursor: pointer;
+            transition: var(--transition);
         }
         
         .add-to-cart-wishlist:hover {
@@ -409,6 +434,7 @@
             border: 2px solid transparent;
             border-radius: 12px;
             font-size: 14px;
+            transition: var(--transition);
             background: white;
         }
         
@@ -425,10 +451,12 @@
             border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
+            transition: var(--transition);
         }
         
         .track-btn:hover {
             background: var(--primary-dark);
+            transform: translateY(-2px);
         }
         
         /* Empty States */
@@ -455,22 +483,35 @@
             margin-bottom: 20px;
         }
         
+        .empty-state .btn-primary {
+            display: inline-block;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .welcome-card {
                 flex-direction: column;
                 text-align: center;
             }
+            
             .order-header, .order-details {
                 flex-direction: column;
                 align-items: flex-start;
             }
+            
+            .order-info {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
             .tracking-input-group {
                 flex-direction: column;
             }
+            
             .track-btn {
                 width: 100%;
             }
+            
             .wishlist-grid {
                 grid-template-columns: 1fr;
             }
@@ -521,6 +562,7 @@
 
 <section class="account-section">
     <div class="container">
+        <!-- Enhanced Tabs -->
         <div class="account-tabs">
             <button class="tab-btn active" onclick="showTab('orders')">
                 <i class="fas fa-shopping-bag"></i> My Orders
@@ -603,7 +645,7 @@
                 </div>
                 <div class="tracking-container">
                     <div class="tracking-input-group">
-                        <input type="text" id="tracking-number" placeholder="Enter Order Number">
+                        <input type="text" id="tracking-number" placeholder="Enter Order Number (e.g., ORD-20241225-XXXXX)">
                         <button class="track-btn" onclick="trackOrder()">
                             <i class="fas fa-truck"></i> Track Order
                         </button>
@@ -638,24 +680,9 @@
 <script>
     // Display user name in welcome section
     function updateWelcomeMessage() {
-        let user = getCurrentUser();
-        
-        if (!user || !user.fullname) {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                try {
-                    user = JSON.parse(storedUser);
-                } catch(e) {
-                    console.error('Error parsing user data:', e);
-                }
-            }
-        }
-        
+        const user = getCurrentUser();
         if (user && user.fullname) {
-            const firstName = user.fullname.split(' ')[0];
-            document.getElementById('user-name-display').textContent = firstName;
-        } else {
-            document.getElementById('user-name-display').textContent = 'Guest';
+            document.getElementById('user-name-display').textContent = user.fullname.split(' ')[0];
         }
     }
     
@@ -669,28 +696,165 @@
             if (btn) btn.classList.add('active');
         }
         
-        if (tabName === 'orders' && typeof loadOrders === 'function') loadOrders();
-        if (tabName === 'wishlist' && typeof loadWishlist === 'function') loadWishlist();
-        if (tabName === 'profile' && typeof loadProfile === 'function') loadProfile();
+        // Load tab-specific data
+        if (tabName === 'orders') {
+            loadOrders();
+        } else if (tabName === 'wishlist') {
+            loadWishlist();
+        } else if (tabName === 'profile') {
+            loadProfile();
+        }
     }
+    
+    // Override loadOrders to use card layout
+    const originalLoadOrders = window.loadOrders;
+    window.loadOrders = async function() {
+        const container = document.getElementById('orders-container');
+        if (!container) return;
+        
+        const user = getCurrentUser();
+        
+        if (!user) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
+            return;
+        }
+        
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
+        try {
+            const response = await fetch('../api.php?request=get_orders');
+            const data = await response.json();
+            
+            if (data.success && data.orders && data.orders.length > 0) {
+                container.innerHTML = `
+                    <div class="orders-grid">
+                        ${data.orders.map(order => `
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
+                                    <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                                </div>
+                                <div class="order-details">
+                                    <div class="order-info">
+                                        <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
+                                        <span><i class="fas fa-box"></i> ${order.items ? order.items.length : 0} item(s)</span>
+                                    </div>
+                                    <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
+                                    <button class="view-order-btn" onclick="viewOrderDetails('${order.order_number}')">View Details →</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
+        }
+    };
+    
+    // Override loadWishlist to use card layout
+    const originalLoadWishlist = window.loadWishlist;
+    if (typeof loadWishlist === 'function') {
+        window.loadWishlist = async function() {
+            const container = document.getElementById('wishlist-container');
+            if (!container) return;
+            
+            const user = getCurrentUser();
+            
+            if (!user) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-heart-broken"></i><h4>Please Login</h4><p>Login to view your wishlist</p><a href="login.html" class="btn-primary">Login Now</a></div>';
+                return;
+            }
+            
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await fetch('../api.php?request=get_wishlist');
+                const data = await response.json();
+                
+                if (data.success && data.wishlist && data.wishlist.length > 0) {
+                    container.innerHTML = `
+                        <div class="wishlist-grid">
+                            ${data.wishlist.map(item => `
+                                <div class="wishlist-item" id="wishlist-item-${item.product_id}">
+                                    <div class="wishlist-image">
+                                        <img src="${item.image_url || 'https://placehold.co/300x200/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}">
+                                        <button class="remove-wishlist-btn" onclick="removeFromWishlist(${item.product_id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="wishlist-info">
+                                        <h4>${item.name}</h4>
+                                        <p class="artisan-name">by ${item.artisan_name || 'Local Artisan'}</p>
+                                        <div class="wishlist-price">${formatPrice(item.price)}</div>
+                                        <div class="wishlist-actions">
+                                            <button class="add-to-cart-wishlist" onclick="addToCartFromWishlist(${item.product_id})">
+                                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-heart-broken"></i><h4>Wishlist is Empty</h4><p>Save your favorite items here!</p><a href="../SHOPPING/shop.html" class="btn-primary">Browse Products</a></div>';
+                }
+            } catch (error) {
+                console.error('Error loading wishlist:', error);
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Wishlist</h4><p>Please try again later.</p></div>';
+            }
+        };
+    }
+    
+    // Helper function for wishlist add to cart
+    window.addToCartFromWishlist = async function(productId) {
+        const user = getCurrentUser();
+        if (!user) {
+            showToast('Please login to add items to cart', 'error');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        try {
+            const response = await fetch('../api.php?request=add_to_cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Added to cart!', 'success');
+                updateCartCount();
+            } else {
+                showToast(data.message || 'Failed to add to cart', 'error');
+            }
+        } catch (error) {
+            console.error('Add to cart error:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
+    };
     
     // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
-        updateWelcomeMessage();
+        checkAuth();
         updateCartCount();
+        updateWelcomeMessage();
         
-        if (typeof loadOrders === 'function') loadOrders();
-        if (typeof loadWishlist === 'function') loadWishlist();
-        if (typeof loadProfile === 'function') loadProfile();
+        // Use the overridden functions
+        loadOrders();
+        if (typeof loadWishlist === 'function') {
+            loadWishlist();
+        }
+        loadProfile();
         
         const profileForm = document.getElementById('profile-form');
         if (profileForm) {
-            profileForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                if (typeof updateProfile === 'function') {
-                    updateProfile(e);
-                }
-            });
+            profileForm.addEventListener('submit', updateProfile);
         }
     });
 </script>
