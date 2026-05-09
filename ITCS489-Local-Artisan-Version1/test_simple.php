@@ -1,7 +1,7 @@
 <?php
 echo "<h1>Simple Database Test</h1>";
 
-// Direct connection - no functions
+// mmm Direct connection - no functions
 $host = 'localhost';
 $dbname = 'artisan_cooperative';
 $username = 'root';
