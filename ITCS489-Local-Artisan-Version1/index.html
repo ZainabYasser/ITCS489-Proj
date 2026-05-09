@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Profile icon styles */
+        .profile-icon {
+            color: #333;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .profile-icon:hover {
+            color: #8B5E3C;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
 
@@ -20,12 +34,12 @@
             </div>
             <nav>
                 <ul>
-                     <li><a href="index.html" class="active">Home</a></li>
-                     <li><a href="SHOPPING/shop.html">Shop</a></li>
-                     <li><a href="AUCTIONS/auction.html">Auctions</a></li>
-                     <li><a href="STATIC/about.html">About</a></li>
-                     <li><a href="STATIC/contact.html">Contact</a></li>
-                 </ul>
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="SHOPPING/shop.html">Shop</a></li>
+                    <li><a href="AUCTIONS/auction.html">Auctions</a></li>
+                    <li><a href="STATIC/about.html">About</a></li>
+                    <li><a href="STATIC/contact.html">Contact</a></li>
+                </ul>
             </nav>
             <div class="nav-icons">
                 <div class="currency-switcher">
@@ -48,6 +62,9 @@
                     </div>
                 </div>
                 <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
+                <a href="AUTH/account.html" id="profile-icon" class="profile-icon" style="display: none;">
+                    <i class="fas fa-user-circle"></i>
+                </a>
                 <a href="cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
@@ -71,7 +88,7 @@
             </div>
         </div>
     </div>
-</section>
+</header>
 
 <section class="categories">
     <div class="container">
@@ -218,6 +235,7 @@
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const profileIcon = document.getElementById('profile-icon');  // Profile icon element
         
         if (user) {
             const userData = JSON.parse(user);
@@ -225,11 +243,13 @@
             if (loginBtn) loginBtn.style.display = 'none';
             if (registerBtn) registerBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            if (profileIcon) profileIcon.style.display = 'inline-block';  // Show profile icon when logged in
         } else {
             if (userGreeting) userGreeting.textContent = '';
             if (loginBtn) loginBtn.style.display = 'inline-block';
             if (registerBtn) registerBtn.style.display = 'inline-block';
             if (logoutBtn) logoutBtn.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'none';  // Hide profile icon when logged out
         }
     }
     
