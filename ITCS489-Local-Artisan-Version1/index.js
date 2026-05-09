@@ -242,7 +242,7 @@ const featuredProductsData = [
         }
     }
     
-    // Make functions global
+    // Make function global
     window.changeCurrency = changeCurrency;
     window.addToCart = addToCart;
     window.addToWishlist = addToWishlist;

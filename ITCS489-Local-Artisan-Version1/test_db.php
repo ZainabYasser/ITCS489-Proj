@@ -23,7 +23,7 @@ try {
     $stmt = $pdo->query("SELECT id, fullname, email, role FROM users");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    echo "<h3>👤 Users in Database:</h3>";
+    echo "<h3>👤 Users in Database:</h3>"; 
     if (count($users) > 0) {
         echo "<table border='1' cellpadding='8' style='border-collapse: collapse;'>";
         echo "<tr style='background:#f5f0eb;'><th>ID</th><th>Name</th><th>Email</th><th>Role</th>tr";
