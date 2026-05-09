@@ -20,12 +20,12 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html" class="active">Home</a></li>
-                    <li><a href="SHOPPING/shop.html">Shop</a></li>
-                    <li><a href="AUCTIONS/auction.html">Auctions</a></li>
-                    <li><a href="STATIC/about.html">About</a></li>
-                    <li><a href="STATIC/contact.html">Contact</a></li>
-                </ul>
+                     <li><a href="index.html" class="active">Home</a></li>
+                     <li><a href="SHOPPING/shop.html">Shop</a></li>
+                     <li><a href="AUCTIONS/auction.html">Auctions</a></li>
+                     <li><a href="STATIC/about.html">About</a></li>
+                     <li><a href="STATIC/contact.html">Contact</a></li>
+                 </ul>
             </nav>
             <div class="nav-icons">
                 <div class="currency-switcher">
@@ -48,7 +48,7 @@
                     </div>
                 </div>
                 <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
-                <a href="SHOPPING/cart.html" class="cart-icon">
+                <a href="cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
@@ -115,7 +115,7 @@
     <div class="container">
         <h2 class="section-title">Featured Products</h2>
         <div class="product-grid" id="featured-products">
-            <div class="loading"><div class="spinner"></div></div>
+            <!-- Products will be loaded here -->
         </div>
     </div>
 </section>
@@ -197,7 +197,7 @@
             <div class="footer-section">
                 <h4>For Artisans</h4>
                 <ul>
-                    <li><a href="AUTH/register_artisan.html">Become an Artisan</a></li>
+                    <li><a href="register_artisan.html">Become an Artisan</a></li>
                     <li><a href="#">Seller Guidelines</a></li>
                     <li><a href="#">Resources</a></li>
                 </ul>
@@ -209,21 +209,19 @@
     </div>
 </footer>
 
-<script src="SHARED/utils.js"></script>
-<script src="SHARED/main.js"></script>
-<script src="SHARED/addToCart.js"></script>
-
+<script src="js/main.js"></script>
 <script>
-    // Additional UI updates for index page only
+    // Check login status and update UI
     function updateUserInterface() {
-        const user = getCurrentUser();
+        const user = localStorage.getItem('user');
         const userGreeting = document.getElementById('user-greeting');
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
         const logoutBtn = document.getElementById('logout-btn');
         
         if (user) {
-            if (userGreeting) userGreeting.textContent = `Welcome, ${user.fullname}! 👋`;
+            const userData = JSON.parse(user);
+            if (userGreeting) userGreeting.textContent = 'Welcome, ' + userData.fullname + '! 👋';
             if (loginBtn) loginBtn.style.display = 'none';
             if (registerBtn) registerBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'inline-block';
@@ -235,49 +233,22 @@
         }
     }
     
-    // Load featured products
-    async function loadFeaturedProducts() {
-        const container = document.getElementById('featured-products');
-        if (!container) return;
-        
-        try {
-            const response = await fetch('api.php?request=get_products');
-            const data = await response.json();
-            
-            if (data.success && data.products && data.products.length > 0) {
-                const featured = data.products.slice(0, 4);
-                container.innerHTML = featured.map(product => `
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="${product.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}">
-                            <span class="product-category">${product.category_name || 'Handmade'}</span>
-                        </div>
-                        <div class="product-info">
-                            <h3>${product.name}</h3>
-                            <p class="artisan-name">by ${product.artisan_name || 'Local Artisan'}</p>
-                            <p class="product-price">${formatPrice(product.price)}</p>
-                            <div class="product-actions">
-                                <button class="add-to-cart" onclick="addToCart(${product.id})">
-                                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-center">No products available yet. Check back soon!</p>';
-            }
-        } catch (error) {
-            console.error('Error loading featured products:', error);
-            container.innerHTML = '<p class="text-center">Unable to load products.</p>';
+    // Logout function
+    function setupLogout() {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function() {
+                fetch('api.php?request=logout', { method: 'POST' });
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            };
         }
     }
     
     // Run when page loads
     document.addEventListener('DOMContentLoaded', function() {
         updateUserInterface();
-        loadFeaturedProducts();
-        updateCartCount();
+        setupLogout();
     });
 </script>
 </body>
