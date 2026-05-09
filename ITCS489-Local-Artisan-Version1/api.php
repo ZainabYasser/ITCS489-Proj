@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Database connection
-$host = 'localhost';
+$host = 'localhost:3307';
 $dbname = 'artisan_cooperative';
 $username = 'root';
 $password = '';
