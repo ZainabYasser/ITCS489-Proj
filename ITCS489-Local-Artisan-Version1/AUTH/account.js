@@ -11,7 +11,7 @@ async function loadOrders() {
     const user = getCurrentUser();
     
     if (!user) {
-        container.innerHTML = '<p>Please login to view orders</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
         return;
     }
     
@@ -23,37 +23,31 @@ async function loadOrders() {
         
         if (data.success && data.orders && data.orders.length > 0) {
             container.innerHTML = `
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Date</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.orders.map(order => `
-                                <tr>
-                                    <td>${order.order_number}</td>
-                                    <td>${new Date(order.created_at).toLocaleDateString()}</td>
-                                    <td>BD ${parseFloat(order.total_amount).toFixed(2)}</td>
-                                    <td><span class="status-badge status-${order.status}">${order.status}</span></td>
-                                    <td><button onclick="viewOrderDetails('${order.order_number}')">View</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div class="orders-grid">
+                    ${data.orders.map(order => `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
+                                <span class="status-badge status-${order.status}">${order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Pending'}</span>
+                            </div>
+                            <div class="order-details">
+                                <div class="order-info">
+                                    <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
+                                    <span><i class="fas fa-box"></i> ${order.items ? order.items.length : 0} item(s)</span>
+                                </div>
+                                <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
+                                <button class="view-order-btn" onclick="viewOrderDetails('${order.order_number}')">View Details →</button>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
         } else {
-            container.innerHTML = '<p>No orders yet. <a href="../SHOPPING/shop.html">Start shopping</a></p>';
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
         }
     } catch (error) {
         console.error('Error loading orders:', error);
-        container.innerHTML = '<p>Error loading orders. Please try again later.</p>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
     }
 }
 
@@ -78,7 +72,7 @@ async function loadProfile() {
 }
 
 async function updateProfile(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     
     const user = getCurrentUser();
     
@@ -88,14 +82,32 @@ async function updateProfile(event) {
         return;
     }
     
-    const fullname = document.getElementById('profile-name').value;
-    const email = document.getElementById('profile-email').value;
-    const phone = document.getElementById('profile-phone').value;
+    const fullname = document.getElementById('profile-name')?.value;
+    const email = document.getElementById('profile-email')?.value;
+    const phone = document.getElementById('profile-phone')?.value;
     const password = document.getElementById('profile-password')?.value;
+    
+    if (!fullname || !email) {
+        showToast('Name and email are required', 'error');
+        return;
+    }
+    
+    if (password && password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#profile-form button[type="submit"]');
+    const originalText = submitBtn?.innerHTML;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        submitBtn.disabled = true;
+    }
     
     try {
         const updateData = { fullname, email, phone };
-        if (password) {
+        if (password && password.length >= 6) {
             updateData.password = password;
         }
         
@@ -116,12 +128,22 @@ async function updateProfile(event) {
             // Clear password field
             const passwordField = document.getElementById('profile-password');
             if (passwordField) passwordField.value = '';
+            
+            // Update welcome message if function exists
+            if (typeof updateWelcomeMessage === 'function') {
+                updateWelcomeMessage();
+            }
         } else {
             showToast(data.message || 'Error updating profile', 'error');
         }
     } catch (error) {
         console.error('Update profile error:', error);
         showToast('Network error. Please try again.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
 }
 
@@ -192,79 +214,36 @@ async function trackOrder() {
     }
 }
 
-// ===== TAB FUNCTIONS =====
-
-function showTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
+// ===== ADDED: Function to update welcome message =====
+function updateWelcomeMessage() {
+    let user = getCurrentUser();
     
-    // Show selected tab
-    const selectedTab = document.getElementById(`${tabName}-tab`);
-    if (selectedTab) {
-        selectedTab.classList.add('active');
-    }
-    
-    // Update active button style
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Find and highlight the clicked button
-    const buttons = document.querySelectorAll('.tab-btn');
-    for (let btn of buttons) {
-        if (btn.textContent.toLowerCase().includes(tabName.toLowerCase())) {
-            btn.classList.add('active');
-            break;
+    if (!user || !user.fullname) {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                user = JSON.parse(storedUser);
+            } catch(e) {
+                console.error('Error parsing user data:', e);
+            }
         }
     }
     
-    // Load tab-specific data
-    if (tabName === 'orders') {
-        loadOrders();
-    } else if (tabName === 'wishlist') {
-        if (typeof loadWishlist === 'function') {
-            loadWishlist();
+    const nameElement = document.getElementById('user-name-display');
+    if (nameElement) {
+        if (user && user.fullname) {
+            const firstName = user.fullname.split(' ')[0];
+            nameElement.textContent = firstName;
+        } else {
+            nameElement.textContent = 'Guest';
         }
-    } else if (tabName === 'profile') {
-        loadProfile();
     }
 }
-
-// ===== INITIALIZATION =====
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Load orders if on orders tab
-    const ordersContainer = document.getElementById('orders-container');
-    if (ordersContainer) {
-        loadOrders();
-    }
-    
-    // Load wishlist if on wishlist tab
-    const wishlistContainer = document.getElementById('wishlist-container');
-    if (wishlistContainer && typeof loadWishlist === 'function') {
-        loadWishlist();
-    }
-    
-    // Load profile if on profile tab
-    const profileForm = document.getElementById('profile-form');
-    if (profileForm) {
-        loadProfile();
-        profileForm.addEventListener('submit', updateProfile);
-    }
-    
-    // Setup tracking form
-    const trackBtn = document.querySelector('#tracking-tab .btn-primary');
-    if (trackBtn) {
-        trackBtn.onclick = trackOrder;
-    }
-});
 
 // Make functions global
 window.loadOrders = loadOrders;
 window.loadProfile = loadProfile;
 window.updateProfile = updateProfile;
 window.trackOrder = trackOrder;
-window.showTab = showTab;
 window.viewOrderDetails = viewOrderDetails;
+window.updateWelcomeMessage = updateWelcomeMessage;

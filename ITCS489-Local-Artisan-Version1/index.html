@@ -7,10 +7,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Profile icon styles */
+        .profile-icon {
+            color: #333;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .profile-icon:hover {
+            color: #8B5E3C;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
     <div class="container">
         <div class="navbar">
@@ -22,10 +35,10 @@
             <nav>
                 <ul>
                     <li><a href="index.html" class="active">Home</a></li>
-                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="SHOPPING/shop.html">Shop</a></li>
                     <li><a href="AUCTIONS/auction.html">Auctions</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="STATIC/about.html">About</a></li>
+                    <li><a href="STATIC/contact.html">Contact</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
@@ -48,63 +61,65 @@
                         </a>
                     </div>
                 </div>
+                <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
+                <a href="AUTH/account.html" id="profile-icon" class="profile-icon" style="display: none;">
+                    <i class="fas fa-user-circle"></i>
+                </a>
                 <a href="cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
     </div>
 </header>
 
-<!-- Hero Section -->
 <section class="hero">
     <div class="container">
         <div class="hero-content">
             <h1>Discover <span>Handmade</span> Treasures</h1>
             <p>Directly from local artisans to your doorstep. Support local craftsmanship and find unique pieces.</p>
             <div class="hero-buttons">
-                <a href="shop.html" class="btn-primary">Shop Now</a>
+                <a href="SHOPPING/shop.html" class="btn-primary">Shop Now</a>
                 <a href="AUCTIONS/auction.html" class="btn-secondary">Explore Auctions</a>
             </div>
         </div>
     </div>
-</section>
+</header>
 
-<!-- Categories Section -->
 <section class="categories">
     <div class="container">
         <h2 class="section-title">Shop by Category</h2>
         <div class="category-grid">
-            <div class="category-card" onclick="location.href='shop.html?category=painting'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=painting'">
                 <i class="fas fa-paintbrush"></i>
                 <h3>Painting</h3>
                 <p>Original artworks</p>
             </div>
-            <div class="category-card" onclick="location.href='shop.html?category=jewellery'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=jewellery'">
                 <i class="fas fa-gem"></i>
                 <h3>Jewellery</h3>
                 <p>Handcrafted pieces</p>
             </div>
-            <div class="category-card" onclick="location.href='shop.html?category=pottery'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=pottery'">
                 <i class="fas fa-mug-hot"></i>
                 <h3>Pottery</h3>
                 <p>Ceramic art</p>
             </div>
-            <div class="category-card" onclick="location.href='shop.html?category=textiles'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=textiles'">
                 <i class="fas fa-tshirt"></i>
                 <h3>Textiles</h3>
                 <p>Fabrics & weaving</p>
             </div>
-            <div class="category-card" onclick="location.href='shop.html?category=woodwork'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=woodwork'">
                 <i class="fas fa-tree"></i>
                 <h3>Woodwork</h3>
                 <p>Hand carved items</p>
             </div>
-            <div class="category-card" onclick="location.href='shop.html?category=ceramics'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=ceramics'">
                 <i class="fas fa-mug-hot"></i>
                 <h3>Ceramics</h3>
                 <p>Clay masterpieces</p>
@@ -113,7 +128,6 @@
     </div>
 </section>
 
-<!-- Featured Products -->
 <section class="featured-products" style="padding: 60px 0; background: #f9f6f3;">
     <div class="container">
         <h2 class="section-title">Featured Products</h2>
@@ -122,7 +136,6 @@
         </div>
     </div>
 </section>
-
 
 <section class="artisan-spotlight" style="padding: 80px 0;">
     <div class="container">
@@ -183,10 +196,10 @@
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <ul>
-                    <li><a href="shop.html">Shop</a></li>
+                    <li><a href="SHOPPING/shop.html">Shop</a></li>
                     <li><a href="AUCTIONS/auction.html">Auctions</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="STATIC/about.html">About Us</a></li>
+                    <li><a href="STATIC/contact.html">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -214,6 +227,49 @@
 </footer>
 
 <script src="js/main.js"></script>
-<script src="script "></script>
+<script>
+    // Check login status and update UI
+    function updateUserInterface() {
+        const user = localStorage.getItem('user');
+        const userGreeting = document.getElementById('user-greeting');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const profileIcon = document.getElementById('profile-icon');  // Profile icon element
+        
+        if (user) {
+            const userData = JSON.parse(user);
+            if (userGreeting) userGreeting.textContent = 'Welcome, ' + userData.fullname + '! 👋';
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (registerBtn) registerBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            if (profileIcon) profileIcon.style.display = 'inline-block';  // Show profile icon when logged in
+        } else {
+            if (userGreeting) userGreeting.textContent = '';
+            if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (registerBtn) registerBtn.style.display = 'inline-block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'none';  // Hide profile icon when logged out
+        }
+    }
+    
+    // Logout function
+    function setupLogout() {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.onclick = function() {
+                fetch('api.php?request=logout', { method: 'POST' });
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            };
+        }
+    }
+    
+    // Run when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateUserInterface();
+        setupLogout();
+    });
+</script>
 </body>
 </html>

@@ -152,8 +152,13 @@ INSERT INTO categories (name, icon) VALUES
 ('Ceramics', 'fa-mug-hot')
 ON DUPLICATE KEY UPDATE name = name;
 
--- Insert sample products
-INSERT INTO products (artisan_id, category_id, name, description, price, stock, image_url, is_featured) VALUES
-(1, 3, 'Handmade Ceramic Vase', 'Beautiful handmade ceramic vase', 45.00, 10, 'https://placehold.co/600x400/8B5E3C/white?text=Ceramic+Vase', 1),
-(1, 2, 'Silver Pearl Earrings', 'Elegant silver earrings with pearls', 29.99, 15, 'https://placehold.co/600x400/C0C0C0/white?text=Pearl+Earrings', 1),
-(1, 4, 'Handwoven Wool Scarf', 'Soft warm wool scarf', 35.00, 8, 'https://placehold.co/600x400/8B4513/white?text=Wool+Scarf', 1);
+
+-- =============================================
+-- SAMPLE PRODUCTS REMOVED
+-- Products will only be added by artisans through the ARTISAN folder
+-- =============================================
+-- The following sample products have been removed to prevent fake products from appearing:
+-- INSERT INTO products (artisan_id, category_id, name, description, price, stock, image_url, is_featured) VALUES
+-- (1, 3, 'Handmade Ceramic Vase', 'Beautiful handmade ceramic vase', 45.00, 10, 'https://placehold.co/600x400/8B5E3C/white?text=Ceramic+Vase', 1),
+-- (1, 2, 'Silver Pearl Earrings', 'Elegant silver earrings with pearls', 29.99, 15, 'https://placehold.co/600x400/C0C0C0/white?text=Pearl+Earrings', 1),
+-- (1, 4, 'Handwoven Wool Scarf', 'Soft warm wool scarf', 35.00, 8, 'https://placehold.co/600x400/8B4513/white?text=Wool+Scarf', 1);
