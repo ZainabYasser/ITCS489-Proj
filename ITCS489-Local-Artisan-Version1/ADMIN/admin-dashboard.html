@@ -53,18 +53,6 @@
             color: #8B5E3C;
         }
         
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 30px;
-        }
-        
-        nav ul li a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-        }
-        
         .nav-icons {
             display: flex;
             align-items: center;
@@ -299,11 +287,6 @@
                 flex-direction: column;
                 gap: 15px;
             }
-            
-            nav ul {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
         }
     </style>
 </head>
@@ -313,14 +296,8 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="../STATIC/index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
-            <nav>
-                <ul>
-                    <li><a href="../STATIC/index.html">Home</a></li>
-                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
-                </ul>
-            </nav>
             <div class="nav-icons">
                 <span id="user-greeting" style="margin-right: 15px; color: #666;"></span>
                 <button class="logout-btn" id="logout-btn">Logout</button>
@@ -561,7 +538,7 @@
                                         <td>${a.product_count || 0}</td>
                                         <td><span class="status-badge ${a.is_active ? 'status-active' : 'status-inactive'}">${a.is_active ? 'Active' : 'Inactive'}</span></td>
                                         <td><button onclick="toggleArtisanStatus(${a.id}, ${a.is_active})" style="background:${a.is_active ? '#dc3545' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">${a.is_active ? 'Disable' : 'Enable'}</button></td>
-                                    </tr>
+                                    <tr>
                                 `).join('')}
                             </tbody>
                         </table>
@@ -663,7 +640,7 @@
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></td></thead>
                             <tbody>
                                 ${data.orders.map(o => `
                                     <tr>
@@ -789,7 +766,7 @@
                                 ${data.categories.map(c => `
                                     <tr>
                                         <td>${c.id}</td>
-                                        <td>${escapeHtml(c.name)}</td>
+                                        <td>${escapeHtml(c.name)}</tr>
                                         <td><button onclick="deleteCategory(${c.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Delete</button></td>
                                     </tr>
                                 `).join('')}
@@ -885,7 +862,7 @@
             fetch(getApiUrl() + 'logout', { method: 'POST' })
                 .then(() => {
                     localStorage.removeItem('user');
-                    window.location.href = '../AUTH/login.html';
+                    window.location.href = '../index.html';
                 });
         };
         
