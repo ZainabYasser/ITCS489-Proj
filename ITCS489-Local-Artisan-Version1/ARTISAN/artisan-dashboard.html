@@ -7,6 +7,81 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+<style>
+    /* Force sidebar styles - temporary fix */
+    .sidebar nav ul {
+        display: block !important;
+        list-style: none !important;
+        padding: 0 !important;
+    }
+    
+    .sidebar nav ul li {
+        display: block !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .sidebar nav ul li a {
+        display: block !important;
+        padding: 12px 20px !important;
+        color: #1a1a1a !important;
+        text-decoration: none !important;
+        border-left: 3px solid transparent !important;
+    }
+    
+    .sidebar nav ul li a.active {
+        background: #f5f0eb !important;
+        color: #8B5E3C !important;
+        border-left-color: #8B5E3C !important;
+    }
+    
+    .dashboard-container {
+        display: flex !important;
+        gap: 30px !important;
+    }
+    
+    .sidebar {
+        width: 280px !important;
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 25px 0 !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    .dashboard-content {
+        flex: 1 !important;
+        background: white !important;
+        border-radius: 16px !important;
+        padding: 30px !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* FORCE STATS GRID - 4 COLUMNS */
+    .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 20px !important;
+        margin-bottom: 30px !important;
+    }
+    
+    .stat-card {
+        background: #f5f0eb !important;
+        padding: 25px 20px !important;
+        border-radius: 12px !important;
+        text-align: center !important;
+    }
+    
+    .stat-card h4 {
+        font-size: 14px !important;
+        color: #666 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .stat-card p {
+        font-size: 32px !important;
+        font-weight: 700 !important;
+        color: #8B5E3C !important;
+    }
+</style>
 </head>
 <body>
 
@@ -16,13 +91,6 @@
             <div class="logo">
                 <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
-            <nav>
-                <ul>
-                    <li><a href="../index.html">Home</a></li>
-                    <li><a href="../SHOPPING/shop.html">Shop</a></li>
-                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
-                </ul>
-            </nav>
             <div class="nav-icons">
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
@@ -37,19 +105,19 @@
                 <h3>Artisan Panel</h3>
                 <nav>
                     <ul>
-                        <li><a href="#" onclick="showSection('overview')" class="active">Overview</a></li>
-                        <li><a href="#" onclick="showSection('products')">My Products</a></li>
-                        <li><a href="#" onclick="showSection('add-product')">Add Product</a></li>
-                        <li><a href="#" onclick="showSection('orders')">Orders</a></li>
-                        <li><a href="#" onclick="showSection('auctions')">My Auctions</a></li>
-                        <li><a href="#" onclick="showSection('sales')">Sales History</a></li>
-                        <li><a href="#" onclick="showSection('profile')">Shop Profile</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('overview')" class="active">Overview</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('products')">My Products</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('add-product')">Add Product</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('orders')">Orders</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('auctions')">My Auctions</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('sales')">Sales History</a></li>
+                        <li><a href="javascript:void(0)" onclick="showSection('profile')">Shop Profile</a></li>
                     </ul>
                 </nav>
             </div>
             
             <div class="dashboard-content">
-                <div id="overview-section" class="dashboard-section-active">
+                <div id="overview-section" style="display: block;">
                     <div class="stats-grid">
                         <div class="stat-card"><h4>Total Products</h4><p id="total-products">0</p></div>
                         <div class="stat-card"><h4>Total Sales</h4><p id="total-sales">$0</p></div>
@@ -101,23 +169,13 @@
                             <textarea id="product-description" rows="4"></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Product Image URL</label>
-                            <input type="text" id="product-image" placeholder="https://placehold.co/600x400/8B5E3C/white?text=Product">
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="is-auction"> List as Auction
-                            </label>
-                        </div>
-                        <div id="auction-fields" style="display: none;">
-                            <div class="form-group">
-                                <label>Starting Bid (BHD)</label>
-                                <input type="number" id="starting-bid" step="0.01">
+                            <label>Product Image</label>
+                            <input type="file" id="product-image-file" accept="image/*" onchange="previewImage(this)">
+                            <div id="image-preview" style="margin-top: 10px; display: none;">
+                                <img id="preview-img" src="#" alt="Preview" style="max-width: 150px; border-radius: 8px;">
                             </div>
-                            <div class="form-group">
-                                <label>Auction End Date</label>
-                                <input type="datetime-local" id="auction-end">
-                            </div>
+                            <small style="color: #666;">Upload a product image (JPG, PNG, GIF) - Max 5MB</small>
+                            <input type="hidden" id="product-image-url" value="">
                         </div>
                         <button type="submit" class="auth-btn">Add Product</button>
                     </form>
@@ -129,7 +187,33 @@
                 </div>
                 
                 <div id="auctions-section" style="display: none;">
-                    <h3>My Auctions</h3>
+                    <div class="dashboard-header">
+                        <h3>My Auctions</h3>
+                        <button class="add-btn" onclick="showCreateAuctionForm()">+ Create New Auction</button>
+                    </div>
+                    <div id="create-auction-form" style="display: none; background: #f9f6f3; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4>Create New Auction</h4>
+                        <div class="form-group">
+                            <label>Select Product</label>
+                            <select id="auction-product-id" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
+                                <option value="">-- Select a product --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Starting Bid (BHD)</label>
+                            <input type="number" id="auction-start-bid" step="0.01" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Minimum Increment (BHD)</label>
+                            <input type="number" id="auction-min-increment" value="5" step="0.01" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
+                        </div>
+                        <div class="form-group">
+                            <label>End Date & Time</label>
+                            <input type="datetime-local" id="auction-end-time" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
+                        </div>
+                        <button class="btn-primary" onclick="createAuction()" style="margin-right:10px;">Create Auction</button>
+                        <button class="btn-secondary" onclick="hideCreateAuctionForm()">Cancel</button>
+                    </div>
                     <div id="auctions-list"></div>
                 </div>
                 
@@ -164,138 +248,46 @@
 <script src="../SHARED/utils.js"></script>
 <script src="../AUTH/auth.js"></script>
 <script src="artisan.js"></script>
-<script src="../SHARED/main.js"></script>
 
 <script>
+    // Make sure showSection works
     function showSection(section) {
-        document.querySelectorAll('.dashboard-content > div').forEach(div => div.style.display = 'none');
-        document.getElementById(`${section}-section`).style.display = 'block';
-        if (section === 'products') loadProducts();
-        if (section === 'orders') loadOrders();
-    }
-    
-    async function loadProducts() {
-        const container = document.getElementById('products-list');
-        try {
-            const response = await fetch('../api.php?request=get_artisan_products');
-            const data = await response.json();
-            if (data.success && data.products) {
-                if (data.products.length === 0) {
-                    container.innerHTML = '<p>No products yet. Click "Add New Product" to get started.</p>';
-                } else {
-                    container.innerHTML = data.products.map(p => `
-                        <div class="product-card">
-                            <h4>${p.name}</h4>
-                            <p>Price: BD ${parseFloat(p.price).toFixed(2)}</p>
-                            <p>Stock: ${p.stock}</p>
-                            <button onclick="deleteProduct(${p.id})" style="background:#dc3545;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">Delete</button>
-                        </div>
-                    `).join('');
-                }
-                document.getElementById('total-products').textContent = data.products.length;
-            }
-        } catch (error) {
-            container.innerHTML = '<p>Error loading products</p>';
-        }
-    }
-    
-    async function deleteProduct(productId) {
-        if (!confirm('Are you sure you want to delete this product?')) return;
-        try {
-            const response = await fetch('../api.php?request=delete_product', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product_id: productId })
-            });
-            const data = await response.json();
-            if (data.success) {
-                showToast('Product deleted successfully!', 'success');
-                loadProducts();
-            } else {
-                showToast(data.message || 'Error deleting product', 'error');
-            }
-        } catch (error) {
-            showToast('Network error', 'error');
-        }
-    }
-    
-    document.getElementById('add-product-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const productData = {
-            name: document.getElementById('product-name').value,
-            category_id: parseInt(document.getElementById('product-category').value),
-            price: parseFloat(document.getElementById('product-price').value),
-            stock: parseInt(document.getElementById('product-stock').value),
-            description: document.getElementById('product-description').value,
-            image_url: document.getElementById('product-image').value,
-            is_auction: document.getElementById('is-auction').checked
-        };
+        console.log('showSection called with:', section);
         
-        try {
-            const response = await fetch('../api.php?request=add_product', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(productData)
-            });
-            const data = await response.json();
-            if (data.success) {
-                showToast('Product added successfully!', 'success');
-                document.getElementById('add-product-form').reset();
-                showSection('products');
-            } else {
-                showToast(data.message || 'Error adding product', 'error');
-            }
-        } catch (error) {
-            showToast('Network error', 'error');
+        // Hide all sections
+        const sections = ['overview', 'products', 'add-product', 'orders', 'auctions', 'sales', 'profile'];
+        for (let i = 0; i < sections.length; i++) {
+            const el = document.getElementById(sections[i] + '-section');
+            if (el) el.style.display = 'none';
         }
-    });
-    
-    document.getElementById('is-auction')?.addEventListener('change', function() {
-        document.getElementById('auction-fields').style.display = this.checked ? 'block' : 'none';
-    });
-    
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-    
-    async function loadOrders() {
-        const container = document.getElementById('orders-list');
-        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-        try {
-            const response = await fetch('../api.php?request=get_orders');
-            const data = await response.json();
-            if (data.success && data.orders) {
-                if (data.orders.length === 0) {
-                    container.innerHTML = '<p>No orders yet.</p>';
-                } else {
-                    container.innerHTML = data.orders.map(order => `
-                        <div class="product-card">
-                            <h4>Order #${order.order_number}</h4>
-                            <p>Date: ${new Date(order.created_at).toLocaleDateString()}</p>
-                            <p>Total: BD ${parseFloat(order.total_amount).toFixed(2)}</p>
-                            <p>Status: ${order.status}</p>
-                        </div>
-                    `).join('');
-                }
-            }
-        } catch (error) {
-            container.innerHTML = '<p>Error loading orders</p>';
+        
+        // Show selected section
+        const selected = document.getElementById(section + '-section');
+        if (selected) {
+            selected.style.display = 'block';
+            console.log('Showing section:', section);
+        } else {
+            console.log('Section not found:', section + '-section');
+        }
+        
+        // Load data
+        if (section === 'products' && typeof loadProducts === 'function') loadProducts();
+        if (section === 'orders' && typeof loadOrders === 'function') loadOrders();
+        if (section === 'auctions' && typeof loadAuctions === 'function') loadAuctions();
+        if (section === 'sales' && typeof loadSales === 'function') loadSales();
+        if (section === 'profile' && typeof loadProfile === 'function') loadProfile();
+        
+        // Update active class
+        document.querySelectorAll('.sidebar nav ul li a').forEach(link => {
+            link.classList.remove('active');
+        });
+        if (event && event.target) {
+            event.target.classList.add('active');
         }
     }
     
-    document.addEventListener('DOMContentLoaded', () => {
-        checkAuth();
-        const user = getCurrentUser();
-        if (!user || user.role !== 'artisan') window.location.href = '../index.html';
-        loadProducts();
-    });
-    
+    // Make sure functions are available
     window.showSection = showSection;
-    window.deleteProduct = deleteProduct;
 </script>
 </body>
 </html>

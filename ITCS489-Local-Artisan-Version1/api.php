@@ -685,21 +685,234 @@ if ($request == 'create_auction') {
 }
 
 // Get artisan's auctions
+// Get artisan's auctions (for dashboard)
 if ($request == 'get_artisan_auctions') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT a.*, p.name as product_name 
-                           FROM auctions a
-                           JOIN products p ON a.product_id = p.id
-                           WHERE p.artisan_id = ?
-                           ORDER BY a.created_at DESC");
+    $stmt = $pdo->prepare("SELECT a.*, p.name as product_name,
+                          (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                          FROM auctions a
+                          JOIN products p ON a.product_id = p.id
+                          WHERE p.artisan_id = ?
+                          ORDER BY a.created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode(['success' => true, 'auctions' => $auctions]);
+    exit();
+}
+
+// ============ ARTISAN PRODUCT MANAGEMENT ============
+
+// Get artisan's products (for dashboard)
+if ($request == 'get_artisan_products') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("SELECT * FROM products WHERE artisan_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$_SESSION['user_id']]);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'products' => $products]);
+    exit();
+}
+
+// Delete product (artisan only)
+if ($request == 'delete_product') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $productId = $input['product_id'] ?? 0;
+    
+    // First delete from cart and wishlist
+    $pdo->prepare("DELETE FROM cart WHERE product_id = ?")->execute([$productId]);
+    $pdo->prepare("DELETE FROM wishlist WHERE product_id = ?")->execute([$productId]);
+    
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$productId, $_SESSION['user_id']]);
+    
+    echo json_encode(['success' => true, 'message' => 'Product deleted']);
+    exit();
+}
+
+
+// Add product (artisan only)
+if ($request == 'add_product') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    $artisan_id = $_SESSION['user_id'];
+    $name = trim($input['name'] ?? '');
+    $category_id = isset($input['category_id']) ? (int)$input['category_id'] : null;
+    $price = isset($input['price']) ? (float)$input['price'] : 0;
+    $stock = isset($input['stock']) ? (int)$input['stock'] : 1;
+    $description = trim($input['description'] ?? '');
+    $image_url = trim($input['image_url'] ?? '');
+    $is_auction = isset($input['is_auction']) ? (int)$input['is_auction'] : 0;
+    
+    // Validate required fields
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Product name is required']);
+        exit();
+    }
+    
+    if ($price <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Valid price is required']);
+        exit();
+    }
+    
+    // Set default image if none provided
+    if (empty($image_url)) {
+        $image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' . urlencode($name);
+    }
+    
+    // Check if category exists
+    if ($category_id) {
+        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
+        $checkStmt->execute([$category_id]);
+        if (!$checkStmt->fetch()) {
+            $category_id = null;
+        }
+    }
+    
+    $stmt = $pdo->prepare("INSERT INTO products (artisan_id, category_id, name, description, price, stock, image_url, is_auction, created_at) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt->execute([$artisan_id, $category_id, $name, $description, $price, $stock, $image_url, $is_auction]);
+    
+    echo json_encode(['success' => true, 'message' => 'Product added successfully', 'product_id' => $pdo->lastInsertId()]);
+    exit();
+}
+
+
+
+
+
+// Get artisan profile
+if ($request == 'get_artisan_profile') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("SELECT * FROM artisan_profiles WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'profile' => $profile]);
+    exit();
+}
+
+// Update artisan profile
+if ($request == 'update_artisan_profile') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    $shop_name = trim($input['shop_name'] ?? '');
+    $bio = trim($input['bio'] ?? '');
+    $location = trim($input['location'] ?? '');
+    
+    // Check if profile exists
+    $stmt = $pdo->prepare("SELECT id FROM artisan_profiles WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    
+    if ($stmt->fetch()) {
+        // Update existing profile
+        $stmt = $pdo->prepare("UPDATE artisan_profiles SET shop_name = ?, bio = ?, location = ? WHERE user_id = ?");
+        $stmt->execute([$shop_name, $bio, $location, $_SESSION['user_id']]);
+    } else {
+        // Insert new profile
+        $stmt = $pdo->prepare("INSERT INTO artisan_profiles (user_id, shop_name, bio, location) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$_SESSION['user_id'], $shop_name, $bio, $location]);
+    }
+    
+    echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
+    exit();
+}
+
+// Get orders for artisan's products
+if ($request == 'get_artisan_orders') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT o.*, u.fullname as customer_name 
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        JOIN users u ON o.user_id = u.id
+        WHERE p.artisan_id = ?
+        ORDER BY o.created_at DESC
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(['success' => true, 'orders' => $orders]);
+    exit();
+}
+
+
+
+
+
+
+
+// ============ IMAGE UPLOAD ============
+if ($request == 'upload_image') {
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Please login']);
+        exit();
+    }
+    
+    // Create uploads folder if it doesn't exist
+    $uploadDir = __DIR__ . '/uploads/';
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['image'];
+        $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file['name']);
+        $targetPath = $uploadDir . $fileName;
+        
+        // Check file type
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            echo json_encode(['success' => false, 'message' => 'Only JPG, PNG, GIF, and WEBP images are allowed']);
+            exit();
+        }
+        
+        // Check file size (max 5MB)
+        if ($file['size'] > 5 * 1024 * 1024) {
+            echo json_encode(['success' => false, 'message' => 'Image must be less than 5MB']);
+            exit();
+        }
+        
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            $imageUrl = '/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/uploads/' . $fileName;
+            echo json_encode(['success' => true, 'image_url' => $imageUrl]);
+            exit();
+        }
+    }
+    
+    echo json_encode(['success' => false, 'message' => 'No image uploaded']);
     exit();
 }
 
