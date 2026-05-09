@@ -14,7 +14,7 @@ async function loadProducts() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     
     try {
-        const response = await fetch(API_URL + 'get_products');
+        const response = await fetch('../api.php?request=get_products');
         const data = await response.json();
         
         if (data.success && data.products) {
@@ -47,9 +47,9 @@ function displayProducts() {
         return `
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${product.image_url || 'https://via.placeholder.com/300x250?text=' + encodeURIComponent(product.name)}" 
+                    <img src="${product.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(product.name)}" 
                          alt="${product.name}" loading="lazy"
-                         onerror="this.src='https://via.placeholder.com/300x250?text=Product'">
+                         onerror="this.src='https://placehold.co/600x400/8B5E3C/white?text=Product'">
                     <span class="product-category">${product.category_name || 'Handmade'}</span>
                 </div>
                 <div class="product-info">
@@ -100,7 +100,7 @@ function applyFilters() {
     const minPrice = parseFloat(document.getElementById('min-price')?.value) || 0;
     const maxPrice = parseFloat(document.getElementById('max-price')?.value) || Infinity;
     const selectedCategories = Array.from(document.querySelectorAll('.filter-section input[type="checkbox"]:checked'))
-        .map(cb => cb.value.toLowerCase());
+        .map(cb => cb.value);
     
     filteredProducts = allProducts.filter(product => {
         const matchesSearch = !searchTerm || 
@@ -108,7 +108,7 @@ function applyFilters() {
             (product.artisan_name && product.artisan_name.toLowerCase().includes(searchTerm));
         const matchesPrice = product.price >= minPrice && product.price <= maxPrice;
         const matchesCategory = selectedCategories.length === 0 || 
-            (product.category_name && selectedCategories.includes(product.category_name.toLowerCase()));
+            (product.category_name && selectedCategories.includes(product.category_name));
         
         return matchesSearch && matchesPrice && matchesCategory;
     });

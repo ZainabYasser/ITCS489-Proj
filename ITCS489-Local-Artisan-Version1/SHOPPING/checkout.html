@@ -6,7 +6,7 @@
     <title>Checkout - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <style>
         .currency-switcher {
             position: relative;
@@ -94,14 +94,6 @@
             margin-bottom: 8px;
             display: block;
         }
-        .payment-method-card .apple-pay-icon {
-            font-size: 28px;
-            font-weight: 600;
-        }
-        .payment-method-card span {
-            font-size: 14px;
-            font-weight: 500;
-        }
         .card-details {
             background: #f9f6f3;
             padding: 20px;
@@ -123,7 +115,7 @@
             margin-bottom: 20px;
             color: #1a1a1a;
         }
-        .form-section input, .form-section select {
+        .form-section input {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -159,25 +151,6 @@
             grid-template-columns: 1fr 380px;
             gap: 40px;
         }
-        .apple-pay-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #000;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-        }
-        .apple-pay-btn i {
-            font-size: 20px;
-        }
         @media (max-width: 768px) {
             .checkout-layout {
                 grid-template-columns: 1fr;
@@ -197,15 +170,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="index.html"><h2>Artisan<span>Co</span></h2></a>
+                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="../index.html">Home</a></li>
                     <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="../AUCTIONS/auction.html">Auctions</a></li>
+                    <li><a href="../STATIC/about.html">About</a></li>
+                    <li><a href="../STATIC/contact.html">Contact</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
@@ -224,8 +197,8 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
-                <a href="login.html" class="login-btn" id="login-btn">Login</a>
-                <a href="register.html" class="register-btn" id="register-btn">Register</a>
+                <a href="../AUTH/login.html" class="login-btn" id="login-btn">Login</a>
+                <a href="../AUTH/register.html" class="register-btn" id="register-btn">Register</a>
                 <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -248,29 +221,6 @@
                 <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
                 <p>Connecting you with local artisans.</p>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="auction.html">Auctions</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Customer Service</h4>
-                <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Shipping Info</a></li>
-                    <li><a href="#">Returns</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>For Artisans</h4>
-                <ul>
-                    <li><a href="register_artisan.html">Become an Artisan</a></li>
-                </ul>
-            </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
@@ -278,334 +228,8 @@
     </div>
 </footer>
 
-<script>
-    // Currency rates
-    const currencyRates = {
-        BHD: { symbol: 'BD', rate: 1, code: 'BHD' },
-        SAR: { symbol: '﷼', rate: 9.96, code: 'SAR' },
-        USD: { symbol: '$', rate: 2.65, code: 'USD' },
-        AED: { symbol: 'د.إ', rate: 9.74, code: 'AED' }
-    };
-    
-    let currentCurrency = 'BHD';
-    let selectedPayment = 'credit_card';
-    
-    // Complete product database
-    const productDatabase = {
-        1: { id: 1, name: "Handmade Ceramic Vase", artisan: "Fatima Al Khalifa", priceBHD: 45 },
-        2: { id: 2, name: "Silver Pearl Earrings", artisan: "Ahmed Al Zayani", priceBHD: 29.99 },
-        3: { id: 3, name: "Handwoven Wool Scarf", artisan: "Noor Al Awadhi", priceBHD: 35 },
-        4: { id: 4, name: "Abstract Oil Painting", artisan: "Yousef Al Doseri", priceBHD: 120 },
-        5: { id: 5, name: "Olive Wood Bowl", artisan: "Khalid Al Musallam", priceBHD: 55 },
-        6: { id: 6, name: "Arabic Calligraphy", artisan: "Mariam Al Safi", priceBHD: 89 },
-        7: { id: 7, name: "Blue Ceramic Tea Set", artisan: "Fatima Al Khalifa", priceBHD: 75 },
-        8: { id: 8, name: "Gold Bracelet", artisan: "Ahmed Al Zayani", priceBHD: 149 }
-    };
-    
-    // Change currency
-    function changeCurrency(currencyCode, symbol, rate) {
-        currentCurrency = currencyCode;
-        localStorage.setItem('preferredCurrency', currencyCode);
-        document.getElementById('current-currency').textContent = currencyCode;
-        showToast(`Currency changed to ${symbol} ${currencyCode}`, 'success');
-        loadCheckout();
-    }
-    
-    // Load saved currency
-    function loadCurrencyPreference() {
-        const saved = localStorage.getItem('preferredCurrency');
-        if (saved && currencyRates[saved]) {
-            currentCurrency = saved;
-            document.getElementById('current-currency').textContent = currentCurrency;
-        }
-    }
-    
-    // Select payment method
-    function selectPaymentMethod(method) {
-        selectedPayment = method;
-        
-        // Update UI
-        document.querySelectorAll('.payment-method-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        document.getElementById(`payment-${method}`).classList.add('selected');
-        
-        // Show/hide card details based on payment method
-        const cardDetails = document.getElementById('card-details-section');
-        if (method === 'apple_pay') {
-            cardDetails.style.display = 'none';
-        } else {
-            cardDetails.style.display = 'block';
-        }
-    }
-    
-    // Main checkout load function
-    function loadCheckout() {
-        const container = document.getElementById('checkout-container');
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const rate = currencyRates[currentCurrency].rate;
-        const symbol = currencyRates[currentCurrency].symbol;
-        
-        if (cart.length === 0) {
-            container.innerHTML = `
-                <div class="empty-cart" style="text-align: center; padding: 60px;">
-                    <i class="fas fa-shopping-cart" style="font-size: 64px; color: #ccc;"></i>
-                    <h3>Your cart is empty</h3>
-                    <p>Add some items to your cart before checking out</p>
-                    <a href="shop.html" class="btn-primary">Continue Shopping</a>
-                </div>
-            `;
-            return;
-        }
-        
-        // Build order items HTML
-        let itemsHTML = '';
-        let totalBHD = 0;
-        
-        for (const item of cart) {
-            const product = productDatabase[item.id];
-            if (product) {
-                const subtotalBHD = product.priceBHD * item.quantity;
-                totalBHD += subtotalBHD;
-                const subtotalConverted = (subtotalBHD * rate).toFixed(2);
-                
-                itemsHTML += `
-                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e8e2d9;">
-                        <div>
-                            <strong>${product.name}</strong>
-                            <small style="display: block; color: #666;">x${item.quantity}</small>
-                        </div>
-                        <div>${symbol} ${subtotalConverted}</div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Calculate totals
-        const shippingBHD = totalBHD > 0 ? 5 : 0;
-        const grandTotalBHD = totalBHD + shippingBHD;
-        const totalConverted = (totalBHD * rate).toFixed(2);
-        const shippingConverted = (shippingBHD * rate).toFixed(2);
-        const grandConverted = (grandTotalBHD * rate).toFixed(2);
-        
-        // Build checkout page with payment methods
-        container.innerHTML = `
-            <div class="checkout-layout">
-                <div class="checkout-form">
-                    <form id="checkout-form">
-                        <div class="form-section">
-                            <h3><i class="fas fa-user"></i> Shipping Information</h3>
-                            <input type="text" id="fullname" placeholder="Full Name" required>
-                            <input type="email" id="email" placeholder="Email Address" required>
-                            <input type="text" id="address" placeholder="Street Address" required>
-                            <input type="text" id="city" placeholder="City" required>
-                            <input type="text" id="zipcode" placeholder="Zip / Postal Code" required>
-                            <input type="tel" id="phone" placeholder="Phone Number" required>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
-                            <div class="payment-methods">
-                                <div class="payment-method-card" id="payment-credit_card" onclick="selectPaymentMethod('credit_card')">
-                                    <i class="fab fa-cc-visa"></i>
-                                    <i class="fab fa-cc-mastercard"></i>
-                                    <span>Credit Card</span>
-                                </div>
-                                <div class="payment-method-card" id="payment-debit_card" onclick="selectPaymentMethod('debit_card')">
-                                    <i class="fas fa-credit-card"></i>
-                                    <span>Debit Card</span>
-                                </div>
-                                <div class="payment-method-card" id="payment-apple_pay" onclick="selectPaymentMethod('apple_pay')">
-                                    <i class="fab fa-apple"></i>
-                                    <span>Apple Pay</span>
-                                </div>
-                            </div>
-                            
-                            <div id="card-details-section">
-                                <div class="card-details">
-                                    <input type="text" id="card_number" placeholder="Card Number">
-                                    <div class="card-row">
-                                        <input type="text" id="expiry" placeholder="MM/YY">
-                                        <input type="text" id="cvc" placeholder="CVC">
-                                    </div>
-                                    <input type="text" id="card_name" placeholder="Cardholder Name">
-                                </div>
-                            </div>
-                            
-                            <div id="apple-pay-section" style="display: none;">
-                                <button type="button" class="apple-pay-btn" onclick="processApplePay()">
-                                    <i class="fab fa-apple"></i> Pay with Apple Pay
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="place-order-btn" id="place-order-btn">
-                            <i class="fas fa-check-circle"></i> Place Order - ${symbol} ${grandConverted}
-                        </button>
-                    </form>
-                </div>
-                
-                <div class="order-summary">
-                    <h3><i class="fas fa-receipt"></i> Order Summary</h3>
-                    ${itemsHTML}
-                    <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
-                        <span>Subtotal</span>
-                        <span>${symbol} ${totalConverted}</span>
-                    </div>
-                    <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
-                        <span>Shipping</span>
-                        <span>${symbol} ${shippingConverted}</span>
-                    </div>
-                    <div class="summary-row total" style="display: flex; justify-content: space-between; padding: 15px 0; margin-top: 10px; border-top: 2px solid #e8e2d9; font-weight: 700; font-size: 18px;">
-                        <span>Total</span>
-                        <span style="color: #8B5E3C;">${symbol} ${grandConverted}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Set default selected payment method
-        selectPaymentMethod('credit_card');
-        
-        // Handle form submission
-        document.getElementById('checkout-form').addEventListener('submit', placeOrder);
-    }
-    
-    // Process Apple Pay
-    function processApplePay() {
-        showToast('Apple Pay is not yet integrated. Please use card payment.', 'info');
-    }
-    
-    // Place order function
-    // Place order function
-function placeOrder(e) {
-    e.preventDefault();
-    
-    // Get shipping info
-    const fullname = document.getElementById('fullname').value;
-    const email = document.getElementById('email').value;
-    const address = document.getElementById('address').value;
-    const city = document.getElementById('city').value;
-    const phone = document.getElementById('phone').value;
-    
-    // Validate shipping info
-    if (!fullname || !email || !address || !city || !phone) {
-        showToast('Please fill in all shipping fields', 'error');
-        return;
-    }
-    
-    // Validate payment info for card payments
-    if (selectedPayment === 'credit_card' || selectedPayment === 'debit_card') {
-        const cardNumber = document.getElementById('card_number')?.value;
-        const expiry = document.getElementById('expiry')?.value;
-        const cvc = document.getElementById('cvc')?.value;
-        const cardName = document.getElementById('card_name')?.value;
-        
-        if (!cardNumber || !expiry || !cvc || !cardName) {
-            showToast('Please fill in all card details', 'error');
-            return;
-        }
-        
-        // Simple card validation
-        if (cardNumber.replace(/\s/g, '').length < 15) {
-            showToast('Please enter a valid card number', 'error');
-            return;
-        }
-        
-        if (cvc.length < 3) {
-            showToast('Please enter a valid CVC', 'error');
-            return;
-        }
-    }
-    
-    // Get cart and clear it
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    if (cart.length === 0) {
-        showToast('Your cart is empty', 'error');
-        return;
-    }
-    
-    // Generate sequential order number
-    let lastOrderNumber = localStorage.getItem('lastOrderNumber') || '0';
-    let newOrderNumber = parseInt(lastOrderNumber) + 1;
-    let formattedOrderNumber = String(newOrderNumber).padStart(6, '0');
-    
-    // Save the new order number for next time
-    localStorage.setItem('lastOrderNumber', newOrderNumber.toString());
-    
-    // Save order details for confirmation page
-    const orderDetails = {
-        orderNumber: formattedOrderNumber,
-        date: new Date().toISOString(),
-        total: document.querySelector('.summary-row.total span:last-child')?.textContent || 'BD 0.00',
-        items: cart.length,
-        customerName: fullname
-    };
-    localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
-    
-    // Clear cart
-    localStorage.removeItem('cart');
-    updateCartCount();
-    
-    // Show success and redirect with order number
-    showToast('Order placed successfully! Thank you for shopping with us!', 'success');
-    
-    setTimeout(() => {
-        window.location.href = `order_confirmation.html?order=${formattedOrderNumber}`;
-    }, 2000);
-}
-    
-    // Update cart count badge
-    function updateCartCount() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const cartCountElements = document.querySelectorAll('.cart-count');
-        cartCountElements.forEach(el => {
-            el.textContent = count;
-            el.style.display = count > 0 ? 'inline-block' : 'none';
-        });
-    }
-    
-    // Show toast notification
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-    
-    // Check authentication
-    function checkAuth() {
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        
-        if (user) {
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (registerBtn) registerBtn.style.display = 'none';
-            if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        }
-    }
-    
-    // Initialize page
-    document.addEventListener('DOMContentLoaded', () => {
-        loadCurrencyPreference();
-        loadCheckout();
-        updateCartCount();
-        checkAuth();
-    });
-    
-    // Make functions global
-    window.changeCurrency = changeCurrency;
-    window.selectPaymentMethod = selectPaymentMethod;
-    window.processApplePay = processApplePay;
-</script>
-<script src="../shared/utils.js"></script>
-<script src="../shared/addToCart.js"></script>
-<script src="shop.js"></script>
-<script src="../shared/main.js"></script>
+<script src="../SHARED/utils.js"></script>
+<script src="checkout.js"></script>
+<script src="../SHARED/main.js"></script>
 </body>
 </html>
