@@ -1121,7 +1121,7 @@ if ($request == 'admin_cancel_auction') {
 
 // ===== GET CATEGORIES =====
 if ($request == 'get_categories') {
-    $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
+    $stmt = $pdo->query("SELECT * FROM categories ORDER BY id ASC");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode(['success' => true, 'categories' => $categories]);
@@ -1294,7 +1294,82 @@ if ($request == 'add_review') {
     echo json_encode(['success' => true, 'message' => 'Review submitted successfully!']);
     exit();
 }
+// ===== ADMIN UPDATE AUCTION =====
+if ($request == 'admin_update_auction') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    $end_time = $input['end_time'] ?? null;
+    $status = $input['status'] ?? null;
+    
+    $updates = [];
+    $params = [];
+    
+    if ($end_time) {
+        $updates[] = "end_time = ?";
+        $params[] = $end_time;
+    }
+    if ($status) {
+        $updates[] = "is_active = ?";
+        $params[] = ($status === 'active') ? 1 : 0;
+    }
+    
+    if (empty($updates)) {
+        echo json_encode(['success' => false, 'message' => 'No updates provided']);
+        exit();
+    }
+    
+    $params[] = $auctionId;
+    $sql = "UPDATE auctions SET " . implode(', ', $updates) . " WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    
+    echo json_encode(['success' => true, 'message' => 'Auction updated successfully']);
+    exit();
+}
 
+// ===== ADMIN EXTEND AUCTION =====
+if ($request == 'admin_extend_auction') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    $hours = $input['hours'] ?? 24;
+    
+    $stmt = $pdo->prepare("UPDATE auctions SET end_time = DATE_ADD(end_time, INTERVAL ? HOUR) WHERE id = ?");
+    $stmt->execute([$hours, $auctionId]);
+    
+    echo json_encode(['success' => true, 'message' => "Auction extended by {$hours} hours"]);
+    exit();
+}
+
+// ===== ADMIN DELETE AUCTION =====
+if ($request == 'admin_delete_auction') {
+    if (!isAdmin()) {
+        echo json_encode(['success' => false, 'message' => 'Admin access required']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    
+    // First delete bids
+    $pdo->prepare("DELETE FROM bids WHERE auction_id = ?")->execute([$auctionId]);
+    
+    // Then delete auction
+    $stmt = $pdo->prepare("DELETE FROM auctions WHERE id = ?");
+    $stmt->execute([$auctionId]);
+    
+    echo json_encode(['success' => true, 'message' => 'Auction deleted successfully']);
+    exit();
+}
 // ============ DEFAULT ============
 echo json_encode(['success' => false, 'message' => 'Unknown request: ' . $request]);
 ?>

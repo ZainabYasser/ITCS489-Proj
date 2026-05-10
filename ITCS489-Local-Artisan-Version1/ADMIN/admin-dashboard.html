@@ -278,6 +278,52 @@
             border-top: 1px solid #333;
         }
         
+        /* Reports Section Styles */
+        .reports-dashboard .stat-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reports-dashboard .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .reports-dashboard .stat-card small {
+            font-size: 12px;
+            color: #8B5E3C;
+            display: block;
+            margin-top: 8px;
+        }
+        
+        #detailed-report {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media print {
+            .sidebar, header, footer, .reports-dashboard .stats-grid button,
+            #detailed-report button, select, .pagination, .logout-btn, .nav-icons {
+                display: none !important;
+            }
+            .dashboard-container {
+                display: block !important;
+            }
+            .dashboard-content {
+                padding: 0 !important;
+            }
+            body {
+                background: white !important;
+            }
+            .stat-card {
+                break-inside: avoid;
+            }
+        }
+        
         @media (max-width: 768px) {
             .dashboard-container {
                 grid-template-columns: 1fr;
@@ -392,7 +438,7 @@
 <script>
     // ===== API URL Function =====
     function getApiUrl() {
-        return '../PHP/api.php?request=';
+        return '../api.php?request=';
     }
     
     // ===== Utility Functions =====
@@ -528,7 +574,7 @@
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>Name</th><th>Email</th><th>Shop Name</th><th>Products</th><th>Status</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Name</th><th>Email</th><th>Shop Name</th><th>Products</th><th>Status</th><th>Action</th></td></thead>
                             <tbody>
                                 ${data.artisans.map(a => `
                                     <tr>
@@ -538,7 +584,7 @@
                                         <td>${a.product_count || 0}</td>
                                         <td><span class="status-badge ${a.is_active ? 'status-active' : 'status-inactive'}">${a.is_active ? 'Active' : 'Inactive'}</span></td>
                                         <td><button onclick="toggleArtisanStatus(${a.id}, ${a.is_active})" style="background:${a.is_active ? '#dc3545' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">${a.is_active ? 'Disable' : 'Enable'}</button></td>
-                                    <tr>
+                                    </tr>
                                 `).join('')}
                             </tbody>
                         </table>
@@ -584,7 +630,7 @@
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>ID</th><th>Name</th><th>Artisan</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+                            <thead><td><th>ID</th><th>Name</th><th>Artisan</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
                             <tbody>
                                 ${data.products.map(p => `
                                     <tr>
@@ -640,7 +686,7 @@
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></td></thead>
+                            <thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody>
                                 ${data.orders.map(o => `
                                     <tr>
@@ -691,41 +737,176 @@
         showToast(`View order #${orderId} - Coming soon`, 'info');
     }
     
-    // ===== AUCTIONS =====
+    // ===== AUCTIONS MANAGEMENT =====
     async function loadAllAuctions() {
         const container = document.getElementById('auctions-list');
+        if (!container) return;
+        
         container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
         try {
             const response = await fetch(getApiUrl() + 'admin_get_auctions');
             const data = await response.json();
+            
             if (data.success && data.auctions) {
                 if (data.auctions.length === 0) {
                     container.innerHTML = '<p>No auctions found</p>';
                     return;
                 }
+                
                 container.innerHTML = `
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead><tr><th>Product</th><th>Artisan</th><th>Starting Bid</th><th>Current Bid</th><th>End Date</th><th>Status</th><th>Action</th></tr></thead>
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f5f0eb;">
+                                    <th style="padding: 12px;">ID</th>
+                                    <th style="padding: 12px;">Product</th>
+                                    <th style="padding: 12px;">Artisan</th>
+                                    <th style="padding: 12px;">Starting Bid</th>
+                                    <th style="padding: 12px;">Current Bid</th>
+                                    <th style="padding: 12px;">Bids</th>
+                                    <th style="padding: 12px;">End Time</th>
+                                    <th style="padding: 12px;">Status</th>
+                                    <th style="padding: 12px;">Actions</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 ${data.auctions.map(a => `
-                                    <tr>
-                                        <td>${escapeHtml(a.product_name)}</td>
-                                        <td>${escapeHtml(a.artisan_name)}</td>
-                                        <td>${formatPrice(a.starting_bid)}</td>
-                                        <td><strong>${formatPrice(a.current_bid)}</strong></td>
-                                        <td>${new Date(a.end_time).toLocaleString()}</td>
-                                        <td><span class="status-badge ${new Date(a.end_time) > new Date() ? 'status-active' : 'status-inactive'}">${new Date(a.end_time) > new Date() ? 'Active' : 'Ended'}</span></td>
-                                        <td>${new Date(a.end_time) > new Date() ? `<button onclick="cancelAuction(${a.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Cancel</button>` : '-'}</td>
+                                    <tr style="border-bottom: 1px solid #eee;" id="auction-row-${a.id}">
+                                        <td style="padding: 12px;">${a.id}</td>
+                                        <td style="padding: 12px;">${escapeHtml(a.product_name)}</td>
+                                        <td style="padding: 12px;">${escapeHtml(a.artisan_name)}</td>
+                                        <td style="padding: 12px;">${formatPrice(a.starting_bid)}</td>
+                                        <td style="padding: 12px;"><strong>${formatPrice(a.current_bid)}</strong></td>
+                                        <td style="padding: 12px;">${a.bid_count || 0}</td>
+                                        <td style="padding: 12px;" id="end-time-${a.id}">${new Date(a.end_time).toLocaleString()}</td>
+                                        <td style="padding: 12px;">
+                                            <span class="status-badge ${new Date(a.end_time) > new Date() ? 'status-active' : 'status-inactive'}">
+                                                ${new Date(a.end_time) > new Date() ? 'Active' : 'Ended'}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px;">
+                                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                                <button onclick="editAuctionEndTime(${a.id}, '${a.end_time}')" style="background:#8B5E3C; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                                    <i class="fas fa-edit"></i> Edit Time
+                                                </button>
+                                                <button onclick="extendAuctionTime(${a.id})" style="background:#17a2b8; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                                    <i class="fas fa-clock"></i> +24h
+                                                </button>
+                                                <button onclick="toggleAuctionStatus(${a.id}, ${new Date(a.end_time) > new Date()})" style="background:${new Date(a.end_time) > new Date() ? '#ffc107' : '#28a745'}; color:#333; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                                    <i class="fas ${new Date(a.end_time) > new Date() ? 'fa-ban' : 'fa-play'}"></i> 
+                                                    ${new Date(a.end_time) > new Date() ? 'Cancel' : 'Activate'}
+                                                </button>
+                                                <button onclick="deleteAuction(${a.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
+            } else {
+                container.innerHTML = '<p>No auctions found</p>';
             }
         } catch (error) {
+            console.error('Error loading auctions:', error);
             container.innerHTML = '<p>Error loading auctions</p>';
+        }
+    }
+    
+    // Edit auction end time
+    async function editAuctionEndTime(auctionId, currentEndTime) {
+        const newEndTime = prompt('Enter new end time (YYYY-MM-DD HH:MM:SS):', currentEndTime);
+        if (newEndTime && newEndTime !== currentEndTime) {
+            try {
+                const response = await fetch(getApiUrl() + 'admin_update_auction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        auction_id: auctionId, 
+                        end_time: newEndTime 
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Auction time updated successfully', 'success');
+                    loadAllAuctions();
+                } else {
+                    showToast(data.message || 'Update failed', 'error');
+                }
+            } catch (error) {
+                showToast('Error updating auction', 'error');
+            }
+        }
+    }
+    
+    // Extend auction by 24 hours
+    async function extendAuctionTime(auctionId) {
+        if (!confirm('Add 24 hours to this auction?')) return;
+        
+        try {
+            const response = await fetch(getApiUrl() + 'admin_extend_auction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auction_id: auctionId, hours: 24 })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Auction extended by 24 hours', 'success');
+                loadAllAuctions();
+            } else {
+                showToast(data.message || 'Extension failed', 'error');
+            }
+        } catch (error) {
+            showToast('Error extending auction', 'error');
+        }
+    }
+    
+    // Toggle auction active status (activate/cancel)
+    async function toggleAuctionStatus(auctionId, isActive) {
+        const action = isActive ? 'cancel' : 'activate';
+        if (!confirm(`Are you sure you want to ${action} this auction?`)) return;
+        
+        try {
+            const response = await fetch(getApiUrl() + 'admin_update_auction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auction_id: auctionId, status: isActive ? 'cancelled' : 'active' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast(`Auction ${action}d successfully`, 'success');
+                loadAllAuctions();
+            } else {
+                showToast(data.message || 'Action failed', 'error');
+            }
+        } catch (error) {
+            showToast('Error updating auction', 'error');
+        }
+    }
+    
+    // Delete auction
+    async function deleteAuction(auctionId) {
+        if (!confirm('Are you sure you want to delete this auction? This action cannot be undone.')) return;
+        
+        try {
+            const response = await fetch(getApiUrl() + 'admin_delete_auction', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ auction_id: auctionId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('Auction deleted successfully', 'success');
+                loadAllAuctions();
+            } else {
+                showToast(data.message || 'Delete failed', 'error');
+            }
+        } catch (error) {
+            showToast('Error deleting auction', 'error');
         }
     }
     
@@ -750,41 +931,66 @@
     // ===== CATEGORIES =====
     async function loadCategories() {
         const container = document.getElementById('categories-list');
+        if (!container) return;
+        
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
         try {
             const response = await fetch(getApiUrl() + 'get_categories');
             const data = await response.json();
+            
             if (data.success && data.categories) {
                 if (data.categories.length === 0) {
-                    container.innerHTML = '<p>No categories found</p>';
+                    container.innerHTML = '<p>No categories found. Add your first category above.</p>';
                     return;
                 }
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>ID</th><th>Name</th><th>Action</th></tr></thead>
+                            <thead>
+                                <tr style="background: #f5f0eb;">
+                                    <th style="padding: 12px;">ID</th>
+                                    <th style="padding: 12px;">Name</th>
+                                    <th style="padding: 12px;">Action</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 ${data.categories.map(c => `
-                                    <tr>
-                                        <td>${c.id}</td>
-                                        <td>${escapeHtml(c.name)}</tr>
-                                        <td><button onclick="deleteCategory(${c.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px;">Delete</button></td>
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 12px;">${c.id}</td>
+                                        <td style="padding: 12px;">${escapeHtml(c.name)}</td>
+                                        <td style="padding: 12px;">
+                                            <button onclick="deleteCategory(${c.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                                Delete
+                                            </button>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
+            } else {
+                container.innerHTML = '<p>No categories found</p>';
             }
         } catch (error) {
-            container.innerHTML = '<p>Error loading categories</p>';
+            console.error('Error loading categories:', error);
+            container.innerHTML = '<p>Error loading categories. Please check your API connection.</p>';
         }
         
+        // Add category form handler
         const form = document.getElementById('add-category-form');
         if (form) {
             form.onsubmit = async (e) => {
                 e.preventDefault();
-                const name = document.getElementById('category-name')?.value;
-                if (!name) return;
+                const nameInput = document.getElementById('category-name');
+                const name = nameInput?.value.trim();
+                
+                if (!name) {
+                    showToast('Please enter a category name', 'error');
+                    return;
+                }
+                
                 try {
                     const response = await fetch(getApiUrl() + 'admin_add_category', {
                         method: 'POST',
@@ -793,12 +999,15 @@
                     });
                     const data = await response.json();
                     if (data.success) {
-                        showToast('Category added', 'success');
-                        document.getElementById('category-name').value = '';
-                        loadCategories();
+                        showToast('Category added successfully', 'success');
+                        nameInput.value = '';
+                        loadCategories(); // Refresh the list
+                    } else {
+                        showToast(data.message || 'Failed to add category', 'error');
                     }
                 } catch (error) {
-                    showToast('Error adding category', 'error');
+                    console.error('Error adding category:', error);
+                    showToast('Network error: ' + error.message, 'error');
                 }
             };
         }
@@ -822,14 +1031,69 @@
         }
     }
     
-    // ===== REPORTS =====
+    // ===== REPORTS (ENHANCED) =====
+    let currentReportData = null;
+    
     function loadReports() {
         const container = document.getElementById('reports-content');
         container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card"><h4>Monthly Sales</h4><p id="monthly-sales">$0</p></div>
-                <div class="stat-card"><h4>Top Artisan</h4><p id="top-artisan">N/A</p></div>
-                <div class="stat-card"><h4>Best Selling</h4><p id="best-selling">N/A</p></div>
+            <div class="reports-dashboard">
+                <!-- Report Summary Cards -->
+                <div class="stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card" onclick="showReportDetails('monthly')" style="cursor: pointer;">
+                        <h4><i class="fas fa-chart-line"></i> Monthly Sales</h4>
+                        <p id="monthly-sales">$0</p>
+                        <small>Click to view details</small>
+                    </div>
+                    <div class="stat-card" onclick="showReportDetails('artisans')" style="cursor: pointer;">
+                        <h4><i class="fas fa-trophy"></i> Top Artisan</h4>
+                        <p id="top-artisan">N/A</p>
+                        <small>Click to view details</small>
+                    </div>
+                    <div class="stat-card" onclick="showReportDetails('products')" style="cursor: pointer;">
+                        <h4><i class="fas fa-crown"></i> Best Selling</h4>
+                        <p id="best-selling">N/A</p>
+                        <small>Click to view details</small>
+                    </div>
+                </div>
+                
+                <!-- Report Actions -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button onclick="exportToPDF()" style="background:#dc3545; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
+                        <i class="fas fa-file-pdf"></i> Export to PDF
+                    </button>
+                    <button onclick="window.print()" style="background:#17a2b8; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                    <select id="report-year" onchange="loadReportData()" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                    <select id="report-month" onchange="loadReportData()" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        <option value="all">All Months</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                
+                <!-- Detailed Report Section -->
+                <div id="detailed-report" style="background: #f9f6f3; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                    <h3 id="report-title">Monthly Sales Report</h3>
+                    <div id="report-details">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
             </div>
         `;
         loadReportData();
@@ -837,16 +1101,262 @@
     
     async function loadReportData() {
         try {
-            const response = await fetch(getApiUrl() + 'admin_reports');
+            const year = document.getElementById('report-year')?.value || 2026;
+            const month = document.getElementById('report-month')?.value || 'all';
+            
+            const response = await fetch(getApiUrl() + `admin_reports?year=${year}&month=${month}`);
             const data = await response.json();
+            
             if (data.success) {
                 document.getElementById('monthly-sales').textContent = formatPrice(data.monthly_sales || 0);
                 document.getElementById('top-artisan').textContent = data.top_artisan || 'N/A';
                 document.getElementById('best-selling').textContent = data.best_selling || 'N/A';
+                
+                // Store current data for PDF export
+                currentReportData = data;
+                
+                // Load detailed report
+                loadDetailedReport(data);
             }
         } catch (error) {
             console.error('Error loading reports:', error);
+            showToast('Error loading reports', 'error');
         }
+    }
+    
+    function loadDetailedReport(data) {
+        const container = document.getElementById('report-details');
+        
+        container.innerHTML = `
+            <div style="display: grid; gap: 20px;">
+                <!-- Monthly Sales Details -->
+                <div style="background: white; border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 15px; color: #8B5E3C;">
+                        <i class="fas fa-chart-bar"></i> Monthly Sales Breakdown
+                    </h4>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Number of Orders</th>
+                                    <th>Total Sales</th>
+                                    <th>Average Order Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.monthly_breakdown ? data.monthly_breakdown.map(m => `
+                                    <tr>
+                                        <td>${m.month_name}</td>
+                                        <td>${m.order_count}</td>
+                                        <td>${formatPrice(m.total_sales)}</td>
+                                        <td>${formatPrice(m.avg_order_value)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4">No data available</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Top Artisans Details -->
+                <div style="background: white; border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 15px; color: #8B5E3C;">
+                        <i class="fas fa-users"></i> Top Artisans Performance
+                    </h4>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Artisan Name</th>
+                                    <th>Shop Name</th>
+                                    <th>Products Sold</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.top_artisans ? data.top_artisans.map((a, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${escapeHtml(a.fullname)}</td>
+                                        <td>${escapeHtml(a.shop_name || '-')}</td>
+                                        <td>${a.products_sold || 0}</td>
+                                        <td>${formatPrice(a.total_revenue || 0)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="5">No data available</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Best Selling Products Details -->
+                <div style="background: white; border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 15px; color: #8B5E3C;">
+                        <i class="fas fa-star"></i> Best Selling Products
+                    </h4>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.best_products ? data.best_products.map((p, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${escapeHtml(p.name)}</td>
+                                        <td>${escapeHtml(p.category_name || '-')}</td>
+                                        <td>${p.quantity_sold || 0}</td>
+                                        <td>${formatPrice(p.total_revenue || 0)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="5">No data available</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recent Orders -->
+                <div style="background: white; border-radius: 12px; padding: 20px;">
+                    <h4 style="margin-bottom: 15px; color: #8B5E3C;">
+                        <i class="fas fa-clock"></i> Recent Orders
+                    </h4>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.recent_orders ? data.recent_orders.map(o => `
+                                    <tr>
+                                        <td>${o.order_number}</td>
+                                        <td>${escapeHtml(o.customer_name)}</td>
+                                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                                        <td>${o.item_count || 0}</td>
+                                        <td>${formatPrice(o.total_amount)}</td>
+                                        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="6">No orders found</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function showReportDetails(type) {
+        const titleMap = {
+            'monthly': 'Monthly Sales Report',
+            'artisans': 'Top Artisans Report',
+            'products': 'Best Selling Products Report'
+        };
+        
+        document.getElementById('report-title').innerHTML = `<i class="fas fa-chart-line"></i> ${titleMap[type]}`;
+        
+        // Scroll to detailed report
+        document.getElementById('detailed-report').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function exportToPDF() {
+        // Get the report content to print
+        const printContent = document.getElementById('detailed-report').cloneNode(true);
+        
+        // Create print window
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>ArtisanCo - Sales Report</title>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        padding: 40px;
+                        color: #1a1a1a;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 2px solid #8B5E3C;
+                    }
+                    .header h1 {
+                        color: #8B5E3C;
+                        margin-bottom: 10px;
+                    }
+                    .report-date {
+                        text-align: center;
+                        color: #666;
+                        margin-bottom: 30px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 20px;
+                    }
+                    th, td {
+                        padding: 10px;
+                        text-align: left;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    th {
+                        background: #f5f0eb;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #ddd;
+                        font-size: 12px;
+                        color: #666;
+                    }
+                    @media print {
+                        body {
+                            padding: 20px;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>ArtisanCo - ${document.getElementById('report-title').innerText}</h1>
+                    <p>Generated on ${new Date().toLocaleString()}</p>
+                </div>
+                <div class="report-date">
+                    <strong>Period:</strong> ${document.getElementById('report-year')?.value || 'All'} 
+                    ${document.getElementById('report-month')?.options[document.getElementById('report-month')?.selectedIndex]?.text || 'Year'}
+                </div>
+                ${printContent.innerHTML}
+                <div class="footer">
+                    <p>ArtisanCo - Empowering Local Artisans</p>
+                    <p>This is a system-generated report</p>
+                </div>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
     
     // ===== INITIALIZATION =====
@@ -878,6 +1388,12 @@
     window.viewOrderDetails = viewOrderDetails;
     window.cancelAuction = cancelAuction;
     window.deleteCategory = deleteCategory;
+    window.editAuctionEndTime = editAuctionEndTime;
+    window.extendAuctionTime = extendAuctionTime;
+    window.toggleAuctionStatus = toggleAuctionStatus;
+    window.deleteAuction = deleteAuction;
+    window.showReportDetails = showReportDetails;
+    window.exportToPDF = exportToPDF;
 </script>
 </body>
 </html>
