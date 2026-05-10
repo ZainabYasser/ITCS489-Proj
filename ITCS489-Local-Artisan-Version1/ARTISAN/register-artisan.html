@@ -51,24 +51,72 @@
     </div>
 </div>
 
-<script src="../SHARED/utils.js"></script>
-<script src="../AUTH/auth.js"></script>
-<script src="artisan.js"></script>
-<script src="../SHARED/main.js"></script>
-
 <script>
-    document.getElementById('register-artisan-form').addEventListener('submit', function(e) {
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+        toast.style.cssText = `position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; z-index: 9999; background: ${type === 'success' ? '#28a745' : '#dc3545'};`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    document.getElementById('register-artisan-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        
+        const fullname = document.getElementById('fullname').value;
+        const email = document.getElementById('email').value;
+        const shop_name = document.getElementById('shop_name').value;
+        const bio = document.getElementById('bio').value;
+        const location = document.getElementById('location').value;
         const password = document.getElementById('password').value;
         const confirm = document.getElementById('confirm_password').value;
         
-        if (password !== confirm) {
-            alert('Passwords do not match!');
+        if (!fullname || !email || !shop_name || !bio || !password) {
+            showToast('Please fill in all required fields', 'error');
             return;
         }
         
-        registerArtisan(e);
+        if (password !== confirm) {
+            showToast('Passwords do not match!', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('../api.php?request=register_artisan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fullname: fullname, 
+                    email: email, 
+                    password: password, 
+                    shop_name: shop_name, 
+                    bio: bio, 
+                    location: location 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast('Registration successful! Please login.', 'success');
+                setTimeout(() => {
+                    window.location.href = '../AUTH/login.html';
+                }, 1500);
+            } else {
+                showToast(data.message || 'Registration failed', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Network error. Please try again.', 'error');
+        }
     });
 </script>
+
 </body>
 </html>
