@@ -534,12 +534,14 @@
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="../SHOPPING/cart.html" class="cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-count">0</span>
-                </a>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
+    <a href="../SHOPPING/cart.html" class="cart-icon">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-count">0</span>
+    </a>
+    <a href="../AUTH/login.html" class="login-btn" id="login-btn" style="display: none;">Login</a>
+    <a href="../AUTH/register.html" class="register-btn" id="register-btn" style="display: none;">Register</a>
+    <button class="logout-btn" id="logout-btn" style="display: none;">Logout</button>
+</div>
         </div>
     </div>
 </header>
@@ -839,8 +841,9 @@
         }
     };
     
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // checkAuth();  // ← COMMENT THIS OUT OR DELETE IT
+    updateHeaderButtons();  // ← ADD THIS LINE
     updateCartCount();
     updateWelcomeMessage();
     
@@ -856,6 +859,23 @@
         profileForm.addEventListener('submit', updateProfile);
     }
 });
+// Update header buttons based on login status
+function updateHeaderButtons() {
+    const user = getCurrentUser();
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (user) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (registerBtn) registerBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    } else {
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (registerBtn) registerBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+}
 </script>
 <script>
     // Override logout button directly

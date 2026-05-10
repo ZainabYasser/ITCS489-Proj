@@ -59,8 +59,25 @@ function viewOrderDetails(orderNumber) {
 
 async function loadProfile() {
     const user = getCurrentUser();
+    const profileContainer = document.querySelector('.profile-form');
     
-    if (user) {
+    if (!user) {
+        // Show login message instead of profile form
+        if (profileContainer) {
+            profileContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <h4>Please Login</h4>
+                    <p>Login to view and update your profile</p>
+                    <a href="login.html" class="btn-primary">Login Now</a>
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    // User is logged in, show the form (make sure form exists)
+    if (profileContainer && profileContainer.querySelector('form')) {
         const nameInput = document.getElementById('profile-name');
         const emailInput = document.getElementById('profile-email');
         const phoneInput = document.getElementById('profile-phone');
