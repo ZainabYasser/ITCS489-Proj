@@ -47,25 +47,25 @@
                         <i class="fas fa-globe"></i> <span id="current-currency">BHD</span> ▼
                     </button>
                     <div class="currency-dropdown">
-                        <a href="#" onclick="changeCurrency('BHD', 'BD', 1)">
+                        <a href="#" onclick="changeCurrency('BHD'); return false;">
                             <span class="currency-symbol">BD</span> Bahraini Dinar (BHD)
                         </a>
-                        <a href="#" onclick="changeCurrency('SAR', '﷼', 9.96)">
+                        <a href="#" onclick="changeCurrency('SAR'); return false;">
                             <span class="currency-symbol">﷼</span> Saudi Riyal (SAR)
                         </a>
-                        <a href="#" onclick="changeCurrency('USD', '$', 2.65)">
+                        <a href="#" onclick="changeCurrency('USD'); return false;">
                             <span class="currency-symbol">$</span> US Dollar (USD)
                         </a>
-                        <a href="#" onclick="changeCurrency('AED', 'د.إ', 9.74)">
+                        <a href="#" onclick="changeCurrency('AED'); return false;">
                             <span class="currency-symbol">د.إ</span> UAE Dirham (AED)
                         </a>
                     </div>
                 </div>
                 <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
-                <a href="AUTH/account.html" id="profile-icon" class="profile-icon" style="display: none;">
+                <a href="AUTH/account.html" id="profile-icon" class="profile-icon">
                     <i class="fas fa-user-circle"></i>
                 </a>
-                <a href="cart.html" class="cart-icon">
+                <a href="SHOPPING/cart.html" class="cart-icon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count">0</span>
                 </a>
@@ -132,7 +132,7 @@
     <div class="container">
         <h2 class="section-title">Featured Products</h2>
         <div class="product-grid" id="featured-products">
-            <!-- Products will be loaded here -->
+            <div class="loading"><div class="spinner"></div></div>
         </div>
     </div>
 </section>
@@ -214,7 +214,7 @@
             <div class="footer-section">
                 <h4>For Artisans</h4>
                 <ul>
-                    <li><a href="register_artisan.html">Become an Artisan</a></li>
+                    <li><a href="AUTH/register_artisan.html">Become an Artisan</a></li>
                     <li><a href="#">Seller Guidelines</a></li>
                     <li><a href="#">Resources</a></li>
                 </ul>
@@ -226,8 +226,13 @@
     </div>
 </footer>
 
-<script src="js/main.js"></script>
+<!-- Load shared utilities for currency only -->
+<script src="SHARED/utils.js"></script>
+<script src="SHARED/addToCart.js"></script>
+
 <script>
+    // ===== YOUR ORIGINAL WORKING LOGIN/LOGOUT CODE =====
+    
     // Check login status and update UI
     function updateUserInterface() {
         const user = localStorage.getItem('user');
@@ -235,7 +240,7 @@
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
         const logoutBtn = document.getElementById('logout-btn');
-        const profileIcon = document.getElementById('profile-icon');  // Profile icon element
+        const profileIcon = document.getElementById('profile-icon');
         
         if (user) {
             const userData = JSON.parse(user);
@@ -243,17 +248,17 @@
             if (loginBtn) loginBtn.style.display = 'none';
             if (registerBtn) registerBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'inline-block';
-            if (profileIcon) profileIcon.style.display = 'inline-block';  // Show profile icon when logged in
+            if (profileIcon) profileIcon.style.display = 'inline-block';
         } else {
             if (userGreeting) userGreeting.textContent = '';
             if (loginBtn) loginBtn.style.display = 'inline-block';
             if (registerBtn) registerBtn.style.display = 'inline-block';
             if (logoutBtn) logoutBtn.style.display = 'none';
-            if (profileIcon) profileIcon.style.display = 'none';  // Hide profile icon when logged out
+            if (profileIcon) profileIcon.style.display = 'inline-block'; // Always show, just redirects to login
         }
     }
     
-    // Logout function
+    // Logout function (YOUR ORIGINAL WORKING VERSION)
     function setupLogout() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -265,10 +270,62 @@
         }
     }
     
+    // ===== FEATURED PRODUCTS LOADING (with currency support) =====
+    
+    async function loadFeaturedProducts() {
+        const container = document.getElementById('featured-products');
+        if (!container) return;
+        
+        try {
+            const timestamp = new Date().getTime();
+            const response = await fetch(`api.php?request=get_products&_=${timestamp}`);
+            const data = await response.json();
+            
+            if (data.success && data.products && data.products.length > 0) {
+                const featured = data.products.slice(0, 4);
+                container.innerHTML = featured.map(product => `
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="${product.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}">
+                            <span class="product-category">${product.category_name || 'Handmade'}</span>
+                        </div>
+                        <div class="product-info">
+                            <h3>${escapeHtml(product.name)}</h3>
+                            <p class="artisan-name">by ${escapeHtml(product.artisan_name || 'Local Artisan')}</p>
+                            <p class="product-price" data-original-price="${product.price}">${formatPrice(product.price)}</p>
+                            <div class="product-actions">
+                                <button class="add-to-cart" onclick="addToCart(${product.id})">
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-center">No products available yet. Check back soon!</p>';
+            }
+        } catch (error) {
+            console.error('Error loading featured products:', error);
+            container.innerHTML = '<p class="text-center">Unable to load products.</p>';
+        }
+    }
+    
+    // Override changeCurrency to refresh featured products (keeps your currency working)
+    const originalChangeCurrency = window.changeCurrency;
+    if (originalChangeCurrency) {
+        window.changeCurrency = function(currencyCode) {
+            originalChangeCurrency(currencyCode);
+            loadFeaturedProducts();
+        };
+    }
+    
     // Run when page loads
     document.addEventListener('DOMContentLoaded', function() {
+        loadCurrencyPreference();
         updateUserInterface();
         setupLogout();
+        updateCartCount();
+        loadFeaturedProducts();
     });
 </script>
 </body>
