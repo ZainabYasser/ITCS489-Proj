@@ -143,7 +143,7 @@ async function loadOrders() {
     }
 }
 
-// ===== AUCTION MANAGEMENT =====
+// ==== AUCTION MANAGEMENT ====
 
 function showCreateAuctionForm() {
     loadProductsForAuctionSelect();

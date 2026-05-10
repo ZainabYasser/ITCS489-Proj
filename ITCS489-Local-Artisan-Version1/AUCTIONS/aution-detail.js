@@ -6,8 +6,8 @@ const API_URL = API_BASE + '?request=';
 let currentCurrency = 'BHD';
 let currentAuction = null;
 let countdownInterval = null;
-
-// Currency rates
+ 
+// Currency rate
 const currencyRates = {
     BHD: { symbol: 'BD', rate: 1, code: 'BHD' },
     SAR: { symbol: '﷼', rate: 9.96, code: 'SAR' },
