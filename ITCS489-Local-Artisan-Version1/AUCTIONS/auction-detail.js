@@ -126,7 +126,7 @@ function displayAuctionDetail() {
             <div class="auction-info-detail">
                 <h1>${escapeHtml(currentAuction.title)} 
                     <span class="bid-count-badge">
-                        <i class="fas fa-gavel"></i> ${currentAuction.bid_count || 0} bids
+                        <i class="fas fa-gavel"></i> ${currentAuction.bid_count || 0} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'}
                     </span>
                 </h1>
                 <p class="artisan-name">by ${escapeHtml(currentAuction.artisan_name || 'Local Artisan')}</p>
@@ -164,7 +164,7 @@ function displayAuctionDetail() {
                 </div>
                 
                 <div class="bid-history">
-                    <h4>Bid History (${currentAuction.bid_count || 0} bids)</h4>
+                    <h4>Bid History (${currentAuction.bid_count || 0} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'})</h4>
                     <div id="bid-history-list" class="bid-history-list">
                         <p style="padding: 20px; text-align: center;">Loading bids...</p>
                     </div>
@@ -307,12 +307,12 @@ async function placeBid() {
             // Update bid count badge
             const bidCountBadge = document.querySelector('.bid-count-badge');
             if (bidCountBadge) {
-                bidCountBadge.innerHTML = `<i class="fas fa-gavel"></i> ${currentAuction.bid_count} bids`;
+                bidCountBadge.innerHTML = `<i class="fas fa-gavel"></i> ${currentAuction.bid_count} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'}`;
             }
             
             const bidHistoryTitle = document.querySelector('.bid-history h4');
             if (bidHistoryTitle) {
-                bidHistoryTitle.innerHTML = `Bid History (${currentAuction.bid_count} bids)`;
+                bidHistoryTitle.innerHTML = `Bid History (${currentAuction.bid_count} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'})`;;
             }
             
             await loadBidHistory();

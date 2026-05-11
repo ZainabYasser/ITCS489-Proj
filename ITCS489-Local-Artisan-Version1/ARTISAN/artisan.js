@@ -826,14 +826,11 @@ async function loadProfile() {
 
 // ===== ADD PRODUCT FORM HANDLER =====
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, setting up form handlers...');
-    
+document.addEventListener('DOMContentLoaded', function() {    
     const addProductForm = document.getElementById('add-product-form');
     if (addProductForm) {
         addProductForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Add product form submitted');
             
             const imageFile = document.getElementById('product-image-file').files[0];
             let image_url = 'https://placehold.co/600x400/8B5E3C/white?text=Product';
@@ -865,9 +862,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 description: document.getElementById('product-description').value,
                 image_url: image_url
             };
-            
-            console.log('Product data:', productData);
-            
+                        
             try {
                 const response = await fetch(ARTISAN_API_URL + 'add_product', {
                     method: 'POST',
@@ -875,7 +870,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify(productData)
                 });
                 const data = await response.json();
-                console.log('API response:', data);
                 
                 if (data.success) {
                     showToast('Product added successfully!', 'success');
@@ -943,9 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ===== SECTION NAVIGATION =====
-function showSection(section) {
-    console.log('showSection called with:', section);
-    
+function showSection(section) {    
     const sections = ['overview', 'products', 'add-product', 'orders', 'auctions', 'sales', 'profile'];
     for (let i = 0; i < sections.length; i++) {
         const el = document.getElementById(sections[i] + '-section');
@@ -955,7 +947,6 @@ function showSection(section) {
     const selected = document.getElementById(section + '-section');
     if (selected) {
         selected.style.display = 'block';
-        console.log('Showing section:', section);
     }
     
     if (section === 'products') loadProducts();
@@ -987,31 +978,30 @@ function escapeHtml(str) {
 // ===== INITIALIZATION =====
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Artisan dashboard initializing...');
     const isAuth = await checkAuth();
     if (!isAuth) return;
     
     loadProducts();
     loadCategoriesForForm();
 
-window.showSection = showSection;
-window.deleteProduct = deleteProduct;
-window.editProduct = editProduct;  
-window.updateProduct = updateProduct;  
-window.closeEditModal = closeEditModal;
-window.editAuction = editAuction;
-window.deleteAuction = deleteAuction;
-window.closeAuctionEditModal = closeAuctionEditModal;
-window.toggleAuctionForm = toggleAuctionForm;
-window.showCreateAuctionForm = showCreateAuctionForm;
-window.hideCreateAuctionForm = hideCreateAuctionForm;
-window.createAuction = createAuction;
-window.loadAuctions = loadAuctions;
-window.logout = logout;
-window.loadProducts = loadProducts;
-window.loadOrders = loadOrders;
-window.loadSales = loadSales;
-window.previewImage = previewImage;
-window.previewAuctionImage = previewAuctionImage;
-window.previewEditAuctionImage = previewEditAuctionImage;
+    window.showSection = showSection;
+    window.deleteProduct = deleteProduct;
+    window.editProduct = editProduct;  
+    window.updateProduct = updateProduct;  
+    window.closeEditModal = closeEditModal;
+    window.editAuction = editAuction;
+    window.deleteAuction = deleteAuction;
+    window.closeAuctionEditModal = closeAuctionEditModal;
+    window.toggleAuctionForm = toggleAuctionForm;
+    window.showCreateAuctionForm = showCreateAuctionForm;
+    window.hideCreateAuctionForm = hideCreateAuctionForm;
+    window.createAuction = createAuction;
+    window.loadAuctions = loadAuctions;
+    window.logout = logout;
+    window.loadProducts = loadProducts;
+    window.loadOrders = loadOrders;
+    window.loadSales = loadSales;
+    window.previewImage = previewImage;
+    window.previewAuctionImage = previewAuctionImage;
+    window.previewEditAuctionImage = previewEditAuctionImage;
 });

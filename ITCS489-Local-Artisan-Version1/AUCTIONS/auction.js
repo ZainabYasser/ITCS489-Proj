@@ -131,14 +131,14 @@ function displayFilteredAuctions(auctions) {
         const currentBidConverted = (auction.current_bid * rate).toFixed(2);
         const startBidConverted = (auction.start_bid * rate).toFixed(2);
         const timerClass = timeRemaining.urgent && !timeRemaining.ended ? 'timer-urgent' : '';
-        const imageUrl = auction.image_url || `https://placehold.co/600x400/8B5E3C/white?text=${encodeURIComponent(auction.name)}`;
+        const imageUrl = auction.image_url || `https://placehold.co/600x400/8B5E3C/white?text=${encodeURIComponent(auction.title)}`;
         
         return `
             <div class="auction-card" onclick="viewAuction(${auction.id})">
                 <div class="auction-image">
                     <img src="${imageUrl}" alt="${auction.title}" loading="lazy">
                     <div class="timer-badge ${timerClass}"><i class="fas fa-clock"></i> ${timeRemaining.text}</div>
-                    <div class="bid-count"><i class="fas fa-gavel"></i> ${auction.bid_count || 0} bids</div>
+                    <div class="bid-count"><i class="fas fa-gavel"></i> ${auction.bid_count || 0} ${auction.bid_count == 1 ? 'bid' : 'bids'}</div>
                 </div>
                 <div class="auction-info">
                     <h3>${auction.title}</h3>
@@ -147,7 +147,7 @@ function displayFilteredAuctions(auctions) {
                         <div class="current-bid-label">Current Bid</div>
                         <div class="current-bid-amount">${symbol} ${currentBidConverted}</div>
                     </div>
-                    <div class="starting-bid">Started at: ${symbol} ${startBidConverted}</div>
+                    <div class="starting-bid" style="margin-bottom: 15px;">Started at: ${symbol} ${startBidConverted}</div>
                     <button class="bid-link" onclick="event.stopPropagation(); viewAuction(${auction.id})">Place Bid <i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>

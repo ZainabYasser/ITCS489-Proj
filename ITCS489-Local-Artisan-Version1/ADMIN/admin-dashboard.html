@@ -6,6 +6,7 @@
     <title>Admin Dashboard - ArtisanCo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
     <style>
         /* * {
             margin: 0;
@@ -411,7 +412,7 @@
                     <form id="add-category-form">
                         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                             <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <button type="submit" style="background: #8B5E3C; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Add Category</button>
+                            <button type="submit" style="background: #1a4b72; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Add Category</button>
                         </div>
                     </form>
                     <div id="categories-list"></div>
@@ -429,7 +430,7 @@
 <footer>
     <div class="container">
         <div class="footer-bottom">
-            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+            <p>&copy; 2026 ArtisanCo. All rights reserved.</p>
         </div>
     </div>
 </footer>
@@ -512,7 +513,13 @@
             const data = await response.json();
             if (data.success && data.users) {
                 if (data.users.length === 0) {
-                    container.innerHTML = '<p>No users found</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-users"></i>
+                            <h4>No Users Found</h4>
+                            <p>Users will appear here once they register.</p>
+                        </div>
+                    `;
                     return;
                 }
                 container.innerHTML = `
@@ -538,7 +545,7 @@
             container.innerHTML = '<p>Error loading users</p>';
         }
     }
-    
+
     async function toggleUserStatus(userId, currentStatus) {
         if (!confirm(`Are you sure you want to ${currentStatus ? 'disable' : 'enable'} this user?`)) return;
         try {
@@ -559,7 +566,7 @@
     }
     
     // ===== ARTISANS =====
-    async function loadAllArtisans() {
+   async function loadAllArtisans() {
         const container = document.getElementById('artisans-list');
         container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
         try {
@@ -567,13 +574,19 @@
             const data = await response.json();
             if (data.success && data.artisans) {
                 if (data.artisans.length === 0) {
-                    container.innerHTML = '<p>No artisans found</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-hands-helping"></i>
+                            <h4>No Artisans Found</h4>
+                            <p>Artisans will appear here once they register.</p>
+                        </div>
+                    `;
                     return;
                 }
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>Name</th><th>Email</th><th>Shop Name</th><th>Products</th><th>Status</th><th>Action</th></td></thead>
+                            <thead><tr><th>Name</th><th>Email</th><th>Shop Name</th><th>Products</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody>
                                 ${data.artisans.map(a => `
                                     <tr>
@@ -623,13 +636,28 @@
             const data = await response.json();
             if (data.success && data.products) {
                 if (data.products.length === 0) {
-                    container.innerHTML = '<p>No products found</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-box-open"></i>
+                            <h4>No Products Found</h4>
+                            <p>Products will appear here once artisans add them.</p>
+                        </div>
+                    `;
                     return;
                 }
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><td><th>ID</th><th>Name</th><th>Artisan</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Name</th>
+                                    <th>Artisan</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 ${data.products.map(p => `
                                     <tr>
@@ -638,15 +666,18 @@
                                         <td>${escapeHtml(p.artisan_name || 'Unknown')}</td>
                                         <td>${formatPrice(p.price)}</td>
                                         <td>${p.stock || 0}</td>
-                                        <td><button onclick="adminDeleteProduct(${p.id})" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Delete</button></td>
+                                        <td><button onclick="adminDeleteProduct(${p.id})" class="delete-btn">Delete</button></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
+            } else {
+                container.innerHTML = '<p>Error loading products</p>';
             }
         } catch (error) {
+            console.error('Error loading products:', error);
             container.innerHTML = '<p>Error loading products</p>';
         }
     }
@@ -679,7 +710,13 @@
             const data = await response.json();
             if (data.success && data.orders) {
                 if (data.orders.length === 0) {
-                    container.innerHTML = '<p>No orders found</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-shopping-bag"></i>
+                            <h4>No Orders Found</h4>
+                            <p>Orders will appear here once customers make purchases.</p>
+                        </div>
+                    `;
                     return;
                 }
                 container.innerHTML = `
@@ -702,7 +739,7 @@
                                                 <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                                             </select>
                                         </td>
-                                        <td><button onclick="viewOrderDetails(${o.id})" style="background:#8B5E3C; color:white; border:none; padding:5px 10px; border-radius:5px;">View</button></td>
+                                        <td><button onclick="viewOrderDetails(${o.id})" class="view-btn">View</button></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -714,7 +751,7 @@
             container.innerHTML = '<p>Error loading orders</p>';
         }
     }
-    
+
     async function updateOrderStatus(orderId, status) {
         try {
             const response = await fetch(getApiUrl() + 'admin_update_order_status', {
@@ -749,7 +786,13 @@
             
             if (data.success && data.auctions) {
                 if (data.auctions.length === 0) {
-                    container.innerHTML = '<p>No auctions found</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-gavel"></i>
+                            <h4>No Auctions Found</h4>
+                            <p>Auctions will appear here once artisans create them.</p>
+                        </div>
+                    `;
                     return;
                 }
                 
@@ -940,9 +983,16 @@
             
             if (data.success && data.categories) {
                 if (data.categories.length === 0) {
-                    container.innerHTML = '<p>No categories found. Add your first category above.</p>';
+                    container.innerHTML = `
+                        <div class="empty-state-message">
+                            <i class="fas fa-tags"></i>
+                            <h4>No Categories Found</h4>
+                            <p>Add your first category using the form above.</p>
+                        </div>
+                    `;
                     return;
                 }
+
                 container.innerHTML = `
                     <div class="table-container">
                         <table class="data-table">

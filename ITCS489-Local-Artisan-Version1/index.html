@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,7 +62,7 @@
                         </a>
                     </div>
                 </div>
-                <span id="user-greeting" style="margin-right: 15px; color: #8B5E3C; font-weight: 500;"></span>
+                <span id="user-greeting" style="margin-right: 15px; color: #1a4b72; font-weight: 500;"></span>
                 <a href="AUTH/account.html" id="profile-icon" class="profile-icon">
                     <i class="fas fa-user-circle"></i>
                 </a>
@@ -78,7 +79,7 @@
 </header>
 
 <section class="hero">
-    <div class="container">
+    <div class="container" id="title">
         <div class="hero-content">
             <h1>Discover <span>Handmade</span> Treasures</h1>
             <p>Directly from local artisans to your doorstep. Support local craftsmanship and find unique pieces.</p>
@@ -90,7 +91,7 @@
     </div>
 </header>
 
-<section class="categories">
+<section class="categories" id="categories-container">
     <div class="container">
         <h2 class="section-title">Shop by Category</h2>
         <div class="category-grid">
@@ -128,7 +129,7 @@
     </div>
 </section>
 
-<section class="featured-products" style="padding: 60px 0; background: #f9f6f3;">
+<section class="featured-products" id="featured">
     <div class="container">
         <h2 class="section-title">Featured Products</h2>
         <div class="product-grid" id="featured-products">
@@ -137,45 +138,45 @@
     </div>
 </section>
 
-<section class="artisan-spotlight" style="padding: 80px 0;">
+<section class="artisan-spotlight" >
     <div class="container">
         <h2 class="section-title">Meet Our Artisans</h2>
         <div class="category-grid" id="artisan-spotlight">
             <div class="category-card">
                 <i class="fas fa-user-circle"></i>
-                <h3>Fatima Al Khalifa</h3>
+                <h3>Mariam Sfaxi</h3>
                 <p>Pottery Master</p>
-                <small>15 years experience</small>
+                <small>5 years experience</small>
             </div>
             <div class="category-card">
                 <i class="fas fa-user-circle"></i>
-                <h3>Ahmed Al Zayani</h3>
-                <p>Jewellery Designer</p>
-                <small>10 years experience</small>
-            </div>
-            <div class="category-card">
-                <i class="fas fa-user-circle"></i>
-                <h3>Noor Al Awadhi</h3>
+                <h3>Taslim Hanouf</h3>
                 <p>Textile Artist</p>
+                <small>7 years experience</small>
+            </div>
+            <div class="category-card">
+                <i class="fas fa-user-circle"></i>
+                <h3>Zainab Yasser</h3>
+                <p>Jewellery Designer</p>
                 <small>8 years experience</small>
             </div>
             <div class="category-card">
                 <i class="fas fa-user-circle"></i>
-                <h3>Yousef Al Doseri</h3>
+                <h3>Dr Taher Saleh</h3>
                 <p>Woodwork Artisan</p>
-                <small>12 years experience</small>
+                <small>20 years experience</small>
             </div>
         </div>
     </div>
 </section>
 
-<section class="newsletter" style="background: #1a1a1a; color: white; padding: 60px 0; text-align: center;">
+<section class="newsletter" style="background: #53738b; color: white; padding: 60px 0; text-align: center;">
     <div class="container">
         <h2 style="margin-bottom: 20px;">Join Our Newsletter</h2>
         <p style="margin-bottom: 30px;">Get updates on new products and special offers</p>
         <form class="newsletter-form" style="max-width: 500px; margin: 0 auto; display: flex; gap: 10px;">
             <input type="email" placeholder="Your email address" style="flex: 1; padding: 12px; border: none; border-radius: 5px;">
-            <button type="submit" style="background: #8B5E3C; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer;">Subscribe</button>
+            <button type="submit" style="background: #1e3a5f; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer;">Subscribe</button>
         </form>
     </div>
 </section>
@@ -184,14 +185,8 @@
     <div class="container">
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
+                <h3>Artisan<span style="color: #53738b;">Co</span></h3>
                 <p>Connecting you with local artisans and their unique handmade creations.</p>
-                <div class="social-icons">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-pinterest"></i></a>
-                </div>
             </div>
             <div class="footer-section">
                 <h4>Quick Links</h4>
@@ -221,10 +216,11 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 ArtisanCo. All rights reserved.</p>
+            <p>&copy; 2026 ArtisanCo. All rights reserved.</p>
         </div>
     </div>
 </footer>
+
 
 <!-- Load shared utilities for currency only -->
 <script src="SHARED/utils.js?v=2"></script>

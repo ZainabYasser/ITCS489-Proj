@@ -1589,7 +1589,7 @@ nav ul li a.active {
     right: 10px;
     background: var(--bg-white);
     border: none;
-    width: 32px;
+    width: 40px !important;
     height: 32px;
     border-radius: 50%;
     cursor: pointer;

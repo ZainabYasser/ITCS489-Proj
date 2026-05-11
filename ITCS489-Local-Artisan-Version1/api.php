@@ -571,7 +571,8 @@ if ($request == 'get_auctions') {
 if ($request == 'get_auction') {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
-    $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name
+    $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name,
+                          (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                            FROM auctions a
                            JOIN users u ON a.artisan_id = u.id
                            WHERE a.id = ?");
