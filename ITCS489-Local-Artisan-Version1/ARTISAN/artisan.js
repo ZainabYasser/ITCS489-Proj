@@ -98,7 +98,12 @@ async function loadProducts() {
         
         if (data.success && data.products) {
             if (data.products.length === 0) {
-                container.innerHTML = '<p>No products yet. Click "Add New Product" to get started.</p>';
+                container.innerHTML = `
+                    <div class="empty-state-message">
+                        <i class="fas fa-box-open"></i>
+                        <h4>No Products Yet</h4>
+                        <p>Click "Add New Product" to get started.</p>
+                    </div>`;
             } else {
                 container.innerHTML = data.products.map(p => {
                     const imageUrl = p.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(p.name);
@@ -334,7 +339,12 @@ async function loadOrders() {
         
         if (data.success && data.orders) {
             if (data.orders.length === 0) {
-                container.innerHTML = '<p>No orders yet.</p>';
+                container.innerHTML = `
+                    <div class="empty-state-message">
+                        <i class="fas fa-shopping-bag"></i>
+                        <h4>No Orders Yet</h4>
+                        <p>When customers place orders, they will appear here.</p>
+                    </div>`;
             } else {
                 container.innerHTML = data.orders.map(order => `
                     <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -494,7 +504,12 @@ async function loadAuctions() {
         
         if (data.success && data.auctions) {
             if (data.auctions.length === 0) {
-                container.innerHTML = '<p>No auctions yet. Click "Create New Auction" to start.</p>';
+                container.innerHTML = `
+                    <div class="empty-state-message">
+                        <i class="fas fa-gavel"></i>
+                        <h4>No Auctions Yet</h4>
+                        <p>Click "Create New Auction" to start selling.</p>
+                    </div>`;
             } else {
                 container.innerHTML = data.auctions.map(auction => {
                     const endDate = new Date(auction.end_time);
@@ -755,7 +770,12 @@ async function loadSales() {
         if (data.success && data.orders) {
             const salesOrders = data.orders.filter(order => order.status === 'delivered');
             if (salesOrders.length === 0) {
-                container.innerHTML = '<p>No sales yet.</p>';
+                container.innerHTML = `
+                    <div class="empty-state-message">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>No Sales Yet</h4>
+                        <p>Once you make sales, they will appear here.</p>
+                    </div>`;
             } else {
                 let totalSales = 0;
                 container.innerHTML = salesOrders.map(order => {

@@ -51,7 +51,7 @@ function deleteImageFile($image_url) {
     
     // Extract filename from URL
     $baseDir = __DIR__;
-    $relativePath = str_replace('/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/', '', $image_url);
+    $relativePath = str_replace('/LocalArtisanITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/', '', $image_url);
     $filePath = $baseDir . '/' . $relativePath;
     
     // Only delete if file exists and is in uploads folder
@@ -1021,7 +1021,7 @@ if ($request == 'upload_image') {
         }
         
         if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-            $imageUrl = '/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/uploads/' . $fileName;
+            $imageUrl = '/LocalArtisanITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/uploads/' . $fileName;
             echo json_encode(['success' => true, 'image_url' => $imageUrl]);
             exit();
         }
