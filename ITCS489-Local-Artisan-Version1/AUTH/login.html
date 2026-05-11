@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .forgot-link {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .forgot-link a {
+            color: #8B5E3C;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .forgot-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="auth-page">
 
@@ -25,12 +39,15 @@
             <div class="form-group">
                 <input type="password" id="password" placeholder="Password" required>
             </div>
+            <div class="forgot-link">
+                <a href="forgot_password.html">Forgot Password?</a>
+            </div>
             <button type="submit" class="auth-btn">Login</button>
         </form>
         
         <div class="auth-footer">
             <p>Don't have an account? <a href="register.html">Register here</a></p>
-            <p style="margin-top: 10px;">Want to sell your creations? <a href="../ARTISAN/register_artisan.html">Become an Artisan</a></p>
+            <p style="margin-top: 10px;">Are you an artisan? <a href="http://localhost:8081/LocalArtisanITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/ARTISAN/register-artisan.html">Register as Artisan</a></p>
         </div>
     </div>
 </div>
@@ -78,8 +95,8 @@
     });
 </script>
 
-<script src="../shared/utils.js"></script>
+<script src="../SHARED/utils.js"></script>
 <script src="auth.js"></script>
-<script src="../shared/main.js"></script>
+<script src="../SHARED/main.js"></script>
 </body>
 </html>
