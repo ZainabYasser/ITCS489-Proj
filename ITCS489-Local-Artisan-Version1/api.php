@@ -247,6 +247,7 @@ if ($request == 'forgot_password') {
         exit();
     }
     
+    // Check if email exists in database
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -256,14 +257,7 @@ if ($request == 'forgot_password') {
         exit();
     }
     
-    // Generate reset token
-    $token = bin2hex(random_bytes(32));
-    $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-    
-    $stmt = $pdo->prepare("UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?");
-    $stmt->execute([$token, $expires, $email]);
-    
-    // In a real app, send email here
+    // Email exists - return success (no database update needed since we don't actually send emails)
     echo json_encode(['success' => true, 'message' => 'Password reset link sent to your email']);
     exit();
 }
