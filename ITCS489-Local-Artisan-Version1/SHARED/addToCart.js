@@ -2,12 +2,13 @@ async function addToCart(productId, quantity = 1) {
     const user = getCurrentUser();
     if (!user) {
         showToast('Please login to add items to cart', 'error');
-        window.location.href = 'login.html';
+        window.location.href = 'AUTH/login.html';
         return;
     }
     
     try {
-        const response = await fetch(API_URL + 'add_to_cart', {
+        // Use direct path without API_URL
+        const response = await fetch('api.php?request=add_to_cart', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_id: productId, quantity: quantity })
