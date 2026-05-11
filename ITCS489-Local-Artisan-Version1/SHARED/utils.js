@@ -2,8 +2,21 @@
 // UTILS.JS - Shared Helper Functions
 // =============================================
 
+
 // ===== API CONFIGURATION =====
 const API_URL = '../api.php?request=';
+
+// Add THIS function:
+function getApiUrl() {
+    const path = window.location.pathname;
+    // If we're in a subfolder (SHOPPING, AUTH, etc.), go up one level
+    if (path.includes('/SHOPPING/') || path.includes('/AUTH/') || path.includes('/AUCTIONS/') || path.includes('/ADMIN/') || path.includes('/ARTISAN/')) {
+        return '../api.php?request=';
+    } else {
+        // We're in the root folder (home page)
+        return 'api.php?request=';
+    }
+}
 
 // ===== CURRENCY CONFIGURATION =====
 const currencyRates = {
@@ -141,25 +154,37 @@ async function fetchCurrentUser() {
 // ===== CART FUNCTIONS =====
 async function updateCartCount() {
     const user = getCurrentUser();
+    console.log('updateCartCount called, user:', user);
+    
     if (!user) {
         const cartCountElements = document.querySelectorAll('.cart-count');
         cartCountElements.forEach(el => {
             el.textContent = '0';
             el.style.display = 'none';
         });
+        console.log('No user, cart count set to 0');
         return;
     }
     
     try {
-        const response = await fetch('../api.php?request=get_cart');
+        const apiUrl = getApiUrl();
+        console.log('Fetching cart from:', apiUrl + 'get_cart');
+        
+        const response = await fetch(apiUrl + 'get_cart');
         const data = await response.json();
         
+        console.log('Cart API response:', data);
+        
         const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
+        console.log('Calculated cart count:', count);
         
         const cartCountElements = document.querySelectorAll('.cart-count');
+        console.log('Cart count elements found:', cartCountElements.length);
+        
         cartCountElements.forEach(el => {
             el.textContent = count;
             el.style.display = count > 0 ? 'inline-block' : 'none';
+            console.log('Set cart count to:', count);
         });
     } catch (error) {
         console.error('Update cart count error:', error);

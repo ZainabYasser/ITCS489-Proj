@@ -202,5 +202,39 @@
         }
     });
 </script>
+<!-- Simple category auto-filter -->
+<script>
+    (function() {
+        // Get category from URL
+        const category = new URLSearchParams(window.location.search).get('category');
+        
+        if (category) {
+            // Function to check checkbox and apply filter
+            function doFilter() {
+                const checkboxes = document.querySelectorAll('.filter-section input[type="checkbox"]');
+                let found = false;
+                
+                for (let cb of checkboxes) {
+                    if (cb.value.toLowerCase() === category.toLowerCase()) {
+                        cb.checked = true;
+                        found = true;
+                        console.log('Checked:', cb.value);
+                        break;
+                    }
+                }
+                
+                if (found && typeof applyFilters === 'function') {
+                    applyFilters();
+                }
+            }
+            
+            // Try immediately, then retry a few times
+            //doFilter();
+            //setTimeout(doFilter, 100);
+            setTimeout(doFilter, 150);
+            //setTimeout(doFilter, 2000);
+        }
+    })();
+</script>
 </body>
 </html>

@@ -227,8 +227,8 @@
 </footer>
 
 <!-- Load shared utilities for currency only -->
-<script src="SHARED/utils.js"></script>
-<script src="SHARED/addToCart.js"></script>
+<script src="SHARED/utils.js?v=2"></script>
+<script src="SHARED/addToCart.js?v=2"></script>
 
 <script>
     // ===== YOUR ORIGINAL WORKING LOGIN/LOGOUT CODE =====
@@ -309,6 +309,47 @@
             container.innerHTML = '<p class="text-center">Unable to load products.</p>';
         }
     }
+
+    // Special add to cart function for home page
+async function addToCart(productId) {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Please login to add items to cart', 'error');
+        window.location.href = 'AUTH/login.html';
+        return;
+    }
+    
+    try {
+        const response = await fetch('api.php?request=add_to_cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to cart!', 'success');
+            
+            // Fetch the actual cart count from database
+            const cartResponse = await fetch('api.php?request=get_cart');
+            const cartData = await cartResponse.json();
+            
+            if (cartData.success && cartData.cart) {
+                const totalCount = cartData.cart.reduce((sum, item) => sum + item.quantity, 0);
+                const cartCountElements = document.querySelectorAll('.cart-count');
+                cartCountElements.forEach(el => {
+                    el.textContent = totalCount;
+                    el.style.display = totalCount > 0 ? 'inline-block' : 'none';
+                });
+            }
+        } else {
+            showToast(data.message || 'Failed to add to cart', 'error');
+        }
+    } catch (error) {
+        console.error('Add to cart error:', error);
+        showToast('Network error', 'error');
+    }
+}
     
     // Override changeCurrency to refresh featured products (keeps your currency working)
     const originalChangeCurrency = window.changeCurrency;
