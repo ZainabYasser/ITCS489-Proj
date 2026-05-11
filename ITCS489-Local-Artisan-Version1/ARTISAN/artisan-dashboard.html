@@ -89,7 +89,8 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="../index.html"><h2>Artisan<span>Co</span></h2></a>
+                <h2>Artisan<span>Co</span></h2>
+                <!-- <a href="../index.html"><h2>Artisan<span>Co</span></h2></a> -->
             </div>
             <div class="nav-icons">
                 <button class="logout-btn" onclick="logout()">Logout</button>
@@ -189,30 +190,45 @@
                 <div id="auctions-section" style="display: none;">
                     <div class="dashboard-header">
                         <h3>My Auctions</h3>
-                        <button class="add-btn" onclick="showCreateAuctionForm()">+ Create New Auction</button>
+                        <button class="add-btn" onclick="toggleAuctionForm()">+ Create New Auction</button>
                     </div>
                     <div id="create-auction-form" style="display: none; background: #f9f6f3; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <h4>Create New Auction</h4>
-                        <div class="form-group">
-                            <label>Select Product</label>
-                            <select id="auction-product-id" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
-                                <option value="">-- Select a product --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Starting Bid (BHD)</label>
-                            <input type="number" id="auction-start-bid" step="0.01" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
-                        </div>
-                        <div class="form-group">
-                            <label>Minimum Increment (BHD)</label>
-                            <input type="number" id="auction-min-increment" value="5" step="0.01" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
-                        </div>
-                        <div class="form-group">
-                            <label>End Date & Time</label>
-                            <input type="datetime-local" id="auction-end-time" class="form-control" style="width:100%; padding:10px; margin-bottom:15px;">
-                        </div>
-                        <button class="btn-primary" onclick="createAuction()" style="margin-right:10px;">Create Auction</button>
-                        <button class="btn-secondary" onclick="hideCreateAuctionForm()">Cancel</button>
+                        <form id="auction-form">
+                            <div class="form-group">
+                                <label>Auction Title</label>
+                                <input type="text" id="auction-title" class="form-control" required placeholder="e.g., Handmade Ceramic Vase">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="auction-description" rows="3" class="form-control" placeholder="Describe your auction item..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Starting Bid (BHD)</label>
+                                <input type="number" id="auction-start-bid" step="0.01" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Minimum Increment (BHD)</label>
+                                <input type="number" id="auction-min-increment" value="5" step="0.01" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>End Date & Time</label>
+                                <input type="datetime-local" id="auction-end-time" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Auction Image</label>
+                                <input type="file" id="auction-image-file" accept="image/*" onchange="previewAuctionImage(this)">
+                                <div id="auction-image-preview" style="margin-top: 10px; display: none;">
+                                    <img id="auction-preview-img" src="#" alt="Preview" style="max-width: 150px; border-radius: 8px;">
+                                </div>
+                                <small style="color: #666;">Upload an image for this auction (JPG, PNG, GIF) - Max 5MB</small>
+                                <input type="hidden" id="auction-image-url" value="">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit" class="btn-primary">Create Auction</button>
+                                <button type="button" class="btn-secondary" onclick="hideCreateAuctionForm()">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                     <div id="auctions-list"></div>
                 </div>
@@ -254,7 +270,6 @@
     function showSection(section) {
         console.log('showSection called with:', section);
         
-        // Hide all sections
         const sections = ['overview', 'products', 'add-product', 'orders', 'auctions', 'sales', 'profile'];
         for (let i = 0; i < sections.length; i++) {
             const el = document.getElementById(sections[i] + '-section');
@@ -286,7 +301,6 @@
         }
     }
     
-    // Make sure functions are available
     window.showSection = showSection;
 </script>
 </body>

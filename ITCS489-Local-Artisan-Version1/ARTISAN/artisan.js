@@ -43,14 +43,13 @@ function previewImage(input) {
         const reader = new FileReader();
         reader.onload = function(e) {
             previewImg.src = e.target.result;
-            previewDiv.style.display = 'block';
+            if (previewDiv) previewDiv.style.display = 'block';
         }
         reader.readAsDataURL(input.files[0]);
     }
 }
 
 // ===== PRODUCT MANAGEMENT =====
-
 async function loadProducts() {
     const container = document.getElementById('products-list');
     if (!container) return;
@@ -65,17 +64,28 @@ async function loadProducts() {
             if (data.products.length === 0) {
                 container.innerHTML = '<p>No products yet. Click "Add New Product" to get started.</p>';
             } else {
-                container.innerHTML = data.products.map(p => `
-                    <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        <h4>${escapeHtml(p.name)}</h4>
-                        <p>Price: BD ${parseFloat(p.price).toFixed(2)}</p>
-                        <p>Stock: ${p.stock}</p>
-                        <p>${p.description ? p.description.substring(0, 100) : ''}</p>
-                        <button onclick="deleteProduct(${p.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;margin-top:10px;">Delete</button>
-                    </div>
-                `).join('');
+                container.innerHTML = data.products.map(p => {
+                    const imageUrl = p.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(p.name);
+                    return `
+                        <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <img src="${imageUrl}" alt="${escapeHtml(p.name)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 15px; float: left;">
+                            <div style="overflow: hidden;">
+                                <h4>${escapeHtml(p.name)}</h4>
+                                <p>Price: BD ${parseFloat(p.price).toFixed(2)}</p>
+                                <p>Stock: ${p.stock}</p>
+                                <p>${p.description ? escapeHtml(p.description.substring(0, 100)) : ''}</p>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button onclick="editProduct(${p.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
+                                    <button onclick="deleteProduct(${p.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
+                                </div>
+                            </div>
+                            <div style="clear: both;"></div>
+                        </div>
+                    `;
+                }).join('');
             }
-            document.getElementById('total-products').textContent = data.products.length;
+            const totalProductsEl = document.getElementById('total-products');
+            if (totalProductsEl) totalProductsEl.textContent = data.products.length;
         } else {
             container.innerHTML = '<p>Error loading products</p>';
         }
@@ -105,6 +115,132 @@ async function deleteProduct(productId) {
     } catch (error) {
         console.error('Delete error:', error);
         showToast('Network error. Please try again.', 'error');
+    }
+}
+
+// Edit product - opens modal with product data
+async function editProduct(productId) {
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'get_product&id=' + productId);
+        const data = await response.json();
+        
+        if (data.success && data.product) {
+            const product = data.product;
+            
+            const modalHtml = `
+                <div id="edit-product-modal" class="modal" style="display: flex;">
+                    <div class="modal-content" style="max-width: 500px; width: 90%;">
+                        <span class="close-modal" onclick="closeEditModal()">&times;</span>
+                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Product</h3>
+                        <form id="edit-product-form">
+                            <input type="hidden" id="edit-product-id" value="${product.id}">
+                            <div class="form-group">
+                                <label>Product Name</label>
+                                <input type="text" id="edit-product-name" value="${escapeHtml(product.name)}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="edit-product-category" required>
+                                    <option value="1" ${product.category_id == 1 ? 'selected' : ''}>Painting</option>
+                                    <option value="2" ${product.category_id == 2 ? 'selected' : ''}>Jewellery</option>
+                                    <option value="3" ${product.category_id == 3 ? 'selected' : ''}>Pottery</option>
+                                    <option value="4" ${product.category_id == 4 ? 'selected' : ''}>Textiles</option>
+                                    <option value="5" ${product.category_id == 5 ? 'selected' : ''}>Woodwork</option>
+                                    <option value="6" ${product.category_id == 6 ? 'selected' : ''}>Ceramics</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Price (BHD)</label>
+                                <input type="number" id="edit-product-price" step="0.01" value="${product.price}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Stock Quantity</label>
+                                <input type="number" id="edit-product-stock" value="${product.stock}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="edit-product-description" rows="4">${escapeHtml(product.description || '')}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Image URL</label>
+                                <input type="text" id="edit-product-image" value="${escapeHtml(product.image_url || '')}" placeholder="https://...">
+                            </div>
+                            <button type="submit" class="auth-btn">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            document.getElementById('edit-product-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updateProduct();
+            });
+        } else {
+            showToast('Error loading product details', 'error');
+        }
+    } catch (error) {
+        console.error('Edit product error:', error);
+        showToast('Error loading product details', 'error');
+    }
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('edit-product-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function updateProduct() {
+    const productId = document.getElementById('edit-product-id').value;
+    const productData = {
+        product_id: parseInt(productId),
+        name: document.getElementById('edit-product-name').value,
+        category_id: parseInt(document.getElementById('edit-product-category').value),
+        price: parseFloat(document.getElementById('edit-product-price').value),
+        stock: parseInt(document.getElementById('edit-product-stock').value),
+        description: document.getElementById('edit-product-description').value,
+        image_url: document.getElementById('edit-product-image').value
+    };
+    
+    if (productData.price <= 0) {
+        showToast('Price must be greater than 0', 'error');
+        return;
+    }
+    
+    if (productData.stock < 0) {
+        showToast('Stock cannot be negative', 'error');
+        return;
+    }
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'update_product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Product updated successfully!', 'success');
+            closeEditModal();
+            loadProducts(); 
+        } else {
+            showToast(data.message || 'Error updating product', 'error');
+        }
+    } catch (error) {
+        console.error('Update product error:', error);
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -143,52 +279,68 @@ async function loadOrders() {
     }
 }
 
-// ==== AUCTION MANAGEMENT ====
+// ===== AUCTION MANAGEMENT =====
 
 function showCreateAuctionForm() {
-    loadProductsForAuctionSelect();
     const form = document.getElementById('create-auction-form');
-    if (form) form.style.display = 'block';
+    const button = document.querySelector('#auctions-section .dashboard-header');
+    const auctionsList = document.getElementById('auctions-list');
+    
+    if (form) {
+        form.style.display = 'block';
+        if (button) button.style.display = 'none';
+        if (auctionsList) auctionsList.style.display = 'none';
+    }
 }
 
 function hideCreateAuctionForm() {
     const form = document.getElementById('create-auction-form');
+    const button = document.querySelector('#auctions-section .dashboard-header');
+    const auctionsList = document.getElementById('auctions-list');
+    
     if (form) form.style.display = 'none';
+    if (button) button.style.display = 'flex';
+    if (auctionsList) auctionsList.style.display = 'block';
+    
+    const auctionForm = document.getElementById('auction-form');
+    if (auctionForm) auctionForm.reset();
+    const preview = document.getElementById('auction-image-preview');
+    if (preview) preview.style.display = 'none';
 }
 
-async function loadProductsForAuctionSelect() {
-    try {
-        const response = await fetch(ARTISAN_API_URL + 'get_artisan_products');
-        const data = await response.json();
-        
-        const select = document.getElementById('auction-product-id');
-        if (select) {
-            select.innerHTML = '<option value="">-- Select a product --</option>';
-            if (data.success && data.products && data.products.length > 0) {
-                data.products.forEach(product => {
-                    select.innerHTML += `<option value="${product.id}">${escapeHtml(product.name)} (BD ${product.price})</option>`;
-                });
-            } else {
-                select.innerHTML += '<option value="" disabled>No products available. Add a product first.</option>';
-            }
+function toggleAuctionForm() {
+    const form = document.getElementById('create-auction-form');
+    if (form && form.style.display === 'block') {
+        hideCreateAuctionForm();
+    } else {
+        showCreateAuctionForm();
+    }
+}
+
+function previewAuctionImage(input) {
+    const previewDiv = document.getElementById('auction-image-preview');
+    const previewImg = document.getElementById('auction-preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            if (previewDiv) previewDiv.style.display = 'block';
         }
-    } catch (error) {
-        console.error('Error loading products:', error);
-        const select = document.getElementById('auction-product-id');
-        if (select) {
-            select.innerHTML = '<option value="">Error loading products</option>';
-        }
+        reader.readAsDataURL(input.files[0]);
     }
 }
 
 async function createAuction() {
-    const productId = document.getElementById('auction-product-id').value;
+    const title = document.getElementById('auction-title').value;
+    const description = document.getElementById('auction-description').value;
     const startBid = parseFloat(document.getElementById('auction-start-bid').value);
     const minIncrement = parseFloat(document.getElementById('auction-min-increment').value);
     const endTime = document.getElementById('auction-end-time').value;
+    const imageFile = document.getElementById('auction-image-file').files[0];
     
-    if (!productId) {
-        showToast('Please select a product', 'error');
+    if (!title) {
+        showToast('Please enter an auction title', 'error');
         return;
     }
     
@@ -202,21 +354,41 @@ async function createAuction() {
         return;
     }
     
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Creating...';
-    btn.disabled = true;
+    let image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(title);
+    
+    if (imageFile) {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        
+        try {
+            const uploadResponse = await fetch('../api.php?request=upload_image', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+                image_url = uploadData.image_url;
+                showToast('Image uploaded!', 'success');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+        }
+    }
+    
+    const auctionData = {
+        title: title,
+        description: description,
+        start_bid: startBid,
+        min_increment: minIncrement,
+        end_time: endTime,
+        image_url: image_url
+    };
     
     try {
         const response = await fetch(ARTISAN_API_URL + 'create_auction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                product_id: parseInt(productId),
-                start_bid: startBid,
-                min_increment: minIncrement,
-                end_time: endTime
-            })
+            body: JSON.stringify(auctionData)
         });
         
         const data = await response.json();
@@ -225,18 +397,12 @@ async function createAuction() {
             showToast('Auction created successfully!', 'success');
             hideCreateAuctionForm();
             loadAuctions();
-            document.getElementById('auction-product-id').value = '';
-            document.getElementById('auction-start-bid').value = '';
-            document.getElementById('auction-end-time').value = '';
         } else {
             showToast(data.message || 'Failed to create auction', 'error');
         }
     } catch (error) {
         console.error('Create auction error:', error);
         showToast('Network error. Please try again.', 'error');
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
     }
 }
 
@@ -257,15 +423,26 @@ async function loadAuctions() {
                 container.innerHTML = data.auctions.map(auction => {
                     const endDate = new Date(auction.end_time);
                     const isActive = endDate > new Date();
+                    const imageUrl = auction.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(auction.title);
+                    const hasBids = (auction.bid_count || 0) > 0;
                     return `
                         <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <h4>${escapeHtml(auction.product_name)}</h4>
-                            <p>Current Bid: BD ${parseFloat(auction.current_bid).toFixed(2)}</p>
-                            <p>Starting Bid: BD ${parseFloat(auction.start_bid).toFixed(2)}</p>
-                            <p>Min Increment: BD ${parseFloat(auction.min_increment).toFixed(2)}</p>
-                            <p>Ends: ${endDate.toLocaleString()}</p>
-                            <p>Status: ${isActive ? '<span style="color:green">Active</span>' : '<span style="color:red">Ended</span>'}</p>
-                            <p>Total Bids: ${auction.bid_count || 0}</p>
+                            <img src="${imageUrl}" alt="${escapeHtml(auction.title)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 15px; float: left;">
+                            <div style="overflow: hidden;">
+                                <h4>${escapeHtml(auction.title)}</h4>
+                                <p>${escapeHtml(auction.description || '')}</p>
+                                <p>Current Bid: BD ${parseFloat(auction.current_bid).toFixed(2)}</p>
+                                <p>Starting Bid: BD ${parseFloat(auction.start_bid).toFixed(2)}</p>
+                                <p>Min Increment: BD ${parseFloat(auction.min_increment).toFixed(2)}</p>
+                                <p>Ends: ${endDate.toLocaleString()}</p>
+                                <p>Status: ${isActive ? '<span style="color:green">Active</span>' : '<span style="color:red">Ended</span>'}</p>
+                                <p>Total Bids: ${auction.bid_count || 0}</p>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <button onclick="editAuction(${auction.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;" ${hasBids ? 'disabled title="Cannot edit auction that has bids"' : ''}>Edit</button>
+                                    <button onclick="deleteAuction(${auction.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
+                                </div>
+                            </div>
+                            <div style="clear: both;"></div>
                         </div>
                     `;
                 }).join('');
@@ -282,8 +459,213 @@ async function loadAuctions() {
     }
 }
 
-// ===== SALES HISTORY =====
+// ===== AUCTION EDIT/DELETE FUNCTIONS =====
 
+async function editAuction(auctionId) {
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'get_auction_for_edit&id=' + auctionId);
+        const data = await response.json();
+        
+        if (data.success && data.auction) {
+            const auction = data.auction;
+            const hasBids = (auction.bid_count || 0) > 0;
+            
+            const modalHtml = `
+                <div id="edit-auction-modal" class="modal" style="display: flex;">
+                    <div class="modal-content" style="max-width: 500px; width: 90%;">
+                        <span class="close-modal" onclick="closeAuctionEditModal()">&times;</span>
+                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Auction</h3>
+                        ${hasBids ? '<p style="color: #dc3545; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> This auction has bids. Starting bid cannot be changed.</p>' : ''}
+                        <form id="edit-auction-form">
+                            <input type="hidden" id="edit-auction-id" value="${auction.id}">
+                            <div class="form-group">
+                                <label>Auction Title</label>
+                                <input type="text" id="edit-auction-title" value="${escapeHtml(auction.title)}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="edit-auction-description" rows="3">${escapeHtml(auction.description || '')}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Starting Bid (BHD)</label>
+                                <input type="number" id="edit-auction-start-bid" step="0.01" value="${auction.start_bid}" required ${hasBids ? 'disabled' : ''}>
+                                ${hasBids ? '<small style="color: #666;">Starting bid cannot be changed after bids are placed</small>' : ''}
+                            </div>
+                            <div class="form-group">
+                                <label>Minimum Increment (BHD)</label>
+                                <input type="number" id="edit-auction-min-increment" step="0.01" value="${auction.min_increment}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>End Date & Time</label>
+                                <input type="datetime-local" id="edit-auction-end-time" value="${auction.end_time.replace(' ', 'T').slice(0, 16)}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Auction Image URL</label>
+                                <input type="text" id="edit-auction-image" value="${escapeHtml(auction.image_url || '')}" placeholder="https://...">
+                                <small style="color: #666;">Or upload a new image below</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Upload New Image (optional)</label>
+                                <input type="file" id="edit-auction-image-file" accept="image/*" onchange="previewEditAuctionImage(this)">
+                                <div id="edit-auction-image-preview" style="margin-top: 10px; display: none;">
+                                    <img id="edit-auction-preview-img" src="#" alt="Preview" style="max-width: 150px; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <button type="submit" class="auth-btn">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            document.getElementById('edit-auction-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updateAuction();
+            });
+        } else {
+            showToast('Error loading auction details', 'error');
+        }
+    } catch (error) {
+        console.error('Edit auction error:', error);
+        showToast('Error loading auction details', 'error');
+    }
+}
+
+function closeAuctionEditModal() {
+    const modal = document.getElementById('edit-auction-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function previewEditAuctionImage(input) {
+    const previewDiv = document.getElementById('edit-auction-image-preview');
+    const previewImg = document.getElementById('edit-auction-preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            if (previewDiv) previewDiv.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function updateAuction() {
+    const auctionId = document.getElementById('edit-auction-id').value;
+    const title = document.getElementById('edit-auction-title').value;
+    const description = document.getElementById('edit-auction-description').value;
+    const startBid = parseFloat(document.getElementById('edit-auction-start-bid').value);
+    const minIncrement = parseFloat(document.getElementById('edit-auction-min-increment').value);
+    const endTime = document.getElementById('edit-auction-end-time').value;
+    let image_url = document.getElementById('edit-auction-image').value;
+    const imageFile = document.getElementById('edit-auction-image-file').files[0];
+    
+    if (!title) {
+        showToast('Please enter an auction title', 'error');
+        return;
+    }
+    
+    if (isNaN(startBid) || startBid <= 0) {
+        showToast('Please enter a valid starting bid', 'error');
+        return;
+    }
+    
+    if (!endTime) {
+        showToast('Please select an end date and time', 'error');
+        return;
+    }
+    
+    // Upload new image if selected
+    if (imageFile) {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        
+        try {
+            const uploadResponse = await fetch('../api.php?request=upload_image', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+                image_url = uploadData.image_url;
+                showToast('Image uploaded!', 'success');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+        }
+    }
+    
+    if (!image_url) {
+        image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(title);
+    }
+    
+    const auctionData = {
+        auction_id: parseInt(auctionId),
+        title: title,
+        description: description,
+        start_bid: startBid,
+        min_increment: minIncrement,
+        end_time: endTime,
+        image_url: image_url
+    };
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'update_auction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(auctionData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Auction updated successfully!', 'success');
+            closeAuctionEditModal();
+            loadAuctions();
+        } else {
+            showToast(data.message || 'Failed to update auction', 'error');
+        }
+    } catch (error) {
+        console.error('Update auction error:', error);
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function deleteAuction(auctionId) {
+    if (!confirm('Are you sure you want to delete this auction? This will also delete all bids and cannot be undone.')) return;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'delete_auction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ auction_id: auctionId })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Auction deleted successfully!', 'success');
+            loadAuctions();
+        } else {
+            showToast(data.message || 'Error deleting auction', 'error');
+        }
+    } catch (error) {
+        console.error('Delete auction error:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+// ===== SALES HISTORY =====
 async function loadSales() {
     const container = document.getElementById('sales-list');
     if (!container) return;
@@ -291,7 +673,7 @@ async function loadSales() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     
     try {
-        const response = await fetch(ARTISAN_API_URL + 'get_orders');
+        const response = await fetch(ARTISAN_API_URL + 'get_artisan_orders');
         const data = await response.json();
         
         if (data.success && data.orders) {
@@ -334,9 +716,12 @@ async function loadProfile() {
         const data = await response.json();
         
         if (data.success && data.profile) {
-            document.getElementById('shop-name').value = data.profile.shop_name || '';
-            document.getElementById('shop-bio').value = data.profile.bio || '';
-            document.getElementById('shop-location').value = data.profile.location || '';
+            const shopNameEl = document.getElementById('shop-name');
+            const shopBioEl = document.getElementById('shop-bio');
+            const shopLocationEl = document.getElementById('shop-location');
+            if (shopNameEl) shopNameEl.value = data.profile.shop_name || '';
+            if (shopBioEl) shopBioEl.value = data.profile.bio || '';
+            if (shopLocationEl) shopLocationEl.value = data.profile.location || '';
         }
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -345,16 +730,36 @@ async function loadProfile() {
 
 // ===== ADD PRODUCT FORM HANDLER =====
 
-// Wait for DOM to be ready before attaching form handlers
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, setting up form handlers...');
     
-    // Add Product Form
     const addProductForm = document.getElementById('add-product-form');
     if (addProductForm) {
         addProductForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             console.log('Add product form submitted');
+            
+            const imageFile = document.getElementById('product-image-file').files[0];
+            let image_url = 'https://placehold.co/600x400/8B5E3C/white?text=Product';
+            
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append('image', imageFile);
+                
+                try {
+                    const uploadResponse = await fetch('../api.php?request=upload_image', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadResponse.json();
+                    if (uploadData.success) {
+                        image_url = uploadData.image_url;
+                        showToast('Image uploaded!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                }
+            }
             
             const productData = {
                 name: document.getElementById('product-name').value,
@@ -362,8 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 price: parseFloat(document.getElementById('product-price').value),
                 stock: parseInt(document.getElementById('product-stock').value),
                 description: document.getElementById('product-description').value,
-                image_url: document.getElementById('product-image-url').value || 'https://placehold.co/600x400/8B5E3C/white?text=Product',
-                is_auction: document.getElementById('is-auction').checked
+                image_url: image_url
             };
             
             console.log('Product data:', productData);
@@ -380,8 +784,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     showToast('Product added successfully!', 'success');
                     addProductForm.reset();
-                    document.getElementById('auction-fields').style.display = 'none';
-                    document.getElementById('image-preview').style.display = 'none';
+                    const previewDiv = document.getElementById('image-preview');
+                    if (previewDiv) {
+                        previewDiv.style.display = 'none';
+                    }
+                    const previewImg = document.getElementById('preview-img');
+                    if (previewImg) {
+                        previewImg.src = '';
+                    }
                     showSection('products');
                     loadProducts();
                 } else {
@@ -392,22 +802,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('Network error. Please try again.', 'error');
             }
         });
-    } else {
-        console.log('Add product form not found!');
     }
     
-    // Toggle auction fields
-    const isAuctionCheckbox = document.getElementById('is-auction');
-    if (isAuctionCheckbox) {
-        isAuctionCheckbox.addEventListener('change', function() {
-            const auctionFields = document.getElementById('auction-fields');
-            if (auctionFields) {
-                auctionFields.style.display = this.checked ? 'block' : 'none';
-            }
-        });
-    }
-    
-    // Shop Profile Form
     const shopProfileForm = document.getElementById('shop-profile-form');
     if (shopProfileForm) {
         shopProfileForm.addEventListener('submit', async (e) => {
@@ -438,37 +834,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Auction Form Submit
+    const auctionForm = document.getElementById('auction-form');
+    if (auctionForm) {
+        auctionForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createAuction();
+        });
+    }
 });
 
-// ===== SECTION NAVIGATION =====
 
+// ===== SECTION NAVIGATION =====
 function showSection(section) {
     console.log('showSection called with:', section);
     
-    // Hide all sections
     const sections = ['overview', 'products', 'add-product', 'orders', 'auctions', 'sales', 'profile'];
     for (let i = 0; i < sections.length; i++) {
         const el = document.getElementById(sections[i] + '-section');
         if (el) el.style.display = 'none';
     }
     
-    // Show selected section
     const selected = document.getElementById(section + '-section');
     if (selected) {
         selected.style.display = 'block';
         console.log('Showing section:', section);
-    } else {
-        console.log('Section not found:', section + '-section');
     }
     
-    // Load data based on section
     if (section === 'products') loadProducts();
     if (section === 'orders') loadOrders();
     if (section === 'auctions') loadAuctions();
     if (section === 'sales') loadSales();
     if (section === 'profile') loadProfile();
     
-    // Update active class in sidebar
     document.querySelectorAll('.sidebar nav ul li a').forEach(link => {
         link.classList.remove('active');
     });
@@ -496,19 +895,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isAuth = await checkAuth();
     if (!isAuth) return;
     
-    // Load initial data
     loadProducts();
-    
-    // Make functions global for onclick handlers
-    window.showSection = showSection;
-    window.deleteProduct = deleteProduct;
-    window.showCreateAuctionForm = showCreateAuctionForm;
-    window.hideCreateAuctionForm = hideCreateAuctionForm;
-    window.createAuction = createAuction;
-    window.loadAuctions = loadAuctions;
-    window.logout = logout;
-    window.loadProducts = loadProducts;
-    window.loadOrders = loadOrders;
-    window.loadSales = loadSales;
-    window.previewImage = previewImage;
+
+window.showSection = showSection;
+window.deleteProduct = deleteProduct;
+window.editProduct = editProduct;  
+window.updateProduct = updateProduct;  
+window.closeEditModal = closeEditModal;
+window.editAuction = editAuction;
+window.deleteAuction = deleteAuction;
+window.closeAuctionEditModal = closeAuctionEditModal;
+window.toggleAuctionForm = toggleAuctionForm;
+window.showCreateAuctionForm = showCreateAuctionForm;
+window.hideCreateAuctionForm = hideCreateAuctionForm;
+window.createAuction = createAuction;
+window.loadAuctions = loadAuctions;
+window.logout = logout;
+window.loadProducts = loadProducts;
+window.loadOrders = loadOrders;
+window.loadSales = loadSales;
+window.previewImage = previewImage;
+window.previewAuctionImage = previewAuctionImage;
+window.previewEditAuctionImage = previewEditAuctionImage;
 });

@@ -1,14 +1,15 @@
 // Auction Detail Module - API Version
 
-const API_BASE = '../api.php';
-const API_URL = API_BASE + '?request=';
+// Use unique variable names to avoid conflicts with utils.js
+const AUCTION_API_BASE = '../api.php';
+const AUCTION_API_URL = AUCTION_API_BASE + '?request=';
 
-let currentCurrency = 'BHD';
+let auctionCurrentCurrency = 'BHD';
 let currentAuction = null;
 let countdownInterval = null;
  
-// Currency rate
-const currencyRates = {
+// Currency rate (using same rates but local copy)
+const auctionCurrencyRates = {
     BHD: { symbol: 'BD', rate: 1, code: 'BHD' },
     SAR: { symbol: '﷼', rate: 9.96, code: 'SAR' },
     USD: { symbol: '$', rate: 2.65, code: 'USD' },
@@ -16,9 +17,10 @@ const currencyRates = {
 };
 
 function changeCurrency(currencyCode, symbol, rate) {
-    currentCurrency = currencyCode;
+    auctionCurrentCurrency = currencyCode;
     localStorage.setItem('preferredCurrency', currencyCode);
-    document.getElementById('current-currency').textContent = currencyCode;
+    const currencyDisplay = document.getElementById('current-currency');
+    if (currencyDisplay) currencyDisplay.textContent = currencyCode;
     showToast(`Currency changed to ${symbol} ${currencyCode}`, 'success');
     if (currentAuction) {
         displayAuctionDetail();
@@ -28,9 +30,10 @@ function changeCurrency(currencyCode, symbol, rate) {
 
 function loadCurrencyPreference() {
     const saved = localStorage.getItem('preferredCurrency');
-    if (saved && currencyRates[saved]) {
-        currentCurrency = saved;
-        document.getElementById('current-currency').textContent = currentCurrency;
+    if (saved && auctionCurrencyRates[saved]) {
+        auctionCurrentCurrency = saved;
+        const currencyDisplay = document.getElementById('current-currency');
+        if (currencyDisplay) currencyDisplay.textContent = auctionCurrentCurrency;
     }
 }
 
@@ -45,7 +48,7 @@ async function loadAuctionDetail() {
     }
     
     try {
-        const response = await fetch(API_URL + 'get_auction&id=' + auctionId);
+        const response = await fetch(AUCTION_API_URL + 'get_auction&id=' + auctionId);
         const data = await response.json();
         
         if (data.success && data.auction) {
@@ -67,7 +70,7 @@ function showError(message) {
     container.innerHTML = `
         <div class="no-auctions" style="text-align: center; padding: 60px;">
             <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #dc3545;"></i>
-            <h3>${message}</h3>
+            <h3>${escapeHtml(message)}</h3>
             <a href="auction.html" class="btn-primary">Back to Auctions</a>
         </div>
     `;
@@ -77,17 +80,17 @@ async function loadBidHistory() {
     if (!currentAuction) return;
     
     try {
-        const response = await fetch(API_URL + 'get_bid_history&id=' + currentAuction.id);
+        const response = await fetch(AUCTION_API_URL + 'get_bid_history&id=' + currentAuction.id);
         const data = await response.json();
         
         const container = document.getElementById('bid-history-list');
         if (container && data.success && data.bids && data.bids.length > 0) {
-            const rate = currencyRates[currentCurrency].rate;
-            const symbol = currencyRates[currentCurrency].symbol;
+            const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
+            const symbol = auctionCurrencyRates[auctionCurrentCurrency].symbol;
             
             container.innerHTML = data.bids.map(bid => `
                 <div class="bid-history-item">
-                    <strong>${bid.bidder_name}</strong> bid ${symbol} ${(bid.bid_amount * rate).toFixed(2)}
+                    <strong>${escapeHtml(bid.bidder_name)}</strong> bid ${symbol} ${(bid.bid_amount * rate).toFixed(2)}
                     <small>${new Date(bid.bid_time).toLocaleString()}</small>
                 </div>
             `).join('');
@@ -101,28 +104,33 @@ async function loadBidHistory() {
 
 function displayAuctionDetail() {
     const container = document.getElementById('auction-detail-container');
-    const rate = currencyRates[currentCurrency].rate;
-    const symbol = currencyRates[currentCurrency].symbol;
-    const currentBidConverted = (currentAuction.current_bid * rate).toFixed(2);
-    const startingBidConverted = (currentAuction.start_bid * rate).toFixed(2);
-    const minIncrement = currentAuction.min_increment || 5;
-    const minBid = currentAuction.current_bid + minIncrement;
+    const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
+    const symbol = auctionCurrencyRates[auctionCurrentCurrency].symbol;
+    
+    // Safety checks - ensure values are numbers
+    const currentBid = parseFloat(currentAuction.current_bid) || 0;
+    const startBid = parseFloat(currentAuction.start_bid) || 0;
+    const minIncrement = parseFloat(currentAuction.min_increment) || 5;
+    const minBid = currentBid + minIncrement;
+    
+    const currentBidConverted = (currentBid * rate).toFixed(2);
+    const startingBidConverted = (startBid * rate).toFixed(2);
     const minBidConverted = (minBid * rate).toFixed(2);
-    const imageUrl = currentAuction.image_url || `https://placehold.co/600x500/8B5E3C/white?text=${encodeURIComponent(currentAuction.name)}`;
+    const imageUrl = currentAuction.image_url || `https://placehold.co/600x500/8B5E3C/white?text=${encodeURIComponent(currentAuction.title)}`;
     
     container.innerHTML = `
         <div class="auction-detail-layout">
             <div class="auction-gallery">
-                <img src="${imageUrl}" alt="${currentAuction.name}">
+                <img src="${imageUrl}" alt="${escapeHtml(currentAuction.title)}">
             </div>
             <div class="auction-info-detail">
-                <h1>${currentAuction.name} 
+                <h1>${escapeHtml(currentAuction.title)} 
                     <span class="bid-count-badge">
                         <i class="fas fa-gavel"></i> ${currentAuction.bid_count || 0} bids
                     </span>
                 </h1>
-                <p class="artisan-name">by ${currentAuction.artisan_name || 'Local Artisan'}</p>
-                <p>${currentAuction.description || 'Beautiful handmade piece up for auction.'}</p>
+                <p class="artisan-name">by ${escapeHtml(currentAuction.artisan_name || 'Local Artisan')}</p>
+                <p>${escapeHtml(currentAuction.description || 'Beautiful handmade piece up for auction.')}</p>
                 
                 <div class="auction-timer-card">
                     <h4>Time Remaining</h4>
@@ -214,9 +222,9 @@ function validateBid(bidAmount) {
     } else if (bidAmount <= 0) {
         errors.push("Bid amount must be greater than zero");
     } else if (bidAmount <= currentAuction.current_bid) {
-        errors.push(`Bid must be higher than the current bid of ${currencyRates[currentCurrency].symbol} ${(currentAuction.current_bid * currencyRates[currentCurrency].rate).toFixed(2)}`);
+        errors.push(`Bid must be higher than the current bid of ${auctionCurrencyRates[auctionCurrentCurrency].symbol} ${(currentAuction.current_bid * auctionCurrencyRates[auctionCurrentCurrency].rate).toFixed(2)}`);
     } else if (bidAmount < currentAuction.current_bid + minIncrement) {
-        errors.push(`Minimum bid must be at least ${currencyRates[currentCurrency].symbol} ${((currentAuction.current_bid + minIncrement) * currencyRates[currentCurrency].rate).toFixed(2)}`);
+        errors.push(`Minimum bid must be at least ${auctionCurrencyRates[auctionCurrentCurrency].symbol} ${((currentAuction.current_bid + minIncrement) * auctionCurrencyRates[auctionCurrentCurrency].rate).toFixed(2)}`);
     }
     
     return errors;
@@ -226,7 +234,7 @@ async function placeBid() {
     const user = getCurrentUser();
     if (!user) {
         showToast('Please login to place a bid', 'error');
-        window.location.href = '../auth&user/login.html';
+        window.location.href = '../AUTH/login.html';
         return;
     }
     
@@ -234,8 +242,8 @@ async function placeBid() {
     const bidAmount = parseFloat(bidInput.value);
     const errorDiv = document.getElementById('bid-error');
     const successDiv = document.getElementById('bid-success');
-    const rate = currencyRates[currentCurrency].rate;
-    const symbol = currencyRates[currentCurrency].symbol;
+    const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
+    const symbol = auctionCurrencyRates[auctionCurrentCurrency].symbol;
     
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
@@ -251,7 +259,7 @@ async function placeBid() {
     }
     
     try {
-        const response = await fetch(API_URL + 'place_bid', {
+        const response = await fetch(AUCTION_API_URL + 'place_bid', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -309,47 +317,11 @@ async function placeBid() {
     }
 }
 
-function getCurrentUser() {
-    return JSON.parse(localStorage.getItem('user') || 'null');
-}
-
-function showToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-async function updateCartCount() {
-    try {
-        const response = await fetch(API_URL + 'get_cart');
-        const data = await response.json();
-        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
-        document.querySelectorAll('.cart-count').forEach(el => {
-            el.textContent = count;
-            el.style.display = count > 0 ? 'inline-block' : 'none';
-        });
-    } catch (error) {
-        console.error('Error updating cart count:', error);
-    }
-}
-
-function checkAuth() {
-    const user = getCurrentUser();
-    const loginBtn = document.getElementById('login-btn');
-    const registerBtn = document.getElementById('register-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (user) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (registerBtn) registerBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

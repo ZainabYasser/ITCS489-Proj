@@ -41,6 +41,26 @@ function getUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
+// Helper function to delete image file
+function deleteImageFile($image_url) {
+    if (empty($image_url)) return false;
+    
+    // Only delete if it's not a placeholder URL
+    if (strpos($image_url, 'placehold.co') !== false) return false;
+    if (strpos($image_url, 'via.placeholder.com') !== false) return false;
+    
+    // Extract filename from URL
+    $baseDir = __DIR__;
+    $relativePath = str_replace('/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/', '', $image_url);
+    $filePath = $baseDir . '/' . $relativePath;
+    
+    // Only delete if file exists and is in uploads folder
+    if (file_exists($filePath) && strpos($filePath, '/uploads/') !== false) {
+        return unlink($filePath);
+    }
+    return false;
+}
+
 // ============ CHECK AUTH ============
 if ($request == 'check_auth') {
     $loggedIn = isLoggedIn();
@@ -540,11 +560,10 @@ if ($request == 'remove_from_wishlist') {
 
 // Get all active auctions
 if ($request == 'get_auctions') {
-    $stmt = $pdo->prepare("SELECT a.*, p.name, p.image_url, u.fullname as artisan_name,
+    $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name,
                           (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                           FROM auctions a
-                          JOIN products p ON a.product_id = p.id
-                          JOIN users u ON p.artisan_id = u.id
+                          JOIN users u ON a.artisan_id = u.id
                           WHERE a.is_active = 1 AND a.end_time > NOW()
                           ORDER BY a.end_time ASC");
     $stmt->execute();
@@ -558,10 +577,9 @@ if ($request == 'get_auctions') {
 if ($request == 'get_auction') {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
-    $stmt = $pdo->prepare("SELECT a.*, p.name, p.description, p.image_url, u.fullname as artisan_name
+    $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name
                            FROM auctions a
-                           JOIN products p ON a.product_id = p.id
-                           JOIN users u ON p.artisan_id = u.id
+                           JOIN users u ON a.artisan_id = u.id
                            WHERE a.id = ?");
     $stmt->execute([$id]);
     $auction = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -647,6 +665,7 @@ if ($request == 'get_bid_history') {
 }
 
 // Create auction (for artisans)
+// Create auction (artisan only) - NEW VERSION without product_id
 if ($request == 'create_auction') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
         echo json_encode(['success' => false, 'message' => 'Only artisans can create auctions']);
@@ -654,30 +673,42 @@ if ($request == 'create_auction') {
     }
     
     $input = json_decode(file_get_contents('php://input'), true);
-    $productId = $input['product_id'] ?? 0;
-    $startBid = $input['start_bid'] ?? 0;
-    $endTime = $input['end_time'] ?? '';
-    $minIncrement = $input['min_increment'] ?? 5;
     
-    if (!$productId || $startBid <= 0 || empty($endTime)) {
-        echo json_encode(['success' => false, 'message' => 'Product ID, starting bid, and end time are required']);
+    $artisan_id = $_SESSION['user_id'];
+    $title = trim($input['title'] ?? '');
+    $description = trim($input['description'] ?? '');
+    $startBid = floatval($input['start_bid'] ?? 0);
+    $minIncrement = floatval($input['min_increment'] ?? 5);
+    $endTime = $input['end_time'] ?? '';
+    $image_url = trim($input['image_url'] ?? '');
+    
+    // Validate required fields
+    if (empty($title)) {
+        echo json_encode(['success' => false, 'message' => 'Auction title is required']);
         exit();
     }
     
-    // Verify product belongs to this artisan
-    $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND artisan_id = ?");
-    $stmt->execute([$productId, $_SESSION['user_id']]);
-    if (!$stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'Product not found or does not belong to you']);
+    if ($startBid <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Starting bid must be greater than 0']);
         exit();
+    }
+    
+    if (empty($endTime)) {
+        echo json_encode(['success' => false, 'message' => 'End date and time is required']);
+        exit();
+    }
+    
+    // Set default image if none provided
+    if (empty($image_url)) {
+        $image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' . urlencode($title);
     }
     
     try {
-        $stmt = $pdo->prepare("INSERT INTO auctions (product_id, start_bid, current_bid, min_increment, start_time, end_time) 
-                               VALUES (?, ?, ?, ?, NOW(), ?)");
-        $stmt->execute([$productId, $startBid, $startBid, $minIncrement, $endTime]);
+        $stmt = $pdo->prepare("INSERT INTO auctions (artisan_id, title, description, start_bid, current_bid, min_increment, image_url, start_time, end_time, is_active, created_at) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, 1, NOW())");
+        $stmt->execute([$artisan_id, $title, $description, $startBid, $startBid, $minIncrement, $image_url, $endTime]);
         
-        echo json_encode(['success' => true, 'message' => 'Auction created successfully']);
+        echo json_encode(['success' => true, 'message' => 'Auction created successfully', 'auction_id' => $pdo->lastInsertId()]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => 'Failed to create auction: ' . $e->getMessage()]);
     }
@@ -692,11 +723,10 @@ if ($request == 'get_artisan_auctions') {
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT a.*, p.name as product_name,
+    $stmt = $pdo->prepare("SELECT a.*,
                           (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                           FROM auctions a
-                          JOIN products p ON a.product_id = p.id
-                          WHERE p.artisan_id = ?
+                          WHERE a.artisan_id = ?
                           ORDER BY a.created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -705,8 +735,10 @@ if ($request == 'get_artisan_auctions') {
     exit();
 }
 
-// ============ ARTISAN PRODUCT MANAGEMENT ============
 
+
+
+// ============ ARTISAN PRODUCT MANAGEMENT ============
 // Get artisan's products (for dashboard)
 if ($request == 'get_artisan_products') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
@@ -731,13 +763,25 @@ if ($request == 'delete_product') {
     
     $input = json_decode(file_get_contents('php://input'), true);
     $productId = $input['product_id'] ?? 0;
+    $artisan_id = $_SESSION['user_id'];
+    
+    // Get image URL before deleting
+    $stmt = $pdo->prepare("SELECT image_url FROM products WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$productId, $artisan_id]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    $image_url = $product ? $product['image_url'] : null;
     
     // First delete from cart and wishlist
     $pdo->prepare("DELETE FROM cart WHERE product_id = ?")->execute([$productId]);
     $pdo->prepare("DELETE FROM wishlist WHERE product_id = ?")->execute([$productId]);
     
     $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND artisan_id = ?");
-    $stmt->execute([$productId, $_SESSION['user_id']]);
+    $stmt->execute([$productId, $artisan_id]);
+    
+    // Delete image file if exists
+    if ($image_url) {
+        deleteImageFile($image_url);
+    }
     
     echo json_encode(['success' => true, 'message' => 'Product deleted']);
     exit();
@@ -796,6 +840,76 @@ if ($request == 'add_product') {
 }
 
 
+// Update product (artisan only)
+if ($request == 'update_product') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    $product_id = isset($input['product_id']) ? (int)$input['product_id'] : 0;
+    $artisan_id = $_SESSION['user_id'];
+    $name = trim($input['name'] ?? '');
+    $category_id = isset($input['category_id']) ? (int)$input['category_id'] : null;
+    $price = isset($input['price']) ? (float)$input['price'] : 0;
+    $stock = isset($input['stock']) ? (int)$input['stock'] : 0;
+    $description = trim($input['description'] ?? '');
+    $new_image_url = trim($input['image_url'] ?? '');
+    
+    // Get old image URL before update
+    $stmt = $pdo->prepare("SELECT image_url FROM products WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$product_id, $artisan_id]);
+    $old_image = $stmt->fetch(PDO::FETCH_ASSOC);
+    $old_image_url = $old_image ? $old_image['image_url'] : null;
+    
+    // Validate product belongs to this artisan
+    $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$product_id, $artisan_id]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Product not found or does not belong to you']);
+        exit();
+    }
+    
+    // Validate required fields
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Product name is required']);
+        exit();
+    }
+    
+    if ($price <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Valid price is required']);
+        exit();
+    }
+    
+    if ($stock < 0) {
+        echo json_encode(['success' => false, 'message' => 'Stock cannot be negative']);
+        exit();
+    }
+    
+    // Check if category exists
+    if ($category_id) {
+        $checkStmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
+        $checkStmt->execute([$category_id]);
+        if (!$checkStmt->fetch()) {
+            $category_id = null;
+        }
+    }
+    
+    $stmt = $pdo->prepare("UPDATE products 
+                           SET name = ?, category_id = ?, price = ?, stock = ?, description = ?, image_url = ?
+                           WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$name, $category_id, $price, $stock, $description, $new_image_url, $product_id, $artisan_id]);
+    
+    // Delete old image if it was replaced and not a placeholder
+    if ($old_image_url && $old_image_url !== $new_image_url) {
+        deleteImageFile($old_image_url);
+    }
+    
+    echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
+    exit();
+}
 
 
 
@@ -870,16 +984,15 @@ if ($request == 'get_artisan_orders') {
 
 
 
-
-
-
-
 // ============ IMAGE UPLOAD ============
 if ($request == 'upload_image') {
     if (!isLoggedIn()) {
         echo json_encode(['success' => false, 'message' => 'Please login']);
         exit();
     }
+    
+    // Get type from POST data (product or auction)
+    $type = isset($_POST['type']) ? $_POST['type'] : 'image';
     
     // Create uploads folder if it doesn't exist
     $uploadDir = __DIR__ . '/uploads/';
@@ -889,7 +1002,15 @@ if ($request == 'upload_image') {
     
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['image'];
-        $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file['name']);
+        
+        // Clean filename: remove special chars, convert to lowercase
+        $originalName = pathinfo($file['name'], PATHINFO_FILENAME);
+        $cleanName = preg_replace('/[^a-zA-Z0-9]/', '_', $originalName);
+        $cleanName = strtolower($cleanName);
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        // Create descriptive filename: type_cleanname_timestamp.extension
+        $fileName = $type . '_' . $cleanName . '_' . time() . '.' . $extension;
         $targetPath = $uploadDir . $fileName;
         
         // Check file type
@@ -1368,6 +1489,158 @@ if ($request == 'admin_delete_auction') {
     $stmt->execute([$auctionId]);
     
     echo json_encode(['success' => true, 'message' => 'Auction deleted successfully']);
+    exit();
+}
+
+// ============ UPDATE AUCTION ============
+// ============ UPDATE AUCTION ============
+if ($request == 'update_auction') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    $auction_id = isset($input['auction_id']) ? (int)$input['auction_id'] : 0;
+    $artisan_id = $_SESSION['user_id'];
+    $title = trim($input['title'] ?? '');
+    $description = trim($input['description'] ?? '');
+    $start_bid = isset($input['start_bid']) ? (float)$input['start_bid'] : 0;
+    $min_increment = isset($input['min_increment']) ? (float)$input['min_increment'] : 5;
+    $end_time = $input['end_time'] ?? '';
+    $new_image_url = trim($input['image_url'] ?? '');
+    
+    // Get old image URL before update
+    $stmt = $pdo->prepare("SELECT image_url FROM auctions WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$auction_id, $artisan_id]);
+    $old_auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    $old_image_url = $old_auction ? $old_auction['image_url'] : null;
+    
+    // Verify auction belongs to this artisan
+    $stmt = $pdo->prepare("SELECT id FROM auctions WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$auction_id, $artisan_id]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Auction not found or does not belong to you']);
+        exit();
+    }
+    
+    // Check if auction has bids
+    $stmt = $pdo->prepare("SELECT COUNT(*) as bid_count FROM bids WHERE auction_id = ?");
+    $stmt->execute([$auction_id]);
+    $bid_count = $stmt->fetch(PDO::FETCH_ASSOC)['bid_count'];
+    
+    if ($bid_count > 0 && $start_bid != $old_auction['start_bid']) {
+        echo json_encode(['success' => false, 'message' => 'Cannot change starting bid because bids have been placed']);
+        exit();
+    }
+    
+    if (empty($title)) {
+        echo json_encode(['success' => false, 'message' => 'Auction title is required']);
+        exit();
+    }
+    
+    if ($start_bid <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Starting bid must be greater than 0']);
+        exit();
+    }
+    
+    if (empty($end_time)) {
+        echo json_encode(['success' => false, 'message' => 'End date and time is required']);
+        exit();
+    }
+    
+    if (empty($new_image_url)) {
+        $new_image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' . urlencode($title);
+    }
+    
+    try {
+        $stmt = $pdo->prepare("UPDATE auctions 
+                               SET title = ?, description = ?, start_bid = ?, min_increment = ?, end_time = ?, image_url = ?
+                               WHERE id = ? AND artisan_id = ?");
+        $stmt->execute([$title, $description, $start_bid, $min_increment, $end_time, $new_image_url, $auction_id, $artisan_id]);
+        
+        // Delete old image if it was replaced and not a placeholder
+        if ($old_image_url && $old_image_url !== $new_image_url) {
+            deleteImageFile($old_image_url);
+        }
+        
+        echo json_encode(['success' => true, 'message' => 'Auction updated successfully']);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to update auction: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+
+// ============ DELETE AUCTION ============
+if ($request == 'delete_auction') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auction_id = isset($input['auction_id']) ? (int)$input['auction_id'] : 0;
+    $artisan_id = $_SESSION['user_id'];
+    
+    // Get image URL before deleting
+    $stmt = $pdo->prepare("SELECT image_url FROM auctions WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$auction_id, $artisan_id]);
+    $auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    $image_url = $auction ? $auction['image_url'] : null;
+    
+    // Verify auction belongs to this artisan
+    $stmt = $pdo->prepare("SELECT id FROM auctions WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$auction_id, $artisan_id]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Auction not found or does not belong to you']);
+        exit();
+    }
+    
+    try {
+        // First delete bids
+        $pdo->prepare("DELETE FROM bids WHERE auction_id = ?")->execute([$auction_id]);
+        // Then delete auction
+        $stmt = $pdo->prepare("DELETE FROM auctions WHERE id = ?");
+        $stmt->execute([$auction_id]);
+        
+        // Delete image file if exists
+        if ($image_url) {
+            deleteImageFile($image_url);
+        }
+        
+        echo json_encode(['success' => true, 'message' => 'Auction deleted successfully']);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to delete auction: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+// ============ GET SINGLE AUCTION FOR EDIT ============
+if ($request == 'get_auction_for_edit') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    $artisan_id = $_SESSION['user_id'];
+    
+    $stmt = $pdo->prepare("SELECT * FROM auctions WHERE id = ? AND artisan_id = ?");
+    $stmt->execute([$id, $artisan_id]);
+    $auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($auction) {
+        // Get bid count
+        $stmt = $pdo->prepare("SELECT COUNT(*) as bid_count FROM bids WHERE auction_id = ?");
+        $stmt->execute([$id]);
+        $auction['bid_count'] = $stmt->fetch(PDO::FETCH_ASSOC)['bid_count'];
+        
+        echo json_encode(['success' => true, 'auction' => $auction]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Auction not found']);
+    }
     exit();
 }
 // ============ DEFAULT ============

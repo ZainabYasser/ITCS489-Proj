@@ -45,26 +45,24 @@ async function loadAuctionsFromAPI() {
         
         if (data.success && data.auctions && data.auctions.length > 0) {
             allAuctions = data.auctions;
+            displayAuctions();
         } else {
-            // Fallback sample data if API returns empty
-            allAuctions = getSampleAuctions();
+            container.innerHTML = '<div class="no-auctions"><i class="fas fa-gavel"></i><h3>No auctions found</h3><p>Check back later for new auctions!</p></div>';
         }
-        displayAuctions();
     } catch (error) {
         console.error('Error loading auctions:', error);
-        allAuctions = getSampleAuctions();
-        displayAuctions();
+        container.innerHTML = '<div class="no-auctions"><i class="fas fa-exclamation-circle"></i><h3>Error loading auctions</h3><p>Please try again later.</p></div>';
     }
 }
 
 // Sample auctions for fallback
-function getSampleAuctions() {
-    return [
-        { id: 1, name: "Handmade Ceramic Vase", artisan_name: "Fatima Al Khalifa", current_bid: 45, start_bid: 30, bid_count: 8, end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/8B5E3C/white?text=Ceramic+Vase" },
-        { id: 2, name: "Silver Pearl Earrings", artisan_name: "Ahmed Al Zayani", current_bid: 35, start_bid: 29.99, bid_count: 12, end_time: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/C0C0C0/white?text=Pearl+Earrings" },
-        { id: 3, name: "Handwoven Wool Scarf", artisan_name: "Noor Al Awadhi", current_bid: 35, start_bid: 35, bid_count: 3, end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/8B4513/white?text=Wool+Scarf" }
-    ];
-}
+// function getSampleAuctions() {
+//     return [
+//         { id: 1, title: "Handmade Ceramic Vase", artisan_name: "Fatima Al Khalifa", current_bid: 45, start_bid: 30, bid_count: 8, end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/8B5E3C/white?text=Ceramic+Vase" },
+//         { id: 2, title: "Silver Pearl Earrings", artisan_name: "Ahmed Al Zayani", current_bid: 35, start_bid: 29.99, bid_count: 12, end_time: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/C0C0C0/white?text=Pearl+Earrings" },
+//         { id: 3, title: "Handwoven Wool Scarf", artisan_name: "Noor Al Awadhi", current_bid: 35, start_bid: 35, bid_count: 3, end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/8B4513/white?text=Wool+Scarf" }
+//     ];
+// }
 
 function getTimeRemaining(endTime) {
     const now = new Date().getTime();
@@ -99,7 +97,7 @@ function applyFilters() {
     
     if (currentSearchTerm) {
         filtered = filtered.filter(auction => 
-            auction.name.toLowerCase().includes(currentSearchTerm) ||
+            auction.title.toLowerCase().includes(currentSearchTerm) ||
             (auction.artisan_name && auction.artisan_name.toLowerCase().includes(currentSearchTerm))
         );
     }
@@ -138,12 +136,12 @@ function displayFilteredAuctions(auctions) {
         return `
             <div class="auction-card" onclick="viewAuction(${auction.id})">
                 <div class="auction-image">
-                    <img src="${imageUrl}" alt="${auction.name}" loading="lazy">
+                    <img src="${imageUrl}" alt="${auction.title}" loading="lazy">
                     <div class="timer-badge ${timerClass}"><i class="fas fa-clock"></i> ${timeRemaining.text}</div>
                     <div class="bid-count"><i class="fas fa-gavel"></i> ${auction.bid_count || 0} bids</div>
                 </div>
                 <div class="auction-info">
-                    <h3>${auction.name}</h3>
+                    <h3>${auction.title}</h3>
                     <p class="artisan-name"><i class="fas fa-user"></i> by ${auction.artisan_name || 'Local Artisan'}</p>
                     <div class="current-bid-section">
                         <div class="current-bid-label">Current Bid</div>
