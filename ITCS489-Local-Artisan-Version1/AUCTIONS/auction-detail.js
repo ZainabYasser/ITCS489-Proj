@@ -107,10 +107,10 @@ function displayAuctionDetail() {
     const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
     const symbol = auctionCurrencyRates[auctionCurrentCurrency].symbol;
     
-    // Safety checks - ensure values are numbers
     const currentBid = parseFloat(currentAuction.current_bid) || 0;
     const startBid = parseFloat(currentAuction.start_bid) || 0;
-    const minIncrement = parseFloat(currentAuction.min_increment) || 5;
+    let minIncrement = parseFloat(currentAuction.min_increment) || 5;
+    minIncrement = parseFloat(minIncrement); 
     const minBid = currentBid + minIncrement;
     
     const currentBidConverted = (currentBid * rate).toFixed(2);
@@ -154,7 +154,7 @@ function displayAuctionDetail() {
                 
                 <div class="bid-placement">
                     <h4>Place Your Bid</h4>
-                    <input type="number" id="bid-amount" step="${minIncrement}" placeholder="Enter bid amount" value="${minBid}">
+                    <input type="number" id="bid-amount" step="${minIncrement}" placeholder="Enter bid amount">
                     <div id="bid-error" class="bid-error"></div>
                     <div id="bid-success" class="bid-success"></div>
                     <button class="place-bid-btn" onclick="placeBid()">Place Bid</button>
@@ -175,9 +175,10 @@ function displayAuctionDetail() {
     
     const bidInput = document.getElementById('bid-amount');
     if (bidInput) {
-        bidInput.min = minBid;
-        bidInput.value = minBid;
-    }
+    const convertedMinBid = minBid * rate; 
+    bidInput.min = convertedMinBid;
+    bidInput.value = convertedMinBid;
+}
 }
 
 function startCountdown() {
@@ -239,16 +240,19 @@ async function placeBid() {
     }
     
     const bidInput = document.getElementById('bid-amount');
-    const bidAmount = parseFloat(bidInput.value);
+    const displayedAmount = parseFloat(bidInput.value);
+    const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
+    const bidAmount = displayedAmount / rate; // Convert back to BHD
+    
     const errorDiv = document.getElementById('bid-error');
     const successDiv = document.getElementById('bid-success');
-    const rate = auctionCurrencyRates[auctionCurrentCurrency].rate;
     const symbol = auctionCurrencyRates[auctionCurrentCurrency].symbol;
     
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
     bidInput.classList.remove('bid-input-error');
     
+    // Validate using the actual BHD amount
     const errors = validateBid(bidAmount);
     
     if (errors.length > 0) {
@@ -264,7 +268,7 @@ async function placeBid() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 auction_id: currentAuction.id,
-                bid_amount: bidAmount
+                bid_amount: bidAmount  
             })
         });
         
@@ -275,20 +279,32 @@ async function placeBid() {
             currentAuction.bid_count = (currentAuction.bid_count || 0) + 1;
             
             const newCurrentBidConverted = (bidAmount * rate).toFixed(2);
-            const newMinBid = bidAmount + (currentAuction.min_increment || 5);
+            const increment = parseFloat(currentAuction.min_increment) || 5;
+            const newMinBid = bidAmount + increment;
             const newMinBidConverted = (newMinBid * rate).toFixed(2);
             
+            // Update displayed current bid
             const currentBidElement = document.getElementById('current-bid-amount');
             currentBidElement.textContent = `${symbol} ${newCurrentBidConverted}`;
             currentBidElement.classList.add('current-bid-highlight');
             setTimeout(() => currentBidElement.classList.remove('current-bid-highlight'), 500);
             
+            // Update displayed minimum next bid
             document.getElementById('min-bid-amount').textContent = `${symbol} ${newMinBidConverted}`;
             
-            bidInput.min = newMinBid;
-            bidInput.value = newMinBid;
+            // Update input field: set to the CONVERTED minimum bid amount
+            const convertedMinBid = newMinBid * rate;
+            bidInput.min = convertedMinBid;
+            bidInput.value = convertedMinBid;
             bidInput.classList.remove('bid-input-error');
             
+            // Update the minimum bid text below
+            const minBidText = document.querySelector('.bid-placement p');
+            if (minBidText) {
+                minBidText.innerHTML = `<i class="fas fa-info-circle"></i> Minimum bid: ${symbol} ${newMinBidConverted}`;
+            }
+            
+            // Update bid count badge
             const bidCountBadge = document.querySelector('.bid-count-badge');
             if (bidCountBadge) {
                 bidCountBadge.innerHTML = `<i class="fas fa-gavel"></i> ${currentAuction.bid_count} bids`;

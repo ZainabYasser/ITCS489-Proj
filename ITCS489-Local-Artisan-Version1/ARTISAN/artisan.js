@@ -49,6 +49,42 @@ function previewImage(input) {
     }
 }
 
+// Preview for edit product image
+function previewEditProductImage(input) {
+    const previewDiv = document.getElementById('edit-product-image-preview');
+    const previewImg = document.getElementById('edit-product-preview-img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            if (previewDiv) previewDiv.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ===== LOAD CATEGORIES FOR FORM =====
+async function loadCategoriesForForm() {
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'get_categories');
+        const data = await response.json();
+        
+        const categorySelect = document.getElementById('product-category');
+        if (categorySelect && data.success && data.categories) {
+            categorySelect.innerHTML = '';
+            data.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
 // ===== PRODUCT MANAGEMENT =====
 async function loadProducts() {
     const container = document.getElementById('products-list');
@@ -121,11 +157,26 @@ async function deleteProduct(productId) {
 // Edit product - opens modal with product data
 async function editProduct(productId) {
     try {
+        // First fetch categories
+        const catResponse = await fetch(ARTISAN_API_URL + 'get_categories');
+        const catData = await catResponse.json();
+        
+        // Then fetch product
         const response = await fetch(ARTISAN_API_URL + 'get_product&id=' + productId);
         const data = await response.json();
         
         if (data.success && data.product) {
             const product = data.product;
+            
+            // Build category options dynamically
+            let categoryOptions = '';
+            if (catData.success && catData.categories) {
+                categoryOptions = catData.categories.map(cat => 
+                    `<option value="${cat.id}" ${product.category_id == cat.id ? 'selected' : ''}>${escapeHtml(cat.name)}</option>`
+                ).join('');
+            } else {
+                categoryOptions = '<option value="">No categories available</option>';
+            }
             
             const modalHtml = `
                 <div id="edit-product-modal" class="modal" style="display: flex;">
@@ -141,12 +192,7 @@ async function editProduct(productId) {
                             <div class="form-group">
                                 <label>Category</label>
                                 <select id="edit-product-category" required>
-                                    <option value="1" ${product.category_id == 1 ? 'selected' : ''}>Painting</option>
-                                    <option value="2" ${product.category_id == 2 ? 'selected' : ''}>Jewellery</option>
-                                    <option value="3" ${product.category_id == 3 ? 'selected' : ''}>Pottery</option>
-                                    <option value="4" ${product.category_id == 4 ? 'selected' : ''}>Textiles</option>
-                                    <option value="5" ${product.category_id == 5 ? 'selected' : ''}>Woodwork</option>
-                                    <option value="6" ${product.category_id == 6 ? 'selected' : ''}>Ceramics</option>
+                                    ${categoryOptions}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -164,6 +210,14 @@ async function editProduct(productId) {
                             <div class="form-group">
                                 <label>Image URL</label>
                                 <input type="text" id="edit-product-image" value="${escapeHtml(product.image_url || '')}" placeholder="https://...">
+                                <small style="color: #666;">Or upload a new image below</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Upload New Image (optional)</label>
+                                <input type="file" id="edit-product-image-file" accept="image/*" onchange="previewEditProductImage(this)">
+                                <div id="edit-product-image-preview" style="margin-top: 10px; display: none;">
+                                    <img id="edit-product-preview-img" src="#" alt="Preview" style="max-width: 150px; border-radius: 8px;">
+                                </div>
                             </div>
                             <button type="submit" class="auth-btn">Save Changes</button>
                         </form>
@@ -195,6 +249,29 @@ function closeEditModal() {
 
 async function updateProduct() {
     const productId = document.getElementById('edit-product-id').value;
+    let image_url = document.getElementById('edit-product-image').value;
+    const imageFile = document.getElementById('edit-product-image-file').files[0];
+    
+    // Upload new image if selected
+    if (imageFile) {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        
+        try {
+            const uploadResponse = await fetch('../api.php?request=upload_image', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+                image_url = uploadData.image_url;
+                showToast('Image uploaded!', 'success');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+        }
+    }
+    
     const productData = {
         product_id: parseInt(productId),
         name: document.getElementById('edit-product-name').value,
@@ -202,7 +279,7 @@ async function updateProduct() {
         price: parseFloat(document.getElementById('edit-product-price').value),
         stock: parseInt(document.getElementById('edit-product-stock').value),
         description: document.getElementById('edit-product-description').value,
-        image_url: document.getElementById('edit-product-image').value
+        image_url: image_url
     };
     
     if (productData.price <= 0) {
@@ -245,7 +322,6 @@ async function updateProduct() {
 }
 
 // ===== ORDER MANAGEMENT =====
-
 async function loadOrders() {
     const container = document.getElementById('orders-list');
     if (!container) return;
@@ -896,6 +972,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isAuth) return;
     
     loadProducts();
+    loadCategoriesForForm();
 
 window.showSection = showSection;
 window.deleteProduct = deleteProduct;
