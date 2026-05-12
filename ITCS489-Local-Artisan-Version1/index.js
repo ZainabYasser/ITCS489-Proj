@@ -18,7 +18,7 @@ const featuredProductsData = [
         artisan: "Fatima Al Khalifa",
         category: "Pottery",
         priceBHD: 45.00,
-        image: "https://placehold.co/600x400/8B5E3C/white?text=Ceramic+Vase",
+        image: "https://placehold.co/600x400/1a4b72/white?text=Ceramic+Vase",
         badge: "Best Seller"
     },
     {

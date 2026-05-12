@@ -41,12 +41,12 @@ function displayProductDetail(product) {
         <div class="product-detail-layout">
             <div class="product-gallery">
                 <div class="main-image">
-                    <img src="${product.image_url || 'https://placehold.co/500x500/8B5E3C/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}" id="main-image">
+                    <img src="${product.image_url || 'https://placehold.co/500x500/1a4b72/E3C/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}" id="main-image">
                 </div>
                 <div class="thumbnail-images">
-                    <img src="${product.image_url || 'https://placehold.co/80x80/8B5E3C/white?text=View+1'}" onclick="changeImage(this.src)">
-                    <img src="https://placehold.co/80x80/8B5E3C/white?text=View+2" onclick="changeImage(this.src)">
-                    <img src="https://placehold.co/80x80/8B5E3C/white?text=View+3" onclick="changeImage(this.src)">
+                    <img src="${product.image_url || 'https://placehold.co/80x80/1a4b72/E3C/white?text=View+1'}" onclick="changeImage(this.src)">
+                    <img src="https://placehold.co/80x80/1a4b72/E3C/white?text=View+2" onclick="changeImage(this.src)">
+                    <img src="https://placehold.co/80x80/1a4b72/E3C/white?text=View+3" onclick="changeImage(this.src)">
                 </div>
             </div>
             <div class="product-info-detail">
@@ -69,9 +69,9 @@ function displayProductDetail(product) {
                     <button class="add-to-cart-btn" onclick="addToCartDetail(${product.id})">
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </button>
-                    <button class="wishlist-btn-detail" onclick="addToWishlist(${product.id})">
-                        <i class="far fa-heart"></i> Wishlist
-                    </button>
+                    <button class="wishlist-btn-detail" onclick="console.log('Button clicked, product ID:', ${product.id}); addToWishlist(${product.id});">
+    <i class="far fa-heart"></i> Wishlist
+</button>
                 </div>
             </div>
         </div>

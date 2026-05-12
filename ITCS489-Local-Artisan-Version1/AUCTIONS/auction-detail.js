@@ -116,7 +116,7 @@ function displayAuctionDetail() {
     const currentBidConverted = (currentBid * rate).toFixed(2);
     const startingBidConverted = (startBid * rate).toFixed(2);
     const minBidConverted = (minBid * rate).toFixed(2);
-    const imageUrl = currentAuction.image_url || `https://placehold.co/600x500/8B5E3C/white?text=${encodeURIComponent(currentAuction.title)}`;
+    const imageUrl = currentAuction.image_url || `https://placehold.co/600x500/1a4b72/white?text=${encodeURIComponent(currentAuction.title)}`;
     
     container.innerHTML = `
         <div class="auction-detail-layout">

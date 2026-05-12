@@ -60,7 +60,7 @@ function displayCartItems(cart) {
         itemsHTML += `
             <div class="cart-item" id="cart-item-${item.id}" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; padding: 20px; border-bottom: 1px solid #eee;">
                 <div style="width: 80px;">
-                    <img src="${item.image_url || 'https://placehold.co/80x80/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                    <img src="${item.image_url || 'https://placehold.co/80x80/1a4b72/white?text=' + encodeURIComponent(item.name)}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
                 </div>
                 <div style="flex: 2;">
                     <h4 style="margin-bottom: 5px;">${escapeHtml(item.name)}</h4>

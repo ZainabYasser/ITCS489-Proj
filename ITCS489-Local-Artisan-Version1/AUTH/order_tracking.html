@@ -37,10 +37,10 @@
 <section style="padding: 60px 0;">
     <div class="container">
         <h1 class="section-title">Track Your Order</h1>
-        <div class="tracking-form" style="max-width: 500px; margin: 0 auto;">
-            <input type="text" id="order-number" placeholder="Enter Order Number">
-            <button class="btn-primary" onclick="trackOrder()">Track</button>
-        </div>
+        <div class="tracking-form" style="max-width: 500px; margin: 0 auto; display: flex; gap: 15px;">
+    <input type="text" id="order-number" placeholder="Enter Order Number" style="flex: 1; padding: 14px 20px; border: 2px solid #e2e8f0; border-radius: 50px; font-size: 16px; outline: none; transition: all 0.3s ease;">
+    <button class="btn-primary" onclick="trackOrder()" style="padding: 14px 32px; border-radius: 50px; background: #1a4b72; color: white; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">Track</button>
+    </div>
         <div id="tracking-result" style="margin-top: 40px;"></div>
     </div>
 </section>
@@ -49,7 +49,7 @@
     <div class="container">
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Artisan<span style="color: #8B5E3C;">Co</span></h3>
+                <h3>Artisan<span style="color: #1a4b72;">Co</span></h3>
                 <p>Connecting you with local artisans.</p>
             </div>
         </div>
@@ -104,7 +104,7 @@
                             </div>
                         </div>
                         <div style="height: 4px; background: #ddd; border-radius: 2px;">
-                            <div style="width: ${progressPercent}%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
+                            <div style="width: ${progressPercent}%; height: 100%; background: #1a4b72; border-radius: 2px;"></div>
                         </div>
                         <p style="margin-top: 20px;">
                             <strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}<br>
