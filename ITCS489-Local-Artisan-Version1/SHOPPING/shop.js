@@ -138,14 +138,31 @@ function resetFilters() {
     if (typeof showToast === 'function') showToast('All filters reset', 'success');
 }
 
-function addToWishlist(productId) {
+async function addToWishlist(productId) {
     const user = getCurrentUser();
     if (!user) {
         showToast('Please login to add to wishlist', 'error');
         window.location.href = '../AUTH/login.html';
         return;
     }
-    showToast('Added to wishlist!', 'success');
+    
+    try {
+        const response = await fetch('../api.php?request=add_to_wishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to wishlist!', 'success');
+        } else {
+            showToast(data.message || 'Failed to add to wishlist', 'error');
+        }
+    } catch (error) {
+        console.error('Wishlist error:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
 }
 
 // Make functions global
