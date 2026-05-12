@@ -321,16 +321,16 @@ if ($request == 'get_product') {
 }
 
 // ============ CART FUNCTIONS ============
-
 if ($request == 'get_cart') {
     if (!isLoggedIn()) {
         echo json_encode(['success' => false, 'message' => 'Please login', 'cart' => []]);
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.image_url 
+    $stmt = $pdo->prepare("SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.image_url, u.fullname as artisan_name
                            FROM cart c
                            JOIN products p ON c.product_id = p.id
+                           JOIN users u ON p.artisan_id = u.id
                            WHERE c.user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $cart = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -348,6 +348,13 @@ if ($request == 'add_to_cart') {
     $input = json_decode(file_get_contents('php://input'), true);
     $productId = $input['product_id'] ?? 0;
     $quantity = $input['quantity'] ?? 1;
+    
+    $stmt = $pdo->prepare("SELECT id FROM products WHERE id = ?");
+    $stmt->execute([$productId]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Product not found']);
+        exit();
+    }
     
     $stmt = $pdo->prepare("SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$_SESSION['user_id'], $productId]);
@@ -489,9 +496,10 @@ if ($request == 'get_order') {
         $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
         $stmt->execute([$order['id']]);
         $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'order' => $order]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Order not found']);
     }
-    
-    echo json_encode(['success' => true, 'order' => $order]);
     exit();
 }
 

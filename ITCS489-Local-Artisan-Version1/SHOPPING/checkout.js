@@ -48,8 +48,10 @@ async function loadCheckout() {
 
 function displayCheckoutForm(cart) {
     const container = document.getElementById('checkout-container');
-    const rate = currencyRates[currentCurrency].rate;
-    const symbol = currencyRates[currentCurrency].symbol;
+    
+    // Get current currency from utils.js (window.currentCurrency)
+    const rate = window.currentCurrency && window.currencyRates ? window.currencyRates[window.currentCurrency]?.rate || 1 : 1;
+    const symbol = window.currentCurrency && window.currencyRates ? window.currencyRates[window.currentCurrency]?.symbol || 'BD' : 'BD';
     
     let itemsHTML = '';
     let totalBHD = 0;
@@ -63,6 +65,7 @@ function displayCheckoutForm(cart) {
             <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e8e2d9;">
                 <div>
                     <strong>${escapeHtml(item.name)}</strong>
+                    <small style="display: block; color: #666;">by ${escapeHtml(item.artisan_name || 'Local Artisan')}</small>
                     <small style="display: block; color: #666;">x${item.quantity}</small>
                 </div>
                 <div>${symbol} ${subtotalConverted}</div>
@@ -76,14 +79,13 @@ function displayCheckoutForm(cart) {
     const shippingConverted = (shippingBHD * rate).toFixed(2);
     const grandConverted = (grandTotalBHD * rate).toFixed(2);
     
-    // Get user data for pre-filling if available
     const user = getCurrentUser();
     
     container.innerHTML = `
         <div class="checkout-layout" style="display: grid; grid-template-columns: 1fr 380px; gap: 40px;">
             <div class="checkout-form">
                 <form id="checkout-form">
-                    <div class="form-section" style="background: #f9f6f3; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                    <div class="form-section" style="background: #e7edf2; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
                         <h3 style="margin-bottom: 20px;"><i class="fas fa-user"></i> Shipping Information</h3>
                         <input type="text" id="fullname" placeholder="Full Name" value="${escapeHtml(user?.fullname || '')}" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
                         <input type="email" id="email" placeholder="Email Address" value="${escapeHtml(user?.email || '')}" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
@@ -92,19 +94,22 @@ function displayCheckoutForm(cart) {
                         <input type="tel" id="phone" placeholder="Phone Number" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px;">
                     </div>
                     
-                    <div class="form-section" style="background: #f9f6f3; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                    <div class="form-section" style="background: #e7edf2; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
                         <h3 style="margin-bottom: 20px;"><i class="fas fa-credit-card"></i> Payment Method</h3>
                         <div class="payment-methods" style="display: flex; gap: 20px; margin: 15px 0; flex-wrap: wrap;">
-                            <div class="payment-method-card" id="payment-credit_card" onclick="selectPaymentMethod('credit_card')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
-                                <i class="fab fa-cc-visa" style="font-size: 32px;"></i>
-                                <i class="fab fa-cc-mastercard" style="font-size: 32px;"></i>
-                                <div>Credit Card</div>
+                            <div class="payment-method-card" id="payment-credit_card" onclick="selectPaymentMethod('credit_card')">
+                                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 8px;">
+                                    <i class="fab fa-cc-visa" style="font-size: 32px;"></i>
+                                    <i class="fab fa-cc-mastercard" style="font-size: 32px;"></i>
+                                </div>
+                                <div>Credit / Debit Card</div>
+                                <small style="font-size: 11px; color: #666;">Visa • Mastercard</small>
                             </div>
-                            <div class="payment-method-card" id="payment-debit_card" onclick="selectPaymentMethod('debit_card')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div class="payment-method-card" id="payment-debit_card" onclick="selectPaymentMethod('debit_card')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #5b8bb5; border-radius: 12px; cursor: pointer; text-align: center;">
                                 <i class="fas fa-credit-card" style="font-size: 32px;"></i>
                                 <div>Debit Card</div>
                             </div>
-                            <div class="payment-method-card" id="payment-apple_pay" onclick="selectPaymentMethod('apple_pay')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #e8e2d9; border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div class="payment-method-card" id="payment-apple_pay" onclick="selectPaymentMethod('apple_pay')" style="flex: 1; min-width: 120px; padding: 15px; border: 2px solid #5b8bb5; border-radius: 12px; cursor: pointer; text-align: center;">
                                 <i class="fab fa-apple" style="font-size: 32px;"></i>
                                 <div>Apple Pay</div>
                             </div>
@@ -122,13 +127,13 @@ function displayCheckoutForm(cart) {
                         </div>
                     </div>
                     
-                    <button type="submit" class="place-order-btn" style="width: 100%; background: #8B5E3C; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    <button type="submit" class="place-order-btn" style="width: 100%; background: #1a4b72; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 30px;">
                         <i class="fas fa-check-circle"></i> Place Order - ${symbol} ${grandConverted}
                     </button>
                 </form>
             </div>
             
-            <div class="order-summary" style="background: #f9f6f3; padding: 25px; border-radius: 10px; position: sticky; top: 100px;">
+            <div class="order-summary" style="background: #e7edf2; padding: 25px; border-radius: 10px; position: sticky; top: 100px;">
                 <h3 style="margin-bottom: 20px;"><i class="fas fa-receipt"></i> Order Summary</h3>
                 ${itemsHTML}
                 <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
@@ -139,9 +144,9 @@ function displayCheckoutForm(cart) {
                     <span>Shipping</span>
                     <span>${symbol} ${shippingConverted}</span>
                 </div>
-                <div class="summary-row total" style="display: flex; justify-content: space-between; padding: 15px 0; margin-top: 10px; border-top: 2px solid #e8e2d9; font-weight: 700; font-size: 18px;">
+                <div class="summary-row total" style="display: flex; justify-content: space-between; padding: 15px 0; margin-top: 10px; border-top: 2px solid #e7edf2; font-weight: 700; font-size: 18px;">
                     <span>Total</span>
-                    <span style="color: #8B5E3C;">${symbol} ${grandConverted}</span>
+                    <span style="color: #1a4b72;">${symbol} ${grandConverted}</span>
                 </div>
             </div>
         </div>
@@ -156,14 +161,14 @@ function selectPaymentMethod(method) {
     
     document.querySelectorAll('.payment-method-card').forEach(card => {
         card.classList.remove('selected');
-        card.style.borderColor = '#e8e2d9';
+        card.style.borderColor = '#e7edf2';
         card.style.background = 'white';
     });
     const selectedCard = document.getElementById(`payment-${method}`);
     if (selectedCard) {
         selectedCard.classList.add('selected');
-        selectedCard.style.borderColor = '#8B5E3C';
-        selectedCard.style.background = '#f9f6f3';
+        selectedCard.style.borderColor = '#1a4b72';
+        selectedCard.style.background = '#f7f9fc';
     }
     
     const cardDetails = document.getElementById('card-details-section');
@@ -200,7 +205,6 @@ async function placeOrder(e) {
         }
     }
     
-    // Show loading state
     const submitBtn = document.querySelector('.place-order-btn');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
@@ -249,3 +253,8 @@ function escapeHtml(text) {
 window.loadCheckout = loadCheckout;
 window.selectPaymentMethod = selectPaymentMethod;
 window.placeOrder = placeOrder;
+
+// Load checkout when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadCheckout();
+});

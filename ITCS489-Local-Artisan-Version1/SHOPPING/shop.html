@@ -182,10 +182,10 @@
     </div>
 </footer>
 
-<script src="../SHARED/utils.js"></script>
-<script src="../SHARED/addToCart.js"></script>
-<script src="shop.js"></script>
-<script src="../SHARED/main.js"></script>
+<script src="../SHARED/utils.js?v=2"></script>
+<script src="../SHARED/addToCart.js?v=2"></script>
+<script src="shop.js?v=2"></script>
+<script src="../SHARED/main.js?v=2"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Load currency preference first
@@ -202,7 +202,6 @@
         }
     });
 </script>
-<!-- Simple category auto-filter -->
 <script>
     (function() {
         // Get category from URL
@@ -228,7 +227,6 @@
                 }
             }
             
-            // Try immediately, then retry a few times
             //doFilter();
             //setTimeout(doFilter, 100);
             setTimeout(doFilter, 150);
