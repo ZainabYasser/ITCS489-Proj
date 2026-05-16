@@ -308,7 +308,9 @@ if ($request == 'get_products') {
 if ($request == 'get_product') {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
-    $stmt = $pdo->prepare("SELECT p.*, u.fullname as artisan_name, c.name as category_name 
+    $stmt = $pdo->prepare("SELECT p.*, u.fullname as artisan_name, c.name as category_name,
+                          (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count,
+                          (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE product_id = p.id) as average_rating
                            FROM products p
                            LEFT JOIN users u ON p.artisan_id = u.id
                            LEFT JOIN categories c ON p.category_id = c.id
@@ -1416,7 +1418,7 @@ if ($request == 'get_reviews') {
         SELECT r.*, u.fullname 
         FROM reviews r
         JOIN users u ON r.user_id = u.id
-        WHERE r.product_id = ? AND r.status = 'approved'
+        WHERE r.product_id = ?
         ORDER BY r.created_at DESC
     ");
     $stmt->execute([$productId]);
@@ -1447,17 +1449,7 @@ if ($request == 'add_review') {
         exit();
     }
     
-    // Check if user has purchased this product
-    $stmt = $pdo->prepare("
-        SELECT COUNT(*) FROM order_items oi
-        JOIN orders o ON oi.order_id = o.id
-        WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'delivered'
-    ");
-    $stmt->execute([$_SESSION['user_id'], $productId]);
-    $hasPurchased = $stmt->fetchColumn() > 0;
     
-    // For now, allow reviews even without purchase (for testing)
-    // In production, you might want to enforce: if (!$hasPurchased) { error }
     
     // Check if user already reviewed this product
     $stmt = $pdo->prepare("SELECT id FROM reviews WHERE user_id = ? AND product_id = ?");
@@ -1468,19 +1460,10 @@ if ($request == 'add_review') {
     }
     
     $stmt = $pdo->prepare("
-        INSERT INTO reviews (product_id, user_id, rating, comment, status, created_at) 
-        VALUES (?, ?, ?, ?, 'approved', NOW())
+        INSERT INTO reviews (user_id, product_id, rating, comment, created_at) 
+        VALUES (?, ?, ?, ?, NOW())
     ");
-    $stmt->execute([$productId, $_SESSION['user_id'], $rating, $comment]);
-    
-    // Update product average rating
-    $stmt = $pdo->prepare("
-        UPDATE products 
-        SET average_rating = (SELECT AVG(rating) FROM reviews WHERE product_id = ?),
-            review_count = (SELECT COUNT(*) FROM reviews WHERE product_id = ?)
-        WHERE id = ?
-    ");
-    $stmt->execute([$productId, $productId, $productId]);
+    $stmt->execute([$_SESSION['user_id'], $productId, $rating, $comment]);
     
     echo json_encode(['success' => true, 'message' => 'Review submitted successfully!']);
     exit();
