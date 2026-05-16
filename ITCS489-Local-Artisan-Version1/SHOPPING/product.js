@@ -41,24 +41,21 @@ function displayProductDetail(product) {
         <div class="product-detail-layout">
             <div class="product-gallery">
                 <div class="main-image">
-                    <img src="${product.image_url || 'https://placehold.co/500x500/1a4b72/E3C/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}" id="main-image">
+                    <img src="${product.image_url || 'https://placehold.co/500x500/1a4b72/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}" id="main-image">
                 </div>
                 <div class="thumbnail-images">
-                    <img src="${product.image_url || 'https://placehold.co/80x80/1a4b72/E3C/white?text=View+1'}" onclick="changeImage(this.src)">
-                    <img src="https://placehold.co/80x80/1a4b72/E3C/white?text=View+2" onclick="changeImage(this.src)">
-                    <img src="https://placehold.co/80x80/1a4b72/E3C/white?text=View+3" onclick="changeImage(this.src)">
                 </div>
             </div>
             <div class="product-info-detail">
-                <h1>${product.name}</h1>
+                <h1>${escapeHtml(product.name)}</h1>
                 <div class="product-rating">
-                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
-                    <span>(15 reviews)</span>
+                    ${getStarRating(product.average_rating || 0)}
+                    <span>(${product.review_count || 0} reviews)</span>
                 </div>
                 <p class="product-price-detail">${priceFormatted}</p>
-                <p class="product-description">${product.description || 'Beautiful handmade product crafted with love and care.'}</p>
+                <p class="product-description">${escapeHtml(product.description) || 'Beautiful handmade product crafted with love and care.'}</p>
                 <div class="artisan-info">
-                    <strong><i class="fas fa-user"></i> Artisan: ${product.artisan_name || 'Local Artisan'}</strong>
+                    <strong><i class="fas fa-user"></i> Artisan: ${escapeHtml(product.artisan_name || 'Local Artisan')}</strong>
                 </div>
                 <div class="quantity-selector">
                     <button onclick="decrementQuantity()">-</button>
@@ -69,9 +66,9 @@ function displayProductDetail(product) {
                     <button class="add-to-cart-btn" onclick="addToCartDetail(${product.id})">
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </button>
-                    <button class="wishlist-btn-detail" onclick="console.log('Button clicked, product ID:', ${product.id}); addToWishlist(${product.id});">
-    <i class="far fa-heart"></i> Wishlist
-</button>
+                    <button class="wishlist-btn-detail" onclick="addToWishlist(${product.id})">
+                        <i class="far fa-heart"></i> Wishlist
+                    </button>
                 </div>
             </div>
         </div>
@@ -105,9 +102,9 @@ async function loadReviews(productId) {
         if (container && data.success && data.reviews && data.reviews.length > 0) {
             container.innerHTML = data.reviews.map(review => `
                 <div class="review-card" style="background: #f9f6f3; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <strong>${review.fullname}</strong>
+                    <strong>${escapeHtml(review.fullname)}</strong>
                     <div class="rating">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
-                    <p>${review.comment}</p>
+                    <p>${escapeHtml(review.comment)}</p>
                     <small style="color: #888;">${new Date(review.created_at).toLocaleDateString()}</small>
                 </div>
             `).join('');
@@ -116,6 +113,10 @@ async function loadReviews(productId) {
         }
     } catch (error) {
         console.error('Error loading reviews:', error);
+        const container = document.getElementById('reviews-container');
+        if (container) {
+            container.innerHTML = '<p>Unable to load reviews. Please try again later.</p>';
+        }
     }
 }
 
@@ -165,6 +166,14 @@ async function submitReview(productId) {
         return;
     }
     
+    // Show loading state on button
+    const submitBtn = document.querySelector('.add-review .btn-primary');
+    const originalText = submitBtn?.innerHTML;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
+    }
+    
     try {
         const response = await fetch('../api.php?request=add_review', {
             method: 'POST',
@@ -175,17 +184,51 @@ async function submitReview(productId) {
                 comment: comment 
             })
         });
+        
         const data = await response.json();
         
         if (data.success) {
-            showToast('Review submitted! Thank you for your feedback.', 'success');
+            showToast('✓ Review submitted! Thank you for your feedback.', 'success');
             document.getElementById('review-comment').value = '';
-            loadReviews(productId);
+            document.getElementById('rating').value = '5';
+            await loadReviews(productId);
         } else {
             showToast(data.message || 'Failed to submit review', 'error');
         }
     } catch (error) {
         console.error('Review error:', error);
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+}
+
+async function addToWishlist(productId) {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Please login to add to wishlist', 'error');
+        window.location.href = '../AUTH/login.html';
+        return;
+    }
+    
+    try {
+        const response = await fetch('../api.php?request=add_to_wishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to wishlist!', 'success');
+        } else {
+            showToast(data.message || 'Failed to add to wishlist', 'error');
+        }
+    } catch (error) {
+        console.error('Wishlist error:', error);
         showToast('Network error. Please try again.', 'error');
     }
 }
@@ -210,9 +253,72 @@ function changeImage(src) {
     document.getElementById('main-image').src = src;
 }
 
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getStarRating(rating) {
+    const roundedRating = Math.round(rating * 2) / 2;
+    const fullStars = Math.floor(roundedRating);
+    const hasHalfStar = roundedRating % 1 !== 0;
+    const emptyStars = 5 - Math.ceil(roundedRating);
+    
+    let stars = '';
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="fas fa-star" style="color: #ffc107;"></i>';
+    }
+    if (hasHalfStar) {
+        stars += '<i class="fas fa-star-half-alt" style="color: #ffc107;"></i>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="far fa-star" style="color: #ffc107;"></i>';
+    }
+    if (rating === 0 || rating === null) {
+        return '☆☆☆☆☆';
+    }
+    return stars;
+}
+
+// Listen for currency changes and update prices
+function setupCurrencyListener() {
+    // Override the changeCurrency function to also refresh product display
+    const originalChangeCurrency = window.changeCurrency;
+    if (originalChangeCurrency) {
+        window.changeCurrency = function(currencyCode) {
+            originalChangeCurrency(currencyCode);
+            // Refresh product price and any other currency-dependent elements
+            refreshProductPrice();
+        };
+    }
+}
+
+function refreshProductPrice() {
+    // Update the main price display
+    const priceElement = document.querySelector('.product-price-detail');
+    if (priceElement && currentProduct) {
+        const newPrice = formatPrice(currentProduct.price);
+        priceElement.textContent = newPrice;
+        priceElement.setAttribute('data-original-price', currentProduct.price);
+    }
+    
+    // Update cart count (in case it changed)
+    if (typeof updateCartCount === 'function') {
+        updateCartCount();
+    }
+}
+
+// Initialize currency listener when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setupCurrencyListener();
+});
+
 // Make functions global
 window.loadProductDetail = loadProductDetail;
 window.addToCartDetail = addToCartDetail;
+window.addToWishlist = addToWishlist;
 window.submitReview = submitReview;
 window.incrementQuantity = incrementQuantity;
 window.decrementQuantity = decrementQuantity;

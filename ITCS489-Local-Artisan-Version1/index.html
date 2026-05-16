@@ -269,42 +269,56 @@
     // ===== FEATURED PRODUCTS LOADING (with currency support) =====
     
     async function loadFeaturedProducts() {
-        const container = document.getElementById('featured-products');
-        if (!container) return;
+    const container = document.getElementById('featured-products');
+    if (!container) return;
+    
+    try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`api.php?request=get_products&_=${timestamp}`);
+        const data = await response.json();
         
-        try {
-            const timestamp = new Date().getTime();
-            const response = await fetch(`api.php?request=get_products&_=${timestamp}`);
-            const data = await response.json();
-            
-            if (data.success && data.products && data.products.length > 0) {
-                const featured = data.products.slice(0, 4);
-                container.innerHTML = featured.map(product => `
+        if (data.success && data.products && data.products.length > 0) {
+            const featured = data.products.slice(0, 4);
+            container.innerHTML = featured.map(product => {
+                const priceFormatted = formatPrice(product.price);
+                
+                return `
                     <div class="product-card">
-                        <div class="product-image">
-                            <img src="${product.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(product.name)}" alt="${product.name}">
+                        <div class="product-image" onclick="location.href='SHOPPING/product-detail.html?id=${product.id}'" style="cursor: pointer;">
+                            <img src="${product.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(product.name)}" 
+                                 alt="${product.name}" loading="lazy"
+                                 onerror="this.src='https://placehold.co/600x400/1a4b72/white?text=Product'">
                             <span class="product-category">${product.category_name || 'Handmade'}</span>
                         </div>
                         <div class="product-info">
-                            <h3>${escapeHtml(product.name)}</h3>
+                            <h3 onclick="location.href='SHOPPING/product-detail.html?id=${product.id}'" style="cursor: pointer;">${escapeHtml(product.name)}</h3>
                             <p class="artisan-name">by ${escapeHtml(product.artisan_name || 'Local Artisan')}</p>
-                            <p class="product-price" data-original-price="${product.price}">${formatPrice(product.price)}</p>
-                            <div class="product-actions">
-                                <button class="add-to-cart" onclick="addToCart(${product.id})">
-                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                            <p class="product-price" data-original-price="${product.price}">${priceFormatted}</p>
+                            <div class="product-actions" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="add-to-cart" onclick="addToCart(${product.id})" style="flex: 1;">
+                                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                                    </button>
+                                    <button class="wishlist-btn" onclick="addToWishlist(${product.id})" style="width: 40px;">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                </div>
+                                <button class="view-details-btn" onclick="location.href='SHOPPING/product-detail.html?id=${product.id}'" style="width: 100%; background: #1a4b72; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+                                    <i class="fas fa-eye"></i> View Details
                                 </button>
                             </div>
                         </div>
                     </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-center">No products available yet. Check back soon!</p>';
-            }
-        } catch (error) {
-            console.error('Error loading featured products:', error);
-            container.innerHTML = '<p class="text-center">Unable to load products.</p>';
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = '<p class="text-center">No products available yet. Check back soon!</p>';
         }
+    } catch (error) {
+        console.error('Error loading featured products:', error);
+        container.innerHTML = '<p class="text-center">Unable to load products.</p>';
     }
+}
 
     // Special add to cart function for home page
 async function addToCart(productId) {
@@ -344,6 +358,39 @@ async function addToCart(productId) {
     } catch (error) {
         console.error('Add to cart error:', error);
         showToast('Network error', 'error');
+    }
+}
+
+// Add to wishlist function for home page
+async function addToWishlist(productId) {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Please login to add to wishlist', 'error');
+        window.location.href = 'AUTH/login.html';
+        return;
+    }
+    
+    try {
+        const response = await fetch('api.php?request=add_to_wishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to wishlist!', 'success');
+            // Optional: Change heart icon color
+            const wishlistBtn = document.querySelector(`.wishlist-btn[onclick*="addToWishlist(${productId})"]`);
+            if (wishlistBtn) {
+                wishlistBtn.innerHTML = '<i class="fas fa-heart" style="color: #e91e63;"></i>';
+            }
+        } else {
+            showToast(data.message || 'Failed to add to wishlist', 'error');
+        }
+    } catch (error) {
+        console.error('Wishlist error:', error);
+        showToast('Network error. Please try again.', 'error');
     }
 }
     
