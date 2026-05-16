@@ -1290,52 +1290,119 @@ if ($request == 'admin_delete_category') {
     $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
     $stmt->execute([$categoryId]);
     
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'message' => 'Category deleted successfully']);
     exit();
 }
 
-// ===== ADMIN REPORTS =====
+// ===== ADMIN REPORTS (ENHANCED) =====
 if ($request == 'admin_reports') {
     if (!isAdmin()) {
         echo json_encode(['success' => false, 'message' => 'Admin access required']);
         exit();
     }
     
-    // Monthly sales
-    $stmt = $pdo->query("SELECT SUM(total_amount) as total FROM orders WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE()) AND status = 'delivered'");
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $monthly_sales = $result['total'] ?? 0;
+    $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+    $month = isset($_GET['month']) ? $_GET['month'] : 'all';
     
-    // Top artisan
-    $stmt = $pdo->query("
-        SELECT u.fullname, SUM(oi.price * oi.quantity) as total_sales
-        FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
-        JOIN users u ON p.artisan_id = u.id
-        GROUP BY p.artisan_id
-        ORDER BY total_sales DESC
-        LIMIT 1
-    ");
-    $top = $stmt->fetch(PDO::FETCH_ASSOC);
-    $top_artisan = $top['fullname'] ?? 'N/A';
+    // Monthly sales summary
+    if ($month == 'all') {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as order_count 
+            FROM orders 
+            WHERE YEAR(created_at) = ? AND status = 'delivered'
+        ");
+        $stmt->execute([$year]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $monthly_sales = $result['total'] ?? 0;
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as order_count 
+            FROM orders 
+            WHERE YEAR(created_at) = ? AND MONTH(created_at) = ? AND status = 'delivered'
+        ");
+        $stmt->execute([$year, $month]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $monthly_sales = $result['total'] ?? 0;
+    }
     
-    // Best selling product
+    // Monthly breakdown
+    $monthly_breakdown = [];
+    for ($m = 1; $m <= 12; $m++) {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as count
+            FROM orders 
+            WHERE YEAR(created_at) = ? AND MONTH(created_at) = ? AND status = 'delivered'
+        ");
+        $stmt->execute([$year, $m]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        $monthly_breakdown[] = [
+            'month' => $m,
+            'month_name' => date('F', mktime(0, 0, 0, $m, 1)),
+            'total_sales' => (float)($data['total'] ?? 0),
+            'order_count' => (int)($data['count'] ?? 0),
+            'avg_order_value' => ($data['count'] > 0) ? (float)($data['total'] / $data['count']) : 0
+        ];
+    }
+    
+    // Top artisans
     $stmt = $pdo->query("
-        SELECT p.name, SUM(oi.quantity) as total_sold
-        FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
-        GROUP BY oi.product_id
-        ORDER BY total_sold DESC
-        LIMIT 1
+        SELECT u.id, u.fullname, ap.shop_name,
+               COALESCE(SUM(oi.quantity), 0) as products_sold,
+               COALESCE(SUM(oi.price * oi.quantity), 0) as total_revenue
+        FROM users u
+        LEFT JOIN artisan_profiles ap ON u.id = ap.user_id
+        LEFT JOIN products p ON u.id = p.artisan_id
+        LEFT JOIN order_items oi ON p.id = oi.product_id
+        LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'delivered'
+        WHERE u.role = 'artisan'
+        GROUP BY u.id
+        ORDER BY total_revenue DESC
+        LIMIT 10
     ");
-    $best = $stmt->fetch(PDO::FETCH_ASSOC);
-    $best_selling = $best['name'] ?? 'N/A';
+    $top_artisans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Best selling products
+    $stmt = $pdo->query("
+        SELECT p.id, p.name, c.name as category_name,
+               COALESCE(SUM(oi.quantity), 0) as quantity_sold,
+               COALESCE(SUM(oi.price * oi.quantity), 0) as total_revenue
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN order_items oi ON p.id = oi.product_id
+        LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'delivered'
+        GROUP BY p.id
+        ORDER BY quantity_sold DESC
+        LIMIT 10
+    ");
+    $best_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Recent orders
+    $stmt = $pdo->query("
+        SELECT o.*, u.fullname as customer_name,
+               (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC
+        LIMIT 20
+    ");
+    $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Top artisan (single for summary)
+    $top_artisan = !empty($top_artisans) ? $top_artisans[0]['fullname'] : 'N/A';
+    
+    // Best selling product (single for summary)
+    $best_selling = !empty($best_products) ? $best_products[0]['name'] : 'N/A';
     
     echo json_encode([
         'success' => true,
-        'monthly_sales' => $monthly_sales,
+        'monthly_sales' => (float)$monthly_sales,
         'top_artisan' => $top_artisan,
-        'best_selling' => $best_selling
+        'best_selling' => $best_selling,
+        'monthly_breakdown' => $monthly_breakdown,
+        'top_artisans' => $top_artisans,
+        'best_products' => $best_products,
+        'recent_orders' => $recent_orders
     ]);
     exit();
 }
@@ -1644,6 +1711,125 @@ if ($request == 'get_auction_for_edit') {
     } else {
         echo json_encode(['success' => false, 'message' => 'Auction not found']);
     }
+    exit();
+}
+// ============ ARTISAN REPORTS ============
+if ($request == 'artisan_reports') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $artisan_id = $_SESSION['user_id'];
+    $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+    $month = isset($_GET['month']) ? $_GET['month'] : 'all';
+    
+    // Total sales and orders
+    if ($month == 'all') {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total_sales, 
+                   COUNT(DISTINCT o.id) as total_orders
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            JOIN products p ON oi.product_id = p.id
+            WHERE p.artisan_id = ? AND YEAR(o.created_at) = ? AND o.status = 'delivered'
+        ");
+        $stmt->execute([$artisan_id, $year]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total_sales, 
+                   COUNT(DISTINCT o.id) as total_orders
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            JOIN products p ON oi.product_id = p.id
+            WHERE p.artisan_id = ? AND YEAR(o.created_at) = ? AND MONTH(o.created_at) = ? AND o.status = 'delivered'
+        ");
+        $stmt->execute([$artisan_id, $year, $month]);
+    }
+    $totals = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total_sales = $totals['total_sales'] ?? 0;
+    $total_orders = $totals['total_orders'] ?? 0;
+    
+    // Monthly breakdown
+    $monthly_breakdown = [];
+    for ($m = 1; $m <= 12; $m++) {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total_sales, 
+                   COUNT(DISTINCT o.id) as order_count
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            JOIN products p ON oi.product_id = p.id
+            WHERE p.artisan_id = ? AND YEAR(o.created_at) = ? AND MONTH(o.created_at) = ? AND o.status = 'delivered'
+        ");
+        $stmt->execute([$artisan_id, $year, $m]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        $monthly_breakdown[] = [
+            'month' => $m,
+            'month_name' => date('F', mktime(0, 0, 0, $m, 1)),
+            'total_sales' => (float)($data['total_sales'] ?? 0),
+            'order_count' => (int)($data['order_count'] ?? 0),
+            'avg_order_value' => ($data['order_count'] > 0) ? (float)($data['total_sales'] / $data['order_count']) : 0
+        ];
+    }
+    
+    // Best selling products (top 5)
+    $stmt = $pdo->prepare("
+        SELECT p.id, p.name, 
+               COALESCE(SUM(oi.quantity), 0) as quantity_sold,
+               COALESCE(SUM(oi.price * oi.quantity), 0) as total_revenue
+        FROM products p
+        LEFT JOIN order_items oi ON p.id = oi.product_id
+        LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'delivered'
+        WHERE p.artisan_id = ?
+        GROUP BY p.id
+        ORDER BY quantity_sold DESC
+        LIMIT 5
+    ");
+    $stmt->execute([$artisan_id]);
+    $best_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Best selling product (single for summary card)
+    $best_selling_product = !empty($best_products) ? $best_products[0]['name'] : 'N/A';
+    
+    // Recent orders (last 10)
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT o.order_number, o.total_amount, o.status, o.created_at, u.fullname as customer_name
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        JOIN users u ON o.user_id = u.id
+        WHERE p.artisan_id = ?
+        ORDER BY o.created_at DESC
+        LIMIT 10
+    ");
+    $stmt->execute([$artisan_id]);
+    $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // If no data at all, return friendly empty message
+    if ($total_sales == 0 && $total_orders == 0 && empty($best_products) && empty($recent_orders)) {
+        echo json_encode([
+            'success' => true,
+            'total_sales' => 0,
+            'total_orders' => 0,
+            'best_selling_product' => 'No sales yet',
+            'monthly_breakdown' => array_fill(0, 12, ['month_name' => '', 'order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0]),
+            'best_products' => [],
+            'recent_orders' => [],
+            'message' => 'No sales data available yet. Start selling your products!'
+        ]);
+        exit();
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'total_sales' => (float)$total_sales,
+        'total_orders' => (int)$total_orders,
+        'best_selling_product' => $best_selling_product,
+        'monthly_breakdown' => $monthly_breakdown,
+        'best_products' => $best_products,
+        'recent_orders' => $recent_orders
+    ]);
     exit();
 }
 // ============ DEFAULT ============
