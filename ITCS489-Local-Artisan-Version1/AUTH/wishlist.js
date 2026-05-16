@@ -25,7 +25,7 @@ async function loadWishlist() {
                     ${data.wishlist.map(item => `
                         <div class="wishlist-item" id="wishlist-item-${item.product_id}">
                             <div class="wishlist-image">
-                                <img src="${item.image_url || 'https://placehold.co/300x200/8B5E3C/white?text=' + encodeURIComponent(item.name)}" alt="${escapeHtml(item.name)}" loading="lazy">
+                                <img src="${item.image_url || 'https://placehold.co/300x200/1a4b72/white?text=' + encodeURIComponent(item.name)}" alt="${escapeHtml(item.name)}" loading="lazy">
                                 <button class="remove-wishlist-btn" onclick="removeFromWishlist(${item.product_id})">
                                     <i class="fas fa-trash"></i>
                                 </button>

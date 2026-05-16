@@ -348,7 +348,7 @@ async function loadAllOrders() {
                                         </select>
                                     </td>
                                     <td style="padding: 12px;">
-                                        <button onclick="viewOrderDetails(${o.id})" style="background: #8B5E3C; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+                                        <button onclick="viewOrderDetails(${o.id})" style="background: #1a4b72; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
                                             View
                                         </button>
                                     </td>
@@ -591,7 +591,7 @@ function loadReports() {
         <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
             <div class="stat-card" style="background: #f9f6f3; padding: 20px; border-radius: 10px; text-align: center;">
                 <h4>Monthly Sales</h4>
-                <p id="monthly-sales" style="font-size: 28px; font-weight: bold; color: #8B5E3C;">Loading...</p>
+                <p id="monthly-sales" style="font-size: 28px; font-weight: bold; color: #1a4b72;">Loading...</p>
             </div>
             <div class="stat-card" style="background: #f9f6f3; padding: 20px; border-radius: 10px; text-align: center;">
                 <h4>Top Artisan</h4>

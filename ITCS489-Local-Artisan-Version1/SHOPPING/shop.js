@@ -49,9 +49,9 @@ function displayProducts() {
         return `
             <div class="product-card">
                 <div class="product-image">
-                    <img src="${product.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(product.name)}" 
+                    <img src="${product.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(product.name)}" 
                          alt="${product.name}" loading="lazy"
-                         onerror="this.src='https://placehold.co/600x400/8B5E3C/white?text=Product'">
+                         onerror="this.src='https://placehold.co/600x400/1a4b72/white?text=Product'">
                     <span class="product-category">${product.category_name || 'Handmade'}</span>
                 </div>
                 <div class="product-info">
@@ -64,7 +64,11 @@ function displayProducts() {
                         </button>
                         <button class="wishlist-btn" onclick="addToWishlist(${product.id})">
                             <i class="far fa-heart"></i>
+                        </div>
+                        <button class="view-details-btn" onclick="location.href='product-detail.html?id=${product.id}'" style="width: 100%; background: #1a4b72; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-eye"></i> View Details
                         </button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -138,14 +142,31 @@ function resetFilters() {
     if (typeof showToast === 'function') showToast('All filters reset', 'success');
 }
 
-function addToWishlist(productId) {
+async function addToWishlist(productId) {
     const user = getCurrentUser();
     if (!user) {
         showToast('Please login to add to wishlist', 'error');
         window.location.href = '../AUTH/login.html';
         return;
     }
-    showToast('Added to wishlist!', 'success');
+    
+    try {
+        const response = await fetch('../api.php?request=add_to_wishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Added to wishlist!', 'success');
+        } else {
+            showToast(data.message || 'Failed to add to wishlist', 'error');
+        }
+    } catch (error) {
+        console.error('Wishlist error:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
 }
 
 // Make functions global

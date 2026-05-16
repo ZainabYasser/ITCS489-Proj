@@ -209,7 +209,7 @@ async function trackOrder() {
                                 </div>
                             </div>
                             <div class="progress-bar" style="height: 4px; background: #ddd; border-radius: 2px;">
-                                <div style="width: ${progressPercent}%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
+                                <div style="width: ${progressPercent}%; height: 100%; background: #1a4b72; border-radius: 2px;"></div>
                             </div>
                             <p style="margin-top: 20px;">
                                 <strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}<br>

@@ -63,7 +63,7 @@ function displayTrackingResult(order, resultDiv) {
     
     resultDiv.innerHTML = `
         <div style="background: #f9f6f3; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto;">
-            <h3 style="color: #8B5E3C; margin-bottom: 20px;">Order #${order.order_number}</h3>
+            <h3 style="color: #53738b; margin-bottom: 20px;">Order #${order.order_number}</h3>
             
             <div style="display: flex; justify-content: space-between; margin: 30px 0; flex-wrap: wrap; gap: 15px;">
                 <div style="text-align: center; flex: 1;">
@@ -85,7 +85,7 @@ function displayTrackingResult(order, resultDiv) {
             </div>
             
             <div style="height: 4px; background: #ddd; border-radius: 2px; margin: 20px 0;">
-                <div style="width: ${progressPercent}%; height: 100%; background: #8B5E3C; border-radius: 2px;"></div>
+                <div style="width: ${progressPercent}%; height: 100%; background: #53738b !important; border-radius: 2px;"></div>
             </div>
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e8e2d9;">
@@ -100,7 +100,7 @@ function displayTrackingResult(order, resultDiv) {
                     </tr>
                     <tr>
                         <td style="padding: 8px 0;"><strong>Total Amount:</strong></td>
-                        <td style="padding: 8px 0; color: #8B5E3C; font-weight: 700;">
+                        <td style="padding: 8px 0; color: #53738b; font-weight: 700;">
                             BD ${parseFloat(order.total_amount).toFixed(2)}
                         </td>
                     </tr>
