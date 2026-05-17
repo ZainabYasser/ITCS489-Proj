@@ -972,7 +972,8 @@ if ($request == 'get_artisan_orders') {
     }
     
     $stmt = $pdo->prepare("
-        SELECT DISTINCT o.*, u.fullname as customer_name 
+        SELECT DISTINCT o.*, u.fullname as customer_name,
+        (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
         FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
@@ -983,7 +984,95 @@ if ($request == 'get_artisan_orders') {
     $stmt->execute([$_SESSION['user_id']]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Get items for each order
+    foreach ($orders as &$order) {
+        $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+        $stmt->execute([$order['id']]);
+        $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
     echo json_encode(['success' => true, 'orders' => $orders]);
+    exit();
+}
+
+// Get artisan order detail
+if ($request == 'get_artisan_order_detail') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $orderNumber = $_GET['order_number'] ?? '';
+    
+    $stmt = $pdo->prepare("
+        SELECT o.*, u.fullname as customer_name
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        WHERE o.order_number = ?
+    ");
+    $stmt->execute([$orderNumber]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($order) {
+        // Verify this artisan has products in this order
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            WHERE oi.order_id = ? AND p.artisan_id = ?
+        ");
+        $stmt->execute([$order['id'], $_SESSION['user_id']]);
+        
+        if ($stmt->fetchColumn() > 0) {
+            $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+            $stmt->execute([$order['id']]);
+            $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode(['success' => true, 'order' => $order]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Order not found']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Order not found']);
+    }
+    exit();
+}
+
+// Update order status (artisan only)
+if ($request == 'artisan_update_order_status') {
+    if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $orderId = $input['order_id'] ?? 0;
+    $status = $input['status'] ?? '';
+    
+    // Verify this order contains products from this artisan
+    $stmt = $pdo->prepare("
+        SELECT o.id FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN products p ON oi.product_id = p.id
+        WHERE o.id = ? AND p.artisan_id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$orderId, $_SESSION['user_id']]);
+    
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Order not found or does not belong to you']);
+        exit();
+    }
+    
+    $allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!in_array($status, $allowedStatuses)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid status']);
+        exit();
+    }
+    
+    $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+    $stmt->execute([$status, $orderId]);
+    
+    echo json_encode(['success' => true, 'message' => 'Order status updated successfully']);
     exit();
 }
 

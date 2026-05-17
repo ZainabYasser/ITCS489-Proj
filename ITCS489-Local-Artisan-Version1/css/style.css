@@ -3200,3 +3200,24 @@ footer {
     background: #dc354520;
     color: #dc3545;
 }
+
+/* Order status select styling */
+.order-status-select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg-white);
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.order-status-select:hover {
+    border-color: var(--primary);
+}
+
+.order-status-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(26, 75, 114, 0.1);
+}
