@@ -8,61 +8,89 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
     <style>
-        .reports-dashboard .stat-card {
-            cursor: pointer;
-            transition: all 0.3s ease;
+    /* ===== EXISTING STYLES - KEEP AS IS ===== */
+    .reports-dashboard .stat-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .reports-dashboard .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .reports-dashboard .stat-card small {
+        font-size: 12px;
+        color: #8B5E3C;
+        display: block;
+        margin-top: 8px;
+    }
+    #detailed-report {
+        animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .empty-state-message {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    .empty-state-message i {
+        font-size: 64px;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+    .empty-state-message h4 {
+        margin-bottom: 10px;
+    }
+    .empty-state-message p {
+        color: #666;
+    }
+    
+    /* ===== NEW: REPORT SECTION ONLY - Artisan Theme ===== */
+    #reports-section .stat-card p {
+        color: #1a4b72 !important;
+    }
+    
+    #reports-section .stat-card small {
+        color: #666 !important;
+    }
+    
+    #detailed-report {
+        background: #e7edf2 !important;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    #detailed-report h3,
+    #detailed-report h4 {
+        color: #1a4b72 !important;
+    }
+    
+    #reports-section .data-table th {
+        background: #1a4b72 !important;
+        color: white !important;
+    }
+    
+    @media print {
+        .sidebar, header, footer, .reports-dashboard .stats-grid button,
+        #detailed-report button, select, .pagination, .logout-btn, .nav-icons {
+            display: none !important;
         }
-        .reports-dashboard .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        .dashboard-container {
+            display: block !important;
         }
-        .reports-dashboard .stat-card small {
-            font-size: 12px;
-            color: #8B5E3C;
-            display: block;
-            margin-top: 8px;
+        .dashboard-content {
+            padding: 0 !important;
         }
-        #detailed-report {
-            animation: fadeIn 0.5s ease;
+        body {
+            background: white !important;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .stat-card {
+            break-inside: avoid;
         }
-        .empty-state-message {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .empty-state-message i {
-            font-size: 64px;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-        .empty-state-message h4 {
-            margin-bottom: 10px;
-        }
-        .empty-state-message p {
-            color: #666;
-        }
-        @media print {
-            .sidebar, header, footer, .reports-dashboard .stats-grid button,
-            #detailed-report button, select, .pagination, .logout-btn, .nav-icons {
-                display: none !important;
-            }
-            .dashboard-container {
-                display: block !important;
-            }
-            .dashboard-content {
-                padding: 0 !important;
-            }
-            body {
-                background: white !important;
-            }
-            .stat-card {
-                break-inside: avoid;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
 
@@ -640,8 +668,8 @@
                     </select>
                 </div>
                 
-                <div id="detailed-report" style="background: #f9f6f3; border-radius: 12px; padding: 20px; margin-top: 20px;">
-                    <h3 id="report-title">Monthly Sales Report</h3>
+                <div id="detailed-report" style="background: #e7edf2; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                    <h3 id="report-title" style="color: #1a4b72;">Monthly Sales Report</h3>
                     <div id="report-details"><div class="loading"><div class="spinner"></div></div></div>
                 </div>
             </div>
@@ -698,11 +726,11 @@
             document.getElementById('report-details').innerHTML = `
                 <div style="display: grid; gap: 20px;">
                     <div style="background: white; border-radius: 12px; padding: 20px;">
-                        <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-chart-bar"></i> Monthly Sales Breakdown</h4>
+                        <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-chart-bar"></i> Monthly Sales Breakdown</h4>
                         <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Month</th><th>Orders</th><th>Total Sales</th><th>Average Order</th></tr></thead><tbody>${hasMonthlyData ? data.monthly_breakdown.filter(m => m.order_count > 0).map(m => `<tr><td>${m.month_name}</td><td>${m.order_count}</td><td>${formatPrice(m.total_sales)}</td><td>${formatPrice(m.avg_order_value)}</td></tr>`).join('') : '<tr><td colspan="4">No sales data for this period</td></tr>'}</tbody></table></div>
                     </div>
                     <div style="background: white; border-radius: 12px; padding: 20px;">
-                        <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-clock"></i> Recent Orders</h4>
+                        <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-clock"></i> Recent Orders</h4>
                         <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>${hasOrdersData ? data.recent_orders.map(o => `<tr><td>${o.order_number}</td><td>${escapeHtml(o.customer_name)}</td><td>${new Date(o.created_at).toLocaleDateString()}</td><td>${o.item_count || 0}</td><td>${formatPrice(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td></tr>`).join('') : '<tr><td colspan="6">No orders found</td></tr>'}</tbody></table></div>
                     </div>
                 </div>
@@ -714,7 +742,7 @@
             }
             document.getElementById('report-details').innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 20px;">
-                    <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-users"></i> Top Artisans Performance</h4>
+                    <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-users"></i> Top Artisans Performance</h4>
                     <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Rank</th><th>Artisan Name</th><th>Shop Name</th><th>Products Sold</th><th>Total Revenue</th></tr></thead><tbody>${data.top_artisans.map((a, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(a.fullname)}</td><td>${escapeHtml(a.shop_name || '-')}</td><td>${a.products_sold || 0}</td><td>${formatPrice(a.total_revenue || 0)}</td></tr>`).join('')}</tbody></table></div>
                 </div>
             `;
@@ -725,7 +753,7 @@
             }
             document.getElementById('report-details').innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 20px;">
-                    <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-star"></i> Best Selling Products</h4>
+                    <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-star"></i> Best Selling Products</h4>
                     <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Rank</th><th>Product Name</th><th>Category</th><th>Quantity Sold</th><th>Total Revenue</th></tr></thead><tbody>${data.best_products.map((p, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category_name || '-')}</td><td>${p.quantity_sold || 0}</td><td>${formatPrice(p.total_revenue || 0)}</td></tr>`).join('')}</tbody></table></div>
                 </div>
             `;
@@ -735,11 +763,36 @@
     }
     
     function exportToPDF() {
-        const printContent = document.getElementById('detailed-report').cloneNode(true);
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<!DOCTYPE html><html><head><title>ArtisanCo - Sales Report</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:40px;color:#1a1a1a}.header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #8B5E3C}.header h1{color:#8B5E3C;margin-bottom:10px}.report-date{text-align:center;color:#666;margin-bottom:30px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f5f0eb}.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;font-size:12px;color:#666}@media print{body{padding:20px}}</style></head><body><div class="header"><h1>ArtisanCo - ${document.getElementById('report-title').innerText}</h1><p>Generated on ${new Date().toLocaleString()}</p></div><div class="report-date"><strong>Period:</strong> ${document.getElementById('report-year')?.value || 'All'} ${document.getElementById('report-month')?.options[document.getElementById('report-month')?.selectedIndex]?.text || 'Year'}</div>${printContent.innerHTML}<div class="footer"><p>ArtisanCo - Empowering Local Artisans</p><p>This is a system-generated report</p></div><script>window.onload=function(){window.print()};<\/script></body></html>`);
-        printWindow.document.close();
-    }
+    const printContent = document.getElementById('detailed-report').cloneNode(true);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>ArtisanCo - Sales Report</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>
+        body{font-family:'Inter',sans-serif;padding:40px;color:#1a1a1a;background:#e7edf2}
+        .header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a4b72}
+        .header h1{color:#1a4b72;margin-bottom:10px}
+        .report-date{text-align:center;color:#666;margin-bottom:30px}
+        table{width:100%;border-collapse:collapse;margin-bottom:20px}
+        th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}
+        th{background:#1a4b72;color:white}
+        tr:nth-child(even){background:#f9f9f9}
+        .footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;font-size:12px;color:#666}
+        @media print{body{padding:20px;background:white}}
+    </style></head><body>
+    <div class="header">
+        <h1>ArtisanCo - ${document.getElementById('report-title').innerText}</h1>
+        <p>Generated on ${new Date().toLocaleString()}</p>
+    </div>
+    <div class="report-date">
+        <strong>Period:</strong> ${document.getElementById('report-year')?.value || 'All'} ${document.getElementById('report-month')?.options[document.getElementById('report-month')?.selectedIndex]?.text || 'Year'}
+    </div>
+    ${printContent.innerHTML}
+    <div class="footer">
+        <p>ArtisanCo - Empowering Local Artisans</p>
+        <p>This is a system-generated report</p>
+    </div>
+    <script>window.onload=function(){window.print()};<\/script>
+    </body></html>`);
+    printWindow.document.close();
+}
     
     // ===== INITIALIZATION =====
     document.addEventListener('DOMContentLoaded', () => {
