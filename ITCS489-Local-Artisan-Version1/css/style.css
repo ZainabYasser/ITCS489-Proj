@@ -3123,3 +3123,80 @@ footer {
     background: var(--primary-dark);
     transform: translateY(-2px);
 }
+
+.reports-dashboard .stat-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.reports-dashboard .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+.reports-dashboard .stat-card small {
+    font-size: 12px;
+    color: var(--primary);
+    display: block;
+    margin-top: 8px;
+}
+#detailed-report {
+    animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.empty-state-message {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state-message i {
+    font-size: 64px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+.empty-state-message h4 {
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+.empty-state-message p {
+    color: var(--text-light);
+}
+@media print {
+    .sidebar, header, footer, .reports-dashboard .stats-grid button,
+    #detailed-report button, select, .pagination, .logout-btn, .nav-icons {
+        display: none !important;
+    }
+    .dashboard-container {
+        display: block !important;
+    }
+    .dashboard-content {
+        padding: 0 !important;
+    }
+    body {
+        background: white !important;
+    }
+    .stat-card {
+        break-inside: avoid;
+    }
+}
+
+.status-pending {
+    background: #ffc10720;
+    color: #ff9800;
+}
+.status-processing {
+    background: #17a2b820;
+    color: #17a2b8;
+}
+.status-shipped {
+    background: #17a2b820;
+    color: #17a2b8;
+}
+.status-delivered {
+    background: #28a74520;
+    color: #28a745;
+}
+.status-cancelled {
+    background: #dc354520;
+    color: #dc3545;
+}
