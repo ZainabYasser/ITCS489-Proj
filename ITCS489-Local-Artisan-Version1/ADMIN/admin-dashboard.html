@@ -93,8 +93,8 @@
                         <li><a href="#" onclick="showSection('products')">All Products</a></li>
                         <li><a href="#" onclick="showSection('orders')">All Orders</a></li>
                         <li><a href="#" onclick="showSection('auctions')">All Auctions</a></li>
-                        <li><a href="#" onclick="showSection('categories')">Categories</a></li>
-                        <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+                        <!-- <li><a href="#" onclick="showSection('categories')">Categories</a></li> -->  <!-- Categories removed -->                     
+                       <li><a href="#" onclick="showSection('reports')">Reports</a></li>
                     </ul>
                 </nav>
             </div>
@@ -135,16 +135,18 @@
                     <div id="auctions-list"></div>
                 </div>
                 
-                <div id="categories-section" style="display: none;">
-                    <h3>Manage Categories</h3>
-                    <form id="add-category-form">
-                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                            <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <button type="submit" style="background: #1a4b72; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Add Category</button>
-                        </div>
-                    </form>
-                    <div id="categories-list"></div>
-                </div>
+                <!-- Categories section removed - admin cannot manage categories
+<div id="categories-section" style="display: none;">
+    <h3>Manage Categories</h3>
+    <form id="add-category-form">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="category-name" placeholder="New Category Name" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            <button type="submit" style="background: #1a4b72; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Add Category</button>
+        </div>
+    </form>
+    <div id="categories-list"></div>
+</div>
+-->
                 
                 <div id="reports-section" style="display: none;">
                     <div id="reports-content"></div>
