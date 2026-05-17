@@ -116,7 +116,7 @@ async function loadProducts() {
                                 <p>Stock: ${p.stock}</p>
                                 <p>${p.description ? escapeHtml(p.description.substring(0, 100)) : ''}</p>
                                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <button onclick="editProduct(${p.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
+                                    <button onclick="editProduct(${p.id})" class="edit-btn" style="background:#1a4b72;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
                                     <button onclick="deleteProduct(${p.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
                                 </div>
                             </div>
@@ -187,7 +187,7 @@ async function editProduct(productId) {
                 <div id="edit-product-modal" class="modal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px; width: 90%;">
                         <span class="close-modal" onclick="closeEditModal()">&times;</span>
-                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Product</h3>
+                        <h3 style="margin-bottom: 20px; color: #1a4b72;">Edit Product</h3>
                         <form id="edit-product-form">
                             <input type="hidden" id="edit-product-id" value="${product.id}">
                             <div class="form-group">
@@ -529,7 +529,7 @@ async function loadAuctions() {
                                 <p>Status: ${isActive ? '<span style="color:green">Active</span>' : '<span style="color:red">Ended</span>'}</p>
                                 <p>Total Bids: ${auction.bid_count || 0}</p>
                                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <button onclick="editAuction(${auction.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;" ${hasBids ? 'disabled title="Cannot edit auction that has bids"' : ''}>Edit</button>
+                                    <button onclick="editAuction(${auction.id})" class="edit-btn" style="background:#1a4b72;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;" ${hasBids ? 'disabled title="Cannot edit auction that has bids"' : ''}>Edit</button>
                                     <button onclick="deleteAuction(${auction.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
                                 </div>
                             </div>
@@ -565,7 +565,7 @@ async function editAuction(auctionId) {
                 <div id="edit-auction-modal" class="modal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px; width: 90%;">
                         <span class="close-modal" onclick="closeAuctionEditModal()">&times;</span>
-                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Auction</h3>
+                        <h3 style="margin-bottom: 20px; color: #1a4b72;">Edit Auction</h3>
                         ${hasBids ? '<p style="color: #dc3545; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> This auction has bids. Starting bid cannot be changed.</p>' : ''}
                         <form id="edit-auction-form">
                             <input type="hidden" id="edit-auction-id" value="${auction.id}">
@@ -949,6 +949,11 @@ function showSection(section) {
         selected.style.display = 'block';
     }
     
+    if (section === 'overview') {
+        updateOverviewStats();
+        loadRecentOrders();
+    }
+    
     if (section === 'products') loadProducts();
     if (section === 'orders') loadOrders();
     if (section === 'auctions') loadAuctions();
@@ -963,8 +968,6 @@ function showSection(section) {
     }
 }
 
-// ===== ESCAPE HTML =====
-
 function escapeHtml(str) {
     if (!str) return '';
     return str
@@ -975,15 +978,126 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// ===== INITIALIZATION =====
+// ===== UPDATE OVERVIEW STATS =====
+async function updateOverviewStats() {
+    try {
+        // Get products count
+        const productsResponse = await fetch(ARTISAN_API_URL + 'get_artisan_products');
+        const productsData = await productsResponse.json();
+        const totalProducts = productsData.success ? productsData.products.length : 0;
+        document.getElementById('total-products').textContent = totalProducts;
+        
+        // Get orders and calculate total sales & pending orders
+        const ordersResponse = await fetch(ARTISAN_API_URL + 'get_artisan_orders');
+        const ordersData = await ordersResponse.json();
+        
+        let totalSales = 0;
+        let pendingOrders = 0;
+        
+        if (ordersData.success && ordersData.orders) {
+            ordersData.orders.forEach(order => {
+                if (order.status === 'delivered') {
+                    totalSales += parseFloat(order.total_amount);
+                }
+                if (order.status === 'pending' || order.status === 'processing') {
+                    pendingOrders++;
+                }
+            });
+        }
+        
+        document.getElementById('total-sales').textContent = `BD ${totalSales.toFixed(2)}`;
+        document.getElementById('pending-orders').textContent = pendingOrders;
+        
+        // Get active auctions
+        const auctionsResponse = await fetch(ARTISAN_API_URL + 'get_artisan_auctions');
+        const auctionsData = await auctionsResponse.json();
+        
+        let activeAuctions = 0;
+        if (auctionsData.success && auctionsData.auctions) {
+            activeAuctions = auctionsData.auctions.filter(a => new Date(a.end_time) > new Date()).length;
+        }
+        
+        document.getElementById('active-auctions').textContent = activeAuctions;
+       
+        // Load recent orders
+        await loadRecentOrders();
+    } catch (error) {
+        console.error('Error updating overview stats:', error);
+    }
+}
+
+// ===== LOAD RECENT ORDERS FOR OVERVIEW =====
+async function loadRecentOrders() {
+    const container = document.getElementById('recent-orders');
+    if (!container) return;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'get_artisan_orders');
+        const data = await response.json();
+        
+        if (data.success && data.orders && data.orders.length > 0) {
+            // Get last 3 orders
+            const recentOrders = data.orders.slice(0, 3);
+            
+            container.innerHTML = `
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr style="background: var(--bg-warm);">
+                                <th style="padding: 12px;">Order #</th>
+                                <th style="padding: 12px;">Date</th>
+                                <th style="padding: 12px;">Total</th>
+                                <th style="padding: 12px;">Status</th>
+                                <th style="padding: 12px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${recentOrders.map(order => `
+                                <tr style="border-bottom: 1px solid var(--border-light);">
+                                    <td style="padding: 12px;">${escapeHtml(order.order_number)}</td>
+                                    <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
+                                    <td style="padding: 12px;">BD ${parseFloat(order.total_amount).toFixed(2)}</td>
+                                    <td style="padding: 12px;">
+                                        <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                                    </td>
+                                    <td style="padding: 12px;">
+                                        <button onclick="viewOrderDetails('${order.order_number}')" style="background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer;">View</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="empty-state-message" style="padding: 40px;">
+                    <i class="fas fa-shopping-bag" style="font-size: 48px; color: #ccc;"></i>
+                    <h4>No Orders Yet</h4>
+                    <p>When customers place orders, they will appear here.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading recent orders:', error);
+        container.innerHTML = '<p style="text-align: center; color: red;">Error loading recent orders</p>';
+    }
+}
+
+function viewOrderDetails(orderNumber) {
+    window.location.href = `../AUTH/order_tracking.html?order=${orderNumber}`;
+}
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     const isAuth = await checkAuth();
     if (!isAuth) return;
     
     loadProducts();
+    updateOverviewStats(); 
     loadCategoriesForForm();
 
+    window.viewOrderDetails = viewOrderDetails;
     window.showSection = showSection;
     window.deleteProduct = deleteProduct;
     window.editProduct = editProduct;  

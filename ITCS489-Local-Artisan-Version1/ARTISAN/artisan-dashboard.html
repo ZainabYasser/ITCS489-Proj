@@ -7,62 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .reports-dashboard .stat-card {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .reports-dashboard .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-        .reports-dashboard .stat-card small {
-            font-size: 12px;
-            color: #8B5E3C;
-            display: block;
-            margin-top: 8px;
-        }
-        #detailed-report {
-            animation: fadeIn 0.5s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .empty-state-message {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .empty-state-message i {
-            font-size: 64px;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-        .empty-state-message h4 {
-            margin-bottom: 10px;
-        }
-        .empty-state-message p {
-            color: #666;
-        }
-        @media print {
-            .sidebar, header, footer, .reports-dashboard .stats-grid button,
-            #detailed-report button, select, .pagination, .logout-btn, .nav-icons {
-                display: none !important;
-            }
-            .dashboard-container {
-                display: block !important;
-            }
-            .dashboard-content {
-                padding: 0 !important;
-            }
-            body {
-                background: white !important;
-            }
-            .stat-card {
-                break-inside: avoid;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -168,7 +112,7 @@
                         <h3>My Auctions</h3>
                         <button class="add-btn" onclick="toggleAuctionForm()">+ Create New Auction</button>
                     </div>
-                    <div id="create-auction-form" style="display: none; background: #f9f6f3; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <div id="create-auction-form" style="display: none; background: #e7edf2; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <h4>Create New Auction</h4>
                         <form id="auction-form">
                             <div class="form-group">
@@ -293,7 +237,7 @@
                     </select>
                 </div>
                 
-                <div id="detailed-report" style="background: #f9f6f3; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                <div id="detailed-report" style="background: #e7edf2; border-radius: 12px; padding: 20px; margin-top: 20px;">
                     <h3 id="report-title">My Sales Report</h3>
                     <div id="report-details"><div class="loading"><div class="spinner"></div></div></div>
                 </div>
@@ -355,12 +299,12 @@
             }
             document.getElementById('report-details').innerHTML = `
                 <div style="display: grid; gap: 20px;">
-                    <div style="background: white; border-radius: 12px; padding: 20px;">
-                        <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-chart-bar"></i> Monthly Sales Breakdown</h4>
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-chart-bar"></i> Monthly Sales Breakdown</h4>
                         <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Month</th><th>Orders</th><th>Total Sales</th><th>Average Order</th></tr></thead><tbody>${hasMonthlyData ? data.monthly_breakdown.filter(m => m.order_count > 0).map(m => `<tr><td>${m.month_name}</td><td>${m.order_count}</td><td>${formatPrice(m.total_sales)}</td><td>${formatPrice(m.avg_order_value)}</td></tr>`).join('') : '<tr><td colspan="4">No sales data for this period</td></tr>'}</tbody></table></div>
                     </div>
                     <div style="background: white; border-radius: 12px; padding: 20px;">
-                        <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-clock"></i> Recent Orders</h4>
+                        <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-clock"></i> Recent Orders</h4>
                         <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead><tbody>${hasOrdersData ? data.recent_orders.map(o => `<tr><td>${o.order_number}</td><td>${escapeHtml(o.customer_name)}</td><td>${new Date(o.created_at).toLocaleDateString()}</td><td>${formatPrice(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td></tr>`).join('') : '<tr><td colspan="5">No orders found</td></tr>'}</tbody></table></div>
                     </div>
                 </div>
@@ -372,7 +316,7 @@
             }
             document.getElementById('report-details').innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 20px;">
-                    <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-star"></i> My Best Selling Products</h4>
+                    <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-star"></i> My Best Selling Products</h4>
                     <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Rank</th><th>Product Name</th><th>Quantity Sold</th><th>Total Revenue</th></tr></thead><tbody>${data.best_products.map((p, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(p.name)}</td><td>${p.quantity_sold || 0}</td><td>${formatPrice(p.total_revenue || 0)}</td></tr>`).join('')}</tbody></table></div>
                 </div>
             `;
@@ -383,7 +327,7 @@
             }
             document.getElementById('report-details').innerHTML = `
                 <div style="background: white; border-radius: 12px; padding: 20px;">
-                    <h4 style="margin-bottom: 15px; color: #8B5E3C;"><i class="fas fa-shopping-bag"></i> My Recent Orders</h4>
+                    <h4 style="margin-bottom: 15px; color: #1a4b72;"><i class="fas fa-shopping-bag"></i> My Recent Orders</h4>
                     <div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead><tbody>${data.recent_orders.map(o => `<tr><td>${o.order_number}</td><td>${escapeHtml(o.customer_name)}</td><td>${new Date(o.created_at).toLocaleDateString()}</td><td>${formatPrice(o.total_amount)}</td><td><span class="status-badge status-${o.status}">${o.status}</span></td></tr>`).join('')}</tbody></tr></div>
                 </div>
             `;
@@ -395,7 +339,7 @@
     function exportToPDF() {
         const printContent = document.getElementById('detailed-report').cloneNode(true);
         const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<!DOCTYPE html><html><head><title>ArtisanCo - My Sales Report</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:40px;color:#1a1a1a}.header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #8B5E3C}.header h1{color:#8B5E3C;margin-bottom:10px}.report-date{text-align:center;color:#666;margin-bottom:30px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f5f0eb}.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;font-size:12px;color:#666}@media print{body{padding:20px}}</style></head><body><div class="header"><h1>ArtisanCo - ${document.getElementById('report-title').innerText}</h1><p>Generated on ${new Date().toLocaleString()}</p></div><div class="report-date"><strong>Period:</strong> ${document.getElementById('report-year')?.value || 'All'} ${document.getElementById('report-month')?.options[document.getElementById('report-month')?.selectedIndex]?.text || 'Year'}</div>${printContent.innerHTML}<div class="footer"><p>ArtisanCo - Empowering Local Artisans</p><p>This is a system-generated report</p></div><script>window.onload=function(){window.print()};<\/script></body></html>`);
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>ArtisanCo - My Sales Report</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:40px;color:#1a1a1a}.header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a4b72}.header h1{color:#1a4b72;margin-bottom:10px}.report-date{text-align:center;color:#666;margin-bottom:30px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#e7edf2}.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #ddd;font-size:12px;color:#666}@media print{body{padding:20px}}</style></head><body><div class="header"><h1>ArtisanCo - ${document.getElementById('report-title').innerText}</h1><p>Generated on ${new Date().toLocaleString()}</p></div><div class="report-date"><strong>Period:</strong> ${document.getElementById('report-year')?.value || 'All'} ${document.getElementById('report-month')?.options[document.getElementById('report-month')?.selectedIndex]?.text || 'Year'}</div>${printContent.innerHTML}<div class="footer"><p>ArtisanCo - Empowering Local Artisans</p><p>This is a system-generated report</p></div><script>window.onload=function(){window.print()};<\/script></body></html>`);
         printWindow.document.close();
     }
     
