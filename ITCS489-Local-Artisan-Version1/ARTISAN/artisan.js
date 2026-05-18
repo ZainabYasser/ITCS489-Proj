@@ -859,7 +859,8 @@ async function loadSales() {
                         <p>Once you make sales, they will appear here.</p>
                     </div>`;
             } else {
-                let totalSales = 0;
+                let totalProductsRevenue = 0;
+                let totalShippingCollected = 0;
                 
                 container.innerHTML = `
                     <div class="table-container" style="overflow-x: auto;">
@@ -868,15 +869,25 @@ async function loadSales() {
                                 <tr style="background: var(--bg-warm);">
                                     <th style="padding: 12px;">Order #</th>
                                     <th style="padding: 12px;">Date</th>
-                                    <th style="padding: 12px;">Amount</th>
+                                    <th style="padding: 12px;">Products Total</th>
+                                    <th style="padding: 12px;">Shipping</th>
+                                    <th style="padding: 12px;">Grand Total</th>
                                     <th style="padding: 12px;">Customer</th>
-                                    <th style="padding: 12px;">Items</th>
                                     <th style="padding: 12px;">Action</th>
-                                 </tr>
+                                  </tr>
                             </thead>
                             <tbody>
                                 ${salesOrders.map(order => {
-                                    totalSales += parseFloat(order.total_amount);
+                                    // Calculate product total (exclude shipping)
+                                    let productTotal = 0;
+                                    if (order.items && order.items.length > 0) {
+                                        productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                    } else {
+                                        productTotal = order.total_amount - 5;
+                                    }
+                                    const shippingAmount = order.total_amount - productTotal;
+                                    totalProductsRevenue += productTotal;
+                                    totalShippingCollected += shippingAmount;
                                     return `
                                         <tr style="border-bottom: 1px solid var(--border-light);">
                                             <td style="padding: 12px;">
@@ -884,15 +895,14 @@ async function loadSales() {
                                             </td>
                                             <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
                                             <td style="padding: 12px;">
-                                                <strong style="color: var(--primary);">BD ${parseFloat(order.total_amount).toFixed(2)}</strong>
+                                                <strong style="color: var(--primary);">BD ${productTotal.toFixed(2)}</strong>
                                             </td>
+                                            <td style="padding: 12px;">BD ${shippingAmount.toFixed(2)}</td>
+                                            <td style="padding: 12px;">BD ${order.total_amount}</td>
                                             <td style="padding: 12px;">
                                                 <i class="fas fa-user" style="color: var(--primary); margin-right: 5px;"></i>
                                                 ${escapeHtml(order.customer_name || 'N/A')}
                                                 ${order.shipping_city ? `<br><small style="color: var(--text-light);"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(order.shipping_city)}</small>` : ''}
-                                            </td>
-                                            <td style="padding: 12px;">
-                                                ${order.item_count || order.items?.length || '-'}
                                             </td>
                                             <td style="padding: 12px;">
                                                 <button onclick="viewOrderDetails('${order.order_number}')" class="view-order-btn" style="background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer;">
@@ -905,9 +915,10 @@ async function loadSales() {
                             </tbody>
                             <tfoot>
                                 <tr style="background: var(--bg-warm); font-weight: bold;">
-                                    <td colspan="2" style="padding: 12px;">Total Sales</td>
-                                    <td colspan="4" style="padding: 12px;">
-                                        <strong style="color: var(--primary); font-size: 18px;">BD ${totalSales.toFixed(2)}</strong>
+                                    <td colspan="2" style="padding: 12px;">Total Revenue (Products Only)</td>
+                                    <td colspan="5" style="padding: 12px;">
+                                        <strong style="color: var(--primary); font-size: 18px;">BD ${totalProductsRevenue.toFixed(2)}</strong>
+                                        <small style="display: block; color: var(--text-light);">(Shipping collected: BD ${totalShippingCollected.toFixed(2)})</small>
                                     </td>
                                 </tr>
                             </tfoot>
@@ -916,7 +927,7 @@ async function loadSales() {
                 `;
                 
                 const totalSalesEl = document.getElementById('total-sales');
-                if (totalSalesEl) totalSalesEl.textContent = `BD ${totalSales.toFixed(2)}`;
+                if (totalSalesEl) totalSalesEl.textContent = `BD ${totalProductsRevenue.toFixed(2)}`;
             }
         } else {
             container.innerHTML = '<p>Error loading sales</p>';
@@ -928,7 +939,6 @@ async function loadSales() {
 }
 
 // ===== PROFILE MANAGEMENT =====
-
 async function loadProfile() {
     const user = getCurrentUser();
     if (!user) return;
@@ -1122,7 +1132,13 @@ async function updateOverviewStats() {
         if (ordersData.success && ordersData.orders) {
             ordersData.orders.forEach(order => {
                 if (order.status === 'delivered') {
-                    totalSales += parseFloat(order.total_amount);
+                    // Calculate product total (exclude shipping)
+                    if (order.items && order.items.length > 0) {
+                        const productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        totalSales += productTotal;
+                    } else {
+                        totalSales += (order.total_amount - 5);
+                    }
                 }
                 if (order.status === 'pending' || order.status === 'processing') {
                     pendingOrders++;
@@ -1152,6 +1168,7 @@ async function updateOverviewStats() {
 }
 
 // ===== LOAD RECENT ORDERS FOR OVERVIEW =====
+// ===== LOAD RECENT ORDERS FOR OVERVIEW =====
 async function loadRecentOrders() {
     const container = document.getElementById('recent-orders');
     if (!container) return;
@@ -1170,21 +1187,30 @@ async function loadRecentOrders() {
                             <tr style="background: var(--bg-warm);">
                                 <th style="padding: 12px;">Order #</th>
                                 <th style="padding: 12px;">Date</th>
-                                <th style="padding: 12px;">Total</th>
+                                <th style="padding: 12px;">Products Total</th>
                                 <th style="padding: 12px;">Status</th>
-                             </tr>
+                              ..
                         </thead>
                         <tbody>
-                            ${recentOrders.map(order => `
-                                <tr style="border-bottom: 1px solid var(--border-light);">
-                                    <td style="padding: 12px;">${escapeHtml(order.order_number)}</td>
-                                    <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 12px;">BD ${parseFloat(order.total_amount).toFixed(2)}</td>
-                                    <td style="padding: 12px;">
-                                        <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
-                                    </td>
-                                </tr>
-                            `).join('')}
+                            ${recentOrders.map(order => {
+                                // Calculate product total (exclude shipping)
+                                let productTotal = 0;
+                                if (order.items && order.items.length > 0) {
+                                    productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                } else {
+                                    productTotal = order.total_amount - 5;
+                                }
+                                return `
+                                    <tr style="border-bottom: 1px solid var(--border-light);">
+                                        <td style="padding: 12px;">${escapeHtml(order.order_number)}</td>
+                                        <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
+                                        <td style="padding: 12px;">BD ${productTotal.toFixed(2)}</td>
+                                        <td style="padding: 12px;">
+                                            <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>

@@ -421,7 +421,7 @@ if ($request == 'place_order') {
     $shipping_phone = $input['shipping_phone'] ?? '';
     $payment_method = $input['payment_method'] ?? 'credit_card';
     
-    $stmt = $pdo->prepare("SELECT c.product_id, c.quantity, p.name, p.price 
+    $stmt = $pdo->prepare("SELECT c.product_id, c.quantity, p.name, p.price, p.stock 
                            FROM cart c
                            JOIN products p ON c.product_id = p.id
                            WHERE c.user_id = ?");
@@ -431,6 +431,14 @@ if ($request == 'place_order') {
     if (empty($cartItems)) {
         echo json_encode(['success' => false, 'message' => 'Cart is empty']);
         exit();
+    }
+    
+    // Check stock availability before proceeding
+    foreach ($cartItems as $item) {
+        if ($item['quantity'] > $item['stock']) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient stock for: ' . $item['name']]);
+            exit();
+        }
     }
     
     $total = 0;
@@ -450,9 +458,14 @@ if ($request == 'place_order') {
         $orderId = $pdo->lastInsertId();
         
         foreach ($cartItems as $item) {
+            // Insert order item
             $stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, product_name, quantity, price) 
                                    VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$orderId, $item['product_id'], $item['name'], $item['quantity'], $item['price']]);
+            
+            // Decrease product stock
+            $stmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+            $stmt->execute([$item['quantity'], $item['product_id']]);
         }
         
         $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
@@ -465,6 +478,30 @@ if ($request == 'place_order') {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Order failed: ' . $e->getMessage()]);
     }
+    exit();
+}
+
+// Restore stock when order is cancelled
+if ($request == 'restore_order_stock') {
+    if (!isLoggedIn() || ($_SESSION['user_role'] !== 'admin' && $_SESSION['user_role'] !== 'artisan')) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $orderId = $input['order_id'] ?? 0;
+    
+    // Get order items
+    $stmt = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+    $stmt->execute([$orderId]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($items as $item) {
+        $stmt = $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?");
+        $stmt->execute([$item['quantity'], $item['product_id']]);
+    }
+    
+    echo json_encode(['success' => true, 'message' => 'Stock restored']);
     exit();
 }
 
@@ -1038,6 +1075,7 @@ if ($request == 'get_artisan_order_detail') {
 }
 
 // Update order status (artisan only)
+// Update order status (artisan only)
 if ($request == 'artisan_update_order_status') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -1046,37 +1084,72 @@ if ($request == 'artisan_update_order_status') {
     
     $input = json_decode(file_get_contents('php://input'), true);
     $orderId = $input['order_id'] ?? 0;
-    $status = $input['status'] ?? '';
+    $newStatus = $input['status'] ?? '';
     
     // Verify this order contains products from this artisan
     $stmt = $pdo->prepare("
-        SELECT o.id FROM orders o
+        SELECT o.id, o.status FROM orders o
         JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.id
         WHERE o.id = ? AND p.artisan_id = ?
         LIMIT 1
     ");
     $stmt->execute([$orderId, $_SESSION['user_id']]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$stmt->fetch()) {
+    if (!$order) {
         echo json_encode(['success' => false, 'message' => 'Order not found or does not belong to you']);
         exit();
     }
     
     $allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-    if (!in_array($status, $allowedStatuses)) {
+    if (!in_array($newStatus, $allowedStatuses)) {
         echo json_encode(['success' => false, 'message' => 'Invalid status']);
         exit();
     }
     
+    $currentStatus = $order['status'];
+    
+    // Get order items (only for this artisan's products)
+    $stmt = $pdo->prepare("
+        SELECT oi.product_id, oi.quantity 
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ? AND p.artisan_id = ?
+    ");
+    $stmt->execute([$orderId, $_SESSION['user_id']]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Define which statuses are "confirmed" (stock should be deducted)
+    $confirmedStatuses = ['processing', 'shipped', 'delivered'];
+    $cancelledStatus = 'cancelled';
+    
+    $wasConfirmed = in_array($currentStatus, $confirmedStatuses);
+    $isNowConfirmed = in_array($newStatus, $confirmedStatuses);
+    $wasCancelled = $currentStatus === $cancelledStatus;
+    $isNowCancelled = $newStatus === $cancelledStatus;
+    
+    // Stock adjustment logic
+    if ($wasConfirmed && $isNowCancelled) {
+        // Moving from confirmed to cancelled: restore stock
+        foreach ($items as $item) {
+            $stmt = $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?");
+            $stmt->execute([$item['quantity'], $item['product_id']]);
+        }
+    } 
+    else if ($wasCancelled && $isNowConfirmed) {
+        // Moving from cancelled to confirmed: deduct stock
+        foreach ($items as $item) {
+            $stmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+            $stmt->execute([$item['quantity'], $item['product_id']]);
+        }
+    }    
     $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-    $stmt->execute([$status, $orderId]);
+    $stmt->execute([$newStatus, $orderId]);
     
     echo json_encode(['success' => true, 'message' => 'Order status updated successfully']);
     exit();
 }
-
-
 
 // ============ IMAGE UPLOAD ============
 if ($request == 'upload_image') {
@@ -1266,12 +1339,53 @@ if ($request == 'admin_update_order_status') {
     
     $input = json_decode(file_get_contents('php://input'), true);
     $orderId = $input['order_id'] ?? 0;
-    $status = $input['status'] ?? '';
+    $newStatus = $input['status'] ?? '';
     
+    // Get current status
+    $stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+    $stmt->execute([$orderId]);
+    $currentStatus = $stmt->fetchColumn();
+    
+    if (!$currentStatus) {
+        echo json_encode(['success' => false, 'message' => 'Order not found']);
+        exit();
+    }
+    
+    // Get order items
+    $stmt = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+    $stmt->execute([$orderId]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Define which statuses are "confirmed" (stock should be deducted)
+    $confirmedStatuses = ['processing', 'shipped', 'delivered'];
+    $cancelledStatus = 'cancelled';
+    
+    $wasConfirmed = in_array($currentStatus, $confirmedStatuses);
+    $isNowConfirmed = in_array($newStatus, $confirmedStatuses);
+    $wasCancelled = $currentStatus === $cancelledStatus;
+    $isNowCancelled = $newStatus === $cancelledStatus;
+    
+    // If moving from confirmed to cancelled: restore stock
+    if ($wasConfirmed && $isNowCancelled) {
+        foreach ($items as $item) {
+            $stmt = $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?");
+            $stmt->execute([$item['quantity'], $item['product_id']]);
+        }
+    }
+    // If moving from cancelled to confirmed: deduct stock
+    else if ($wasCancelled && $isNowConfirmed) {
+        foreach ($items as $item) {
+            $stmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+            $stmt->execute([$item['quantity'], $item['product_id']]);
+        }
+    }
+    // If moving from one confirmed to another confirmed: no stock change
+    
+    // Update order status
     $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-    $stmt->execute([$status, $orderId]);
+    $stmt->execute([$newStatus, $orderId]);
     
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'message' => 'Order status updated']);
     exit();
 }
 
