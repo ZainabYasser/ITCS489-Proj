@@ -874,7 +874,6 @@ function updateHeaderButtons() {
     if (logoutBtn) {
         logoutBtn.onclick = function(e) {
             e.preventDefault();
-            console.log('Manual logout handler triggered');
             
             fetch('../api.php?request=logout', { method: 'POST' })
                 .then(() => {
@@ -882,12 +881,12 @@ function updateHeaderButtons() {
                     sessionStorage.clear();
                     showToast('Logged out successfully', 'success');
                     setTimeout(() => {
-                        window.location.href = '/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/index.html';
+                        window.location.href = '../index.html';
                     }, 1000);
                 })
                 .catch(() => {
                     localStorage.removeItem('user');
-                    window.location.href = '/ITCS489Project/ITCS489-Proj/ITCS489-Local-Artisan-Version1/index.html';
+                    window.location.href = '../index.html';
                 });
         };
     }
