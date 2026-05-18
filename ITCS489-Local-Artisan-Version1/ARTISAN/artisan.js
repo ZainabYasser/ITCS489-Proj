@@ -106,7 +106,7 @@ async function loadProducts() {
                     </div>`;
             } else {
                 container.innerHTML = data.products.map(p => {
-                    const imageUrl = p.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(p.name);
+                    const imageUrl = p.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(p.name);
                     return `
                         <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                             <img src="${imageUrl}" alt="${escapeHtml(p.name)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 15px; float: left;">
@@ -116,7 +116,7 @@ async function loadProducts() {
                                 <p>Stock: ${p.stock}</p>
                                 <p>${p.description ? escapeHtml(p.description.substring(0, 100)) : ''}</p>
                                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <button onclick="editProduct(${p.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
+                                    <button onclick="editProduct(${p.id})" class="edit-btn" style="background:#1a4b72;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
                                     <button onclick="deleteProduct(${p.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
                                 </div>
                             </div>
@@ -187,7 +187,7 @@ async function editProduct(productId) {
                 <div id="edit-product-modal" class="modal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px; width: 90%;">
                         <span class="close-modal" onclick="closeEditModal()">&times;</span>
-                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Product</h3>
+                        <h3 style="margin-bottom: 20px; color: #1a4b72;">Edit Product</h3>
                         <form id="edit-product-form">
                             <input type="hidden" id="edit-product-id" value="${product.id}">
                             <div class="form-group">
@@ -201,7 +201,7 @@ async function editProduct(productId) {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Price (BHD)</label>
+                                <label>Price (BD)</label>
                                 <input type="number" id="edit-product-price" step="0.01" value="${product.price}" required>
                             </div>
                             <div class="form-group">
@@ -326,6 +326,7 @@ async function updateProduct() {
     }
 }
 
+
 // ===== ORDER MANAGEMENT =====
 async function loadOrders() {
     const container = document.getElementById('orders-list');
@@ -346,15 +347,52 @@ async function loadOrders() {
                         <p>When customers place orders, they will appear here.</p>
                     </div>`;
             } else {
-                container.innerHTML = data.orders.map(order => `
-                    <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        <h4>Order #${order.order_number}</h4>
-                        <p>Date: ${new Date(order.created_at).toLocaleDateString()}</p>
-                        <p>Total: BD ${parseFloat(order.total_amount).toFixed(2)}</p>
-                        <p>Status: ${order.status}</p>
-                        <p>Payment: ${order.payment_status}</p>
+                container.innerHTML = `
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--bg-warm);">
+                                    <th style="padding: 12px;">Order #</th>
+                                    <th style="padding: 12px;">Date</th>
+                                    <th style="padding: 12px;">Total</th>
+                                    <th style="padding: 12px;">Status</th>
+                                    <th style="padding: 12px;">Action</th>
+                                 </tr>
+                            </thead>
+                            <tbody>
+                                ${data.orders.map(order => `
+                                    <tr style="border-bottom: 1px solid var(--border-light);">
+                                        <td style="padding: 12px;">${escapeHtml(order.order_number)}</td>
+                                        <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
+                                        <td style="padding: 12px;">BD ${parseFloat(order.total_amount).toFixed(2)}</td>
+                                        <td style="padding: 12px;">
+                                            <select class="order-status-select" data-order-id="${order.id}" data-order-number="${order.order_number}" style="padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border);">
+                                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                                <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                        </td>
+                                        <td style="padding: 12px;">
+                                            <button onclick="viewOrderDetails('${order.order_number}')" class="view-order-btn" style="background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer;">View</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('');
+                `;
+                
+                // Add event listeners to all status selects
+                document.querySelectorAll('.order-status-select').forEach(select => {
+                    select.addEventListener('change', async function() {
+                        const orderId = this.dataset.orderId;
+                        const orderNumber = this.dataset.orderNumber;
+                        const newStatus = this.value;
+                        await updateArtisanOrderStatus(orderId, orderNumber, newStatus, this);
+                    });
+                });
             }
         } else {
             container.innerHTML = '<p>Error loading orders</p>';
@@ -364,6 +402,42 @@ async function loadOrders() {
         container.innerHTML = '<p>Error loading orders. Please try again.</p>';
     }
 }
+
+// Add this new function after loadOrders()
+async function updateArtisanOrderStatus(orderId, orderNumber, newStatus, selectElement) {
+    const originalStatus = selectElement.querySelector(`option[value="${newStatus}"]`)?.textContent || newStatus;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'artisan_update_order_status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId, status: newStatus })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`Order #${orderNumber} status updated to ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`, 'success');
+            // Refresh the orders list to show updated status
+            loadOrders();
+            // Also update overview stats
+            if (typeof updateOverviewStats === 'function') {
+                updateOverviewStats();
+            }
+        } else {
+            showToast(data.message || 'Failed to update order status', 'error');
+            // Reset select to previous value
+            loadOrders();
+        }
+    } catch (error) {
+        console.error('Update order status error:', error);
+        showToast('Network error. Please try again.', 'error');
+        loadOrders();
+    }
+}
+
+
+
+
 
 // ===== AUCTION MANAGEMENT =====
 
@@ -440,7 +514,7 @@ async function createAuction() {
         return;
     }
     
-    let image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(title);
+    let image_url = 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(title);
     
     if (imageFile) {
         const formData = new FormData();
@@ -514,7 +588,7 @@ async function loadAuctions() {
                 container.innerHTML = data.auctions.map(auction => {
                     const endDate = new Date(auction.end_time);
                     const isActive = endDate > new Date();
-                    const imageUrl = auction.image_url || 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(auction.title);
+                    const imageUrl = auction.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(auction.title);
                     const hasBids = (auction.bid_count || 0) > 0;
                     return `
                         <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -529,7 +603,7 @@ async function loadAuctions() {
                                 <p>Status: ${isActive ? '<span style="color:green">Active</span>' : '<span style="color:red">Ended</span>'}</p>
                                 <p>Total Bids: ${auction.bid_count || 0}</p>
                                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <button onclick="editAuction(${auction.id})" class="edit-btn" style="background:#8B5E3C;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;" ${hasBids ? 'disabled title="Cannot edit auction that has bids"' : ''}>Edit</button>
+                                    <button onclick="attemptEditAuction(${auction.id}, ${hasBids})" class="edit-btn" style="background:#1a4b72;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Edit</button>
                                     <button onclick="deleteAuction(${auction.id})" class="delete-btn" style="background:#dc3545;color:white;border:none;padding:5px 15px;border-radius:5px;cursor:pointer;">Delete</button>
                                 </div>
                             </div>
@@ -551,6 +625,13 @@ async function loadAuctions() {
 }
 
 // ===== AUCTION EDIT/DELETE FUNCTIONS =====
+function attemptEditAuction(auctionId, hasBids) {
+    if (hasBids) {
+        showToast('Cannot edit this auction because bids have already been placed', 'error');
+        return;
+    }
+    editAuction(auctionId);
+}
 
 async function editAuction(auctionId) {
     try {
@@ -565,7 +646,7 @@ async function editAuction(auctionId) {
                 <div id="edit-auction-modal" class="modal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px; width: 90%;">
                         <span class="close-modal" onclick="closeAuctionEditModal()">&times;</span>
-                        <h3 style="margin-bottom: 20px; color: #8B5E3C;">Edit Auction</h3>
+                        <h3 style="margin-bottom: 20px; color: #1a4b72;">Edit Auction</h3>
                         ${hasBids ? '<p style="color: #dc3545; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> This auction has bids. Starting bid cannot be changed.</p>' : ''}
                         <form id="edit-auction-form">
                             <input type="hidden" id="edit-auction-id" value="${auction.id}">
@@ -578,12 +659,12 @@ async function editAuction(auctionId) {
                                 <textarea id="edit-auction-description" rows="3">${escapeHtml(auction.description || '')}</textarea>
                             </div>
                             <div class="form-group">
-                                <label>Starting Bid (BHD)</label>
+                                <label>Starting Bid (BD)</label>
                                 <input type="number" id="edit-auction-start-bid" step="0.01" value="${auction.start_bid}" required ${hasBids ? 'disabled' : ''}>
                                 ${hasBids ? '<small style="color: #666;">Starting bid cannot be changed after bids are placed</small>' : ''}
                             </div>
                             <div class="form-group">
-                                <label>Minimum Increment (BHD)</label>
+                                <label>Minimum Increment (BD)</label>
                                 <input type="number" id="edit-auction-min-increment" step="0.01" value="${auction.min_increment}" required>
                             </div>
                             <div class="form-group">
@@ -690,7 +771,7 @@ async function updateAuction() {
     }
     
     if (!image_url) {
-        image_url = 'https://placehold.co/600x400/8B5E3C/white?text=' + encodeURIComponent(title);
+        image_url = 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(title);
     }
     
     const auctionData = {
@@ -769,6 +850,7 @@ async function loadSales() {
         
         if (data.success && data.orders) {
             const salesOrders = data.orders.filter(order => order.status === 'delivered');
+            
             if (salesOrders.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state-message">
@@ -777,20 +859,75 @@ async function loadSales() {
                         <p>Once you make sales, they will appear here.</p>
                     </div>`;
             } else {
-                let totalSales = 0;
-                container.innerHTML = salesOrders.map(order => {
-                    totalSales += parseFloat(order.total_amount);
-                    return `
-                        <div class="product-card" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <h4>Order #${order.order_number}</h4>
-                            <p>Date: ${new Date(order.created_at).toLocaleDateString()}</p>
-                            <p>Amount: BD ${parseFloat(order.total_amount).toFixed(2)}</p>
-                            <p>Customer: ${escapeHtml(order.shipping_address || 'N/A')}</p>
-                        </div>
-                    `;
-                }).join('');
+                let totalProductsRevenue = 0;
+                let totalShippingCollected = 0;
+                
+                container.innerHTML = `
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--bg-warm);">
+                                    <th style="padding: 12px;">Order #</th>
+                                    <th style="padding: 12px;">Date</th>
+                                    <th style="padding: 12px;">Products Total</th>
+                                    <th style="padding: 12px;">Shipping</th>
+                                    <th style="padding: 12px;">Grand Total</th>
+                                    <th style="padding: 12px;">Customer</th>
+                                    <th style="padding: 12px;">Action</th>
+                                  </tr>
+                            </thead>
+                            <tbody>
+                                ${salesOrders.map(order => {
+                                    // Calculate product total (exclude shipping)
+                                    let productTotal = 0;
+                                    if (order.items && order.items.length > 0) {
+                                        productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                    } else {
+                                        productTotal = order.total_amount - 5;
+                                    }
+                                    const shippingAmount = order.total_amount - productTotal;
+                                    totalProductsRevenue += productTotal;
+                                    totalShippingCollected += shippingAmount;
+                                    return `
+                                        <tr style="border-bottom: 1px solid var(--border-light);">
+                                            <td style="padding: 12px;">
+                                                <strong>#${escapeHtml(order.order_number)}</strong>
+                                            </td>
+                                            <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
+                                            <td style="padding: 12px;">
+                                                <strong style="color: var(--primary);">BD ${productTotal.toFixed(2)}</strong>
+                                            </td>
+                                            <td style="padding: 12px;">BD ${shippingAmount.toFixed(2)}</td>
+                                            <td style="padding: 12px;">BD ${order.total_amount}</td>
+                                            <td style="padding: 12px;">
+                                                <i class="fas fa-user" style="color: var(--primary); margin-right: 5px;"></i>
+                                                ${escapeHtml(order.customer_name || 'N/A')}
+                                                ${order.shipping_city ? `<br><small style="color: var(--text-light);"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(order.shipping_city)}</small>` : ''}
+                                            </td>
+                                            <td style="padding: 12px;">
+                                                <button onclick="viewOrderDetails('${order.order_number}')" class="view-order-btn" style="background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer;">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="background: var(--bg-warm); font-weight: bold;">
+                                    <td colspan="2" style="padding: 12px;">Total Revenue (Products Only)</td>
+                                    <td colspan="5" style="padding: 12px;">
+                                        <strong style="color: var(--primary); font-size: 18px;">BD ${totalProductsRevenue.toFixed(2)}</strong>
+                                        <small style="display: block; color: var(--text-light);">(Shipping collected: BD ${totalShippingCollected.toFixed(2)})</small>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                `;
+                
                 const totalSalesEl = document.getElementById('total-sales');
-                if (totalSalesEl) totalSalesEl.textContent = `BD ${totalSales.toFixed(2)}`;
+                if (totalSalesEl) totalSalesEl.textContent = `BD ${totalProductsRevenue.toFixed(2)}`;
             }
         } else {
             container.innerHTML = '<p>Error loading sales</p>';
@@ -802,7 +939,6 @@ async function loadSales() {
 }
 
 // ===== PROFILE MANAGEMENT =====
-
 async function loadProfile() {
     const user = getCurrentUser();
     if (!user) return;
@@ -825,7 +961,6 @@ async function loadProfile() {
 }
 
 // ===== ADD PRODUCT FORM HANDLER =====
-
 document.addEventListener('DOMContentLoaded', function() {    
     const addProductForm = document.getElementById('add-product-form');
     if (addProductForm) {
@@ -833,7 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const imageFile = document.getElementById('product-image-file').files[0];
-            let image_url = 'https://placehold.co/600x400/8B5E3C/white?text=Product';
+            let image_url = 'https://placehold.co/600x400/1a4b72/white?text=Product';
             
             if (imageFile) {
                 const formData = new FormData();
@@ -949,6 +1084,11 @@ function showSection(section) {
         selected.style.display = 'block';
     }
     
+    if (section === 'overview') {
+        updateOverviewStats();
+        loadRecentOrders();
+    }
+    
     if (section === 'products') loadProducts();
     if (section === 'orders') loadOrders();
     if (section === 'auctions') loadAuctions();
@@ -963,8 +1103,6 @@ function showSection(section) {
     }
 }
 
-// ===== ESCAPE HTML =====
-
 function escapeHtml(str) {
     if (!str) return '';
     return str
@@ -975,15 +1113,206 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// ===== INITIALIZATION =====
+// ===== UPDATE OVERVIEW STATS =====
+async function updateOverviewStats() {
+    try {
+        // Get products count
+        const productsResponse = await fetch(ARTISAN_API_URL + 'get_artisan_products');
+        const productsData = await productsResponse.json();
+        const totalProducts = productsData.success ? productsData.products.length : 0;
+        document.getElementById('total-products').textContent = totalProducts;
+        
+        // Get orders and calculate total sales & pending orders
+        const ordersResponse = await fetch(ARTISAN_API_URL + 'get_artisan_orders');
+        const ordersData = await ordersResponse.json();
+        
+        let totalSales = 0;
+        let pendingOrders = 0;
+        
+        if (ordersData.success && ordersData.orders) {
+            ordersData.orders.forEach(order => {
+                if (order.status === 'delivered') {
+                    // Calculate product total (exclude shipping)
+                    if (order.items && order.items.length > 0) {
+                        const productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        totalSales += productTotal;
+                    } else {
+                        totalSales += (order.total_amount - 5);
+                    }
+                }
+                if (order.status === 'pending' || order.status === 'processing') {
+                    pendingOrders++;
+                }
+            });
+        }
+        
+        document.getElementById('total-sales').textContent = `BD ${totalSales.toFixed(2)}`;
+        document.getElementById('pending-orders').textContent = pendingOrders;
+        
+        // Get active auctions
+        const auctionsResponse = await fetch(ARTISAN_API_URL + 'get_artisan_auctions');
+        const auctionsData = await auctionsResponse.json();
+        
+        let activeAuctions = 0;
+        if (auctionsData.success && auctionsData.auctions) {
+            activeAuctions = auctionsData.auctions.filter(a => new Date(a.end_time) > new Date()).length;
+        }
+        
+        document.getElementById('active-auctions').textContent = activeAuctions;
+       
+        // Load recent orders
+        await loadRecentOrders();
+    } catch (error) {
+        console.error('Error updating overview stats:', error);
+    }
+}
+
+// ===== LOAD RECENT ORDERS FOR OVERVIEW =====
+// ===== LOAD RECENT ORDERS FOR OVERVIEW =====
+async function loadRecentOrders() {
+    const container = document.getElementById('recent-orders');
+    if (!container) return;
+    
+    try {
+        const response = await fetch(ARTISAN_API_URL + 'get_artisan_orders');
+        const data = await response.json();
+        
+        if (data.success && data.orders && data.orders.length > 0) {
+            const recentOrders = data.orders.slice(0, 5);
+            
+            container.innerHTML = `
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr style="background: var(--bg-warm);">
+                                <th style="padding: 12px;">Order #</th>
+                                <th style="padding: 12px;">Date</th>
+                                <th style="padding: 12px;">Products Total</th>
+                                <th style="padding: 12px;">Status</th>
+                              ..
+                        </thead>
+                        <tbody>
+                            ${recentOrders.map(order => {
+                                // Calculate product total (exclude shipping)
+                                let productTotal = 0;
+                                if (order.items && order.items.length > 0) {
+                                    productTotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                } else {
+                                    productTotal = order.total_amount - 5;
+                                }
+                                return `
+                                    <tr style="border-bottom: 1px solid var(--border-light);">
+                                        <td style="padding: 12px;">${escapeHtml(order.order_number)}</td>
+                                        <td style="padding: 12px;">${new Date(order.created_at).toLocaleDateString()}</td>
+                                        <td style="padding: 12px;">BD ${productTotal.toFixed(2)}</td>
+                                        <td style="padding: 12px;">
+                                            <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="empty-state-message" style="padding: 40px;">
+                    <i class="fas fa-shopping-bag" style="font-size: 48px; color: #ccc;"></i>
+                    <h4>No Orders Yet</h4>
+                    <p>When customers place orders, they will appear here.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading recent orders:', error);
+        container.innerHTML = '<p style="text-align: center; color: red;">Error loading recent orders</p>';
+    }
+}
+
+// Replace the viewOrderDetails function in artisan.js
+function viewOrderDetails(orderNumber) {
+    // Fetch order details from API
+    fetch(ARTISAN_API_URL + 'get_artisan_order_detail&order_number=' + orderNumber)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.order) {
+                showOrderDetailsModal(data.order);
+            } else {
+                showToast('Error loading order details', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            showToast('Error loading order details', 'error');
+        });
+}
+
+function showOrderDetailsModal(order) {
+    let itemsHtml = '';
+    if (order.items && order.items.length > 0) {
+        itemsHtml = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: var(--bg-warm);"><th style="padding: 8px;">Product</th><th style="padding: 8px;">Qty</th><th style="padding: 8px;">Price</th><th style="padding: 8px;">Subtotal</th></tr></thead><tbody>';
+        for (const item of order.items) {
+            itemsHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.product_name)}</td>
+                          <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.quantity}</td>
+                          <td style="padding: 8px; border-bottom: 1px solid #eee;">BD ${parseFloat(item.price).toFixed(2)}</td>
+                          <td style="padding: 8px; border-bottom: 1px solid #eee;">BD ${(item.price * item.quantity).toFixed(2)}</td></tr>`;
+        }
+        itemsHtml += '</tbody></table>';
+    }
+    
+    const modalHtml = `
+        <div id="order-detail-modal" class="modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 600px; width: 90%;">
+                <span class="close-modal" onclick="closeOrderModal()">&times;</span>
+                <h3 style="margin-bottom: 20px; color: var(--primary);">
+                    <i class="fas fa-receipt"></i> Order #${order.order_number}
+                </h3>
+                <div style="margin-bottom: 15px;">
+                    <strong><i class="fas fa-user"></i> Customer:</strong> ${escapeHtml(order.customer_name || 'N/A')}<br>
+                    <strong><i class="fas fa-map-marker-alt"></i> Shipping Address:</strong> ${escapeHtml(order.shipping_address || 'N/A')}, ${escapeHtml(order.shipping_city || '')}<br>
+                    <strong><i class="fas fa-calendar"></i> Date:</strong> ${new Date(order.created_at).toLocaleString()}<br>
+                    <strong><i class="fas fa-tag"></i> Status:</strong> <span class="status-badge status-${order.status}">${order.status}</span><br>
+                    <strong><i class="fas fa-credit-card"></i> Payment:</strong> ${order.payment_status === 'completed' ? 'Paid' : 'Pending'}
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <h4 style="margin-bottom: 10px;">Order Items</h4>
+                    ${itemsHtml}
+                </div>
+                
+                <div style="text-align: right; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <strong style="font-size: 18px;">Total: BD ${parseFloat(order.total_amount).toFixed(2)}</strong>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeOrderModal()" class="btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeOrderModal() {
+    const modal = document.getElementById('order-detail-modal');
+    if (modal) modal.remove();
+}
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     const isAuth = await checkAuth();
     if (!isAuth) return;
     
     loadProducts();
+    updateOverviewStats(); 
     loadCategoriesForForm();
 
+
+    window.closeOrderModal = closeOrderModal;
+    window.viewOrderDetails = viewOrderDetails;
+    window.updateArtisanOrderStatus = updateArtisanOrderStatus;
     window.showSection = showSection;
     window.deleteProduct = deleteProduct;
     window.editProduct = editProduct;  

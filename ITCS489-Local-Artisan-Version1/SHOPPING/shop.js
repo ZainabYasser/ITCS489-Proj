@@ -43,11 +43,10 @@ function displayProducts() {
     const paginatedProducts = filteredProducts.slice(start, start + productsPerPage);
     
     container.innerHTML = paginatedProducts.map(product => {
-        // Use formatPrice function from utils.js (already handles currency)
         const priceFormatted = formatPrice(product.price);
         
         return `
-            <div class="product-card">
+            <div class="product-card" onclick="goToProductDetail(${product.id}, event)">
                 <div class="product-image">
                     <img src="${product.image_url || 'https://placehold.co/600x400/1a4b72/white?text=' + encodeURIComponent(product.name)}" 
                          alt="${product.name}" loading="lazy"
@@ -58,17 +57,13 @@ function displayProducts() {
                     <h3>${escapeHtml(product.name)}</h3>
                     <p class="artisan-name">by ${escapeHtml(product.artisan_name || 'Local Artisan')}</p>
                     <p class="product-price" data-original-price="${product.price}">${priceFormatted}</p>
-                    <div class="product-actions">
+                    <div class="product-actions" onclick="event.stopPropagation()">
                         <button class="add-to-cart" onclick="addToCart(${product.id})">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
                         <button class="wishlist-btn" onclick="addToWishlist(${product.id})">
                             <i class="far fa-heart"></i>
-                        </div>
-                        <button class="view-details-btn" onclick="location.href='product-detail.html?id=${product.id}'" style="width: 100%; background: #1a4b72; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
-                            <i class="fas fa-eye"></i> View Details
                         </button>
-                    </div>
                     </div>
                 </div>
             </div>
@@ -76,6 +71,14 @@ function displayProducts() {
     }).join('');
     
     updatePagination();
+}
+
+function goToProductDetail(productId, event) {
+    // Don't navigate if the click was on a button
+    if (event.target.closest('.add-to-cart') || event.target.closest('.wishlist-btn')) {
+        return;
+    }
+    window.location.href = `product-detail.html?id=${productId}`;
 }
 
 function updatePagination() {
@@ -128,7 +131,13 @@ function applyFilters() {
     displayProducts();
     
     const resultCount = filteredProducts.length;
-    if (typeof showToast === 'function') showToast(`Found ${resultCount} products`, 'info');
+    
+    // Show toast with appropriate color
+    if (resultCount === 0) {
+        showToast(`No products found.`, 'error');
+    } else {
+        showToast(`Found ${resultCount} product${resultCount === 1 ? '' : 's'}`, 'success');
+    }
 }
 
 function resetFilters() {
