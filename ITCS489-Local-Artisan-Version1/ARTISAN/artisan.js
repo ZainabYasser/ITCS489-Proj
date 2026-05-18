@@ -201,7 +201,7 @@ async function editProduct(productId) {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Price (BHD)</label>
+                                <label>Price (BD)</label>
                                 <input type="number" id="edit-product-price" step="0.01" value="${product.price}" required>
                             </div>
                             <div class="form-group">
@@ -659,12 +659,12 @@ async function editAuction(auctionId) {
                                 <textarea id="edit-auction-description" rows="3">${escapeHtml(auction.description || '')}</textarea>
                             </div>
                             <div class="form-group">
-                                <label>Starting Bid (BHD)</label>
+                                <label>Starting Bid (BD)</label>
                                 <input type="number" id="edit-auction-start-bid" step="0.01" value="${auction.start_bid}" required ${hasBids ? 'disabled' : ''}>
                                 ${hasBids ? '<small style="color: #666;">Starting bid cannot be changed after bids are placed</small>' : ''}
                             </div>
                             <div class="form-group">
-                                <label>Minimum Increment (BHD)</label>
+                                <label>Minimum Increment (BD)</label>
                                 <input type="number" id="edit-auction-min-increment" step="0.01" value="${auction.min_increment}" required>
                             </div>
                             <div class="form-group">

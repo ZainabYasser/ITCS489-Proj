@@ -199,11 +199,18 @@ if ($request == 'login') {
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT id, fullname, email, password, role FROM users WHERE email = ?");
+    // Include is_active in the SELECT
+    $stmt = $pdo->prepare("SELECT id, fullname, email, password, role, is_active FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($user && password_verify($password, $user['password'])) {
+        // Check if account is active
+        if ($user['is_active'] == 0) {
+            echo json_encode(['success' => false, 'message' => 'Your account has been disabled. Please contact support.']);
+            exit();
+        }
+        
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['fullname'];
         $_SESSION['user_role'] = $user['role'];
@@ -527,9 +534,25 @@ if ($request == 'get_order') {
     
     $orderNumber = $_GET['order_number'] ?? '';
     
-    $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_number = ? AND user_id = ?");
-    $stmt->execute([$orderNumber, $_SESSION['user_id']]);
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Check if user is admin
+    $isAdmin = ($_SESSION['user_role'] === 'admin');
+    
+    if ($isAdmin) {
+        // Admin can view any order
+        $stmt = $pdo->prepare("
+            SELECT o.*, u.fullname as customer_name 
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            WHERE o.order_number = ?
+        ");
+        $stmt->execute([$orderNumber]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        // Regular users can only view their own orders
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_number = ? AND user_id = ?");
+        $stmt->execute([$orderNumber, $_SESSION['user_id']]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     
     if ($order) {
         $stmt = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
@@ -1232,7 +1255,13 @@ if ($request == 'admin_stats') {
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM orders");
     $stats['orders'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
-    $stmt = $pdo->query("SELECT SUM(total_amount) as total FROM orders WHERE status = 'delivered'");
+    // Calculate revenue from order_items (product totals only, exclude shipping)
+    $stmt = $pdo->query("
+        SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total 
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id 
+        WHERE o.status = 'delivered'
+    ");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['revenue'] = $result['total'] ?? 0;
     
@@ -1264,6 +1293,12 @@ if ($request == 'admin_toggle_user') {
     $input = json_decode(file_get_contents('php://input'), true);
     $userId = $input['user_id'] ?? 0;
     $isActive = $input['is_active'] ?? 1;
+    
+    // Prevent admin from disabling their own account
+    if ($userId == $_SESSION['user_id']) {
+        echo json_encode(['success' => false, 'message' => 'You cannot disable your own account']);
+        exit();
+    }
     
     $stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?");
     $stmt->execute([$isActive ? 1 : 0, $userId]);
@@ -1319,7 +1354,8 @@ if ($request == 'admin_get_orders') {
     }
     
     $stmt = $pdo->query("
-        SELECT o.*, u.fullname as customer_name 
+        SELECT o.*, u.fullname as customer_name,
+               (SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) as products_total
         FROM orders o
         JOIN users u ON o.user_id = u.id
         ORDER BY o.created_at DESC
@@ -1418,13 +1454,14 @@ if ($request == 'admin_get_auctions') {
         exit();
     }
     
-    $stmt = $pdo->query("
-        SELECT a.*, p.name as product_name, u.fullname as artisan_name
+    $stmt = $pdo->prepare("
+        SELECT a.*, u.fullname as artisan_name,
+        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
         FROM auctions a
-        JOIN products p ON a.product_id = p.id
-        JOIN users u ON p.artisan_id = u.id
+        JOIN users u ON a.artisan_id = u.id
         ORDER BY a.created_at DESC
     ");
+    $stmt->execute();
     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode(['success' => true, 'auctions' => $auctions]);
@@ -1509,34 +1546,37 @@ if ($request == 'admin_reports') {
     $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
     $month = isset($_GET['month']) ? $_GET['month'] : 'all';
     
-    // Monthly sales summary
+    // Monthly sales summary (using product totals only)
     if ($month == 'all') {
         $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as order_count 
-            FROM orders 
-            WHERE YEAR(created_at) = ? AND status = 'delivered'
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total, COUNT(DISTINCT o.id) as order_count 
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE YEAR(o.created_at) = ? AND o.status = 'delivered'
         ");
         $stmt->execute([$year]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $monthly_sales = $result['total'] ?? 0;
     } else {
         $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as order_count 
-            FROM orders 
-            WHERE YEAR(created_at) = ? AND MONTH(created_at) = ? AND status = 'delivered'
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total, COUNT(DISTINCT o.id) as order_count 
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE YEAR(o.created_at) = ? AND MONTH(o.created_at) = ? AND o.status = 'delivered'
         ");
         $stmt->execute([$year, $month]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $monthly_sales = $result['total'] ?? 0;
     }
     
-    // Monthly breakdown
+    // Monthly breakdown (using product totals only)
     $monthly_breakdown = [];
     for ($m = 1; $m <= 12; $m++) {
         $stmt = $pdo->prepare("
-            SELECT COALESCE(SUM(total_amount), 0) as total, COUNT(*) as count
-            FROM orders 
-            WHERE YEAR(created_at) = ? AND MONTH(created_at) = ? AND status = 'delivered'
+            SELECT COALESCE(SUM(oi.price * oi.quantity), 0) as total, COUNT(DISTINCT o.id) as count
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE YEAR(o.created_at) = ? AND MONTH(o.created_at) = ? AND o.status = 'delivered'
         ");
         $stmt->execute([$year, $m]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1550,7 +1590,7 @@ if ($request == 'admin_reports') {
         ];
     }
     
-    // Top artisans
+    // Top artisans (already using product totals - correct)
     $stmt = $pdo->query("
         SELECT u.id, u.fullname, ap.shop_name,
                COALESCE(SUM(oi.quantity), 0) as products_sold,
@@ -1567,7 +1607,7 @@ if ($request == 'admin_reports') {
     ");
     $top_artisans = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Best selling products
+    // Best selling products (already using product totals - correct)
     $stmt = $pdo->query("
         SELECT p.id, p.name, c.name as category_name,
                COALESCE(SUM(oi.quantity), 0) as quantity_sold,
@@ -1582,10 +1622,11 @@ if ($request == 'admin_reports') {
     ");
     $best_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Recent orders
+    // Recent orders (adding products_total)
     $stmt = $pdo->query("
         SELECT o.*, u.fullname as customer_name,
-               (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+            (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
+            (SELECT COALESCE(SUM(price * quantity), 0) FROM order_items WHERE order_id = o.id) as products_total
         FROM orders o
         JOIN users u ON o.user_id = u.id
         ORDER BY o.created_at DESC
@@ -1613,7 +1654,6 @@ if ($request == 'admin_reports') {
 }
 
 // ============ REVIEW FUNCTIONS ============
-
 if ($request == 'get_reviews') {
     $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
     
