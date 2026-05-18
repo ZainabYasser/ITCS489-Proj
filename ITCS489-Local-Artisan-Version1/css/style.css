@@ -3221,3 +3221,68 @@ footer {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(26, 75, 114, 0.1);
 }
+
+/* ===== WISHLIST BUTTON STYLES ===== */
+.wishlist-btn {
+    background: #f0f0f0;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #666;
+}
+
+.wishlist-btn:hover {
+    background: #ffebee;
+    color: #e91e63;
+    transform: scale(1.05);
+}
+
+.wishlist-btn i {
+    pointer-events: none;
+}
+
+/* View details button */
+.view-details-btn {
+    width: 100%;
+    background: #1a4b72;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+    background: #1e3a5f;
+    transform: translateY(-1px);
+}
+
+/* Make entire product card clickable */
+.product-card {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.product-actions {
+    position: relative;
+    z-index: 2;
+}
+
+.product-actions button {
+    position: relative;
+    z-index: 3;
+}
