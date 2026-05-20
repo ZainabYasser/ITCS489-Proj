@@ -257,70 +257,6 @@ function updateWelcomeMessage() {
     }
 }
 
-// Load Won Auctions
-// async function loadWonAuctions() {
-//     const container = document.getElementById('won-auctions-container');
-//     if (!container) return;
-    
-//     const user = getCurrentUser();
-//     if (!user) {
-//         container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your won auctions</p></div>';
-//         return;
-//     }
-    
-//     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-    
-//     try {
-//         const response = await fetch('../api.php?request=get_user_won_auctions');
-//         const data = await response.json();
-        
-//         if (data.success && data.auctions && data.auctions.length > 0) {
-//             // Trigger confetti when page loads and there are won auctions
-//             triggerWinnerConfetti();
-            
-//             container.innerHTML = `
-//                 <div style="display: grid; gap: 20px;">
-//                     ${data.auctions.map(auction => `
-//                         <div class="order-card" style="padding: 20px; background: linear-gradient(135deg, #28a74510, #1a4b7210); border-left: 4px solid #28a745; border-radius: 16px;">
-//                             <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
-//                                 <img src="${auction.image_url || 'https://placehold.co/100x100/1a4b72/white?text=' + encodeURIComponent(auction.title)}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-//                                 <div style="flex: 1;">
-//                                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-//                                         <h3 style="color: #1a4b72; margin: 0;">${escapeHtml(auction.title)}</h3>
-//                                         <span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-//                                             <i class="fas fa-trophy"></i> YOU WON!
-//                                         </span>
-//                                     </div>
-//                                     <p style="margin: 10px 0 5px 0;">
-//                                         <strong>Winning Bid:</strong> BD ${parseFloat(auction.current_bid).toFixed(2)}
-//                                     </p>
-//                                     <p style="margin: 5px 0;">
-//                                         <strong>Expires:</strong> ${new Date(auction.winner_expires).toLocaleString()}
-//                                     </p>
-//                                     <div style="margin-top: 15px;">
-//                                         ${new Date(auction.winner_expires) > new Date() ? 
-//                                             `<button onclick="addWonAuctionToCart(${auction.id})" class="btn-primary" style="background: #1a4b72; padding: 10px 20px;">
-//                                                 <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
-//                                             </button>` :
-//                                             `<span style="color: #dc3545; background: #dc354520; padding: 8px 15px; border-radius: 8px;">
-//                                                 <i class="fas fa-clock"></i> Purchase window expired
-//                                             </span>`
-//                                         }
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     `).join('')}
-//                 </div>
-//             `;
-//         } else {
-//             container.innerHTML = '<div class="empty-state"><i class="fas fa-trophy"></i><h4>No Won Auctions Yet</h4><p>When you win an auction, it will appear here with confetti! 🎉</p></div>';
-//         }
-//     } catch (error) {
-//         console.error('Error loading won auctions:', error);
-//         container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading</h4><p>Please try again later.</p></div>';
-//     }
-// }
 
 // Track if confetti has been shown for this session
 let confettiShownForSession = false;
@@ -388,10 +324,15 @@ async function loadAuctionHistory() {
                                     </p>
                                     
                                     <div style="margin-top: 15px;">
-                                        ${auction.status === 'won' && new Date(auction.winner_expires) > new Date() ? 
-                                            `<button onclick="addWonAuctionToCart(${auction.id})" class="btn-primary" style="background: #1a4b72; padding: 10px 20px;">
-                                                <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
-                                            </button>` :
+                                        ${auction.status === 'won' ? 
+                                            (new Date(auction.winner_expires) > new Date() ? 
+                                                `<button onclick="addWonAuctionToCart(${auction.id})" class="btn-primary" style="background: #1a4b72; padding: 10px 20px;">
+                                                    <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
+                                                </button>` :
+                                                `<span style="background: #28a745; color: white; padding: 10px 20px; border-radius: 8px; display: inline-block;">
+                                                    <i class="fas fa-check-circle"></i> Purchased / Completed
+                                                </span>`
+                                            ) :
                                             `<a href="../AUCTIONS/auction.html" class="btn-secondary" style="background: #1a4b72; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 8px; color: white;">
                                                 <i class="fas fa-gavel"></i> Browse Active Auctions
                                             </a>`
@@ -533,6 +474,5 @@ window.updateProfile = updateProfile;
 window.trackOrder = trackOrder;
 window.viewOrderDetails = viewOrderDetails;
 window.updateWelcomeMessage = updateWelcomeMessage;
-// window.loadWonAuctions = loadWonAuctions;
 window.loadAuctionHistory = loadAuctionHistory;
 window.addWonAuctionToCart = addWonAuctionToCart;

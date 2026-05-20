@@ -783,7 +783,7 @@ if ($request == 'add_auction_to_cart') {
     } else {
         // Create a temporary product for this auction win
         $stmt = $pdo->prepare("INSERT INTO products (artisan_id, name, description, price, stock, image_url, is_auction, created_at) 
-                               VALUES (?, ?, ?, ?, 1, ?, 0, NOW())");
+                               VALUES (?, ?, ?, ?, 1, ?, 1, NOW())");
         $stmt->execute([
             $auction['artisan_id'],
             $tempProductName,
@@ -845,29 +845,6 @@ if ($request == 'get_bid_history') {
     exit();
 }
 
-// Get user's won auctions (for account page)
-// if ($request == 'get_user_won_auctions') {
-//     if (!isLoggedIn()) {
-//         echo json_encode(['success' => false, 'message' => 'Please login']);
-//         exit();
-//     }
-    
-//     $userId = $_SESSION['user_id'];
-    
-//     $stmt = $pdo->prepare("
-//         SELECT a.*, u.fullname as artisan_name
-//         FROM auctions a
-//         JOIN users u ON a.artisan_id = u.id
-//         WHERE a.winner_id = ? AND a.winner_expires > NOW()
-//         ORDER BY a.winner_expires ASC
-//     ");
-//     $stmt->execute([$userId]);
-//     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-//     echo json_encode(['success' => true, 'auctions' => $auctions]);
-//     exit();
-// }
-
 // Get user's auction history (both won and lost)
 if ($request == 'get_user_auction_history') {
     if (!isLoggedIn()) {
@@ -877,13 +854,14 @@ if ($request == 'get_user_auction_history') {
     
     $userId = $_SESSION['user_id'];
     
-    // Get WON auctions (winner_id matches, within purchase window)
+    // Get WON auctions (all won auctions, regardless of expiry)
     $stmt = $pdo->prepare("
         SELECT a.*, u.fullname as artisan_name, 'won' as status,
-               a.current_bid as winning_bid
+               a.current_bid as winning_bid,
+               CASE WHEN a.winner_expires > NOW() THEN 1 ELSE 0 END as can_purchase
         FROM auctions a
         JOIN users u ON a.artisan_id = u.id
-        WHERE a.winner_id = ? AND a.winner_expires > NOW()
+        WHERE a.winner_id = ?
         ORDER BY a.end_time DESC
     ");
     $stmt->execute([$userId]);
@@ -893,7 +871,8 @@ if ($request == 'get_user_auction_history') {
     $stmt = $pdo->prepare("
         SELECT DISTINCT a.*, u.fullname as artisan_name, 'lost' as status,
                (SELECT MAX(bid_amount) FROM bids WHERE auction_id = a.id AND user_id = ?) as my_highest_bid,
-               a.current_bid as winning_bid
+               a.current_bid as winning_bid,
+               0 as can_purchase
         FROM auctions a
         JOIN users u ON a.artisan_id = u.id
         WHERE a.id IN (
