@@ -7,507 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        /* Enhanced Account Page Specific Styles */
-        
-        /* .account-hero {
-            background: linear-gradient(135deg, var(--bg-warm) 0%, var(--bg-warm-dark) 100%);
-            padding: 40px 0;
-            border-radius: 0 0 30px 30px;
-            margin-bottom: 40px;
-        }
-        
-        .welcome-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            box-shadow: var(--shadow);
-        }
-        
-        .welcome-text h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .welcome-text h2 i {
-            color: var(--primary);
-            margin-right: 10px;
-        }
-        
-        .welcome-text p {
-            color: var(--text-light);
-        }
-        
-        .member-since {
-            background: var(--bg-warm);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 14px;
-        }
-        
-        .member-since i {
-            color: var(--primary);
-            margin-right: 8px;
-        }
-        
-        .account-tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 35px;
-            flex-wrap: wrap;
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        
-        .account-tabs .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 12px 28px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            border-radius: 40px;
-            transition: all 0.3s ease;
-            color: var(--text-gray);
-            position: relative;
-        }
-        
-        .account-tabs .tab-btn i {
-            margin-right: 8px;
-            font-size: 16px;
-        }
-        
-        .account-tabs .tab-btn:hover {
-            background: var(--bg-warm);
-            color: var(--primary);
-        }
-        
-        .account-tabs .tab-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
-        }
-        
-        .dashboard-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-        }
-        
-        .dashboard-card:hover {
-            box-shadow: var(--shadow-hover);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--bg-warm);
-        }
-        
-        .card-header h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-        
-        .card-header h3 i {
-            color: var(--primary);
-            margin-right: 10px;
-        }
-        
-        .card-header a {
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-        
-        .card-header a:hover {
-            text-decoration: underline;
-        }
-        
-        .profile-form {
-            max-width: 600px;
-        }
-        
-        .form-group-modern {
-            margin-bottom: 20px;
-        }
-        
-        .form-group-modern label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-dark);
-            font-size: 14px;
-        }
-        
-        .form-group-modern label i {
-            color: var(--primary);
-            margin-right: 8px;
-            width: 20px;
-        }
-        
-        .form-group-modern input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid var(--border-light);
-            border-radius: 12px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            background: var(--white);
-        }
-        
-        .form-group-modern input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.1);
-        }
-        
-        .form-group-modern input:hover {
-            border-color: var(--primary-light);
-        }
-        
-        .update-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .update-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 94, 60, 0.3);
-        }
-        
-        .orders-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .order-card {
-            background: var(--bg-warm);
-            border-radius: 16px;
-            padding: 20px;
-            transition: var(--transition);
-            border: 1px solid transparent;
-        }
-        
-        .order-card:hover {
-            border-color: var(--primary);
-            transform: translateX(5px);
-        }
-        
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .order-number {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--primary);
-        }
-        
-        .order-number i {
-            margin-right: 8px;
-        }
-        
-        .status-badge {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-delivered {
-            background: #28a74520;
-            color: #28a745;
-        }
-        
-        .status-processing, .status-pending {
-            background: #ffc10720;
-            color: #ff9800;
-        }
-        
-        .status-shipped {
-            background: #17a2b820;
-            color: #17a2b8;
-        }
-        
-        .status-cancelled {
-            background: #dc354520;
-            color: #dc3545;
-        }
-        
-        .order-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .order-info {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .order-info span {
-            font-size: 13px;
-            color: var(--text-light);
-        }
-        
-        .order-info i {
-            margin-right: 5px;
-            color: var(--primary);
-        }
-        
-        .order-total {
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--primary);
-        }
-        
-        .view-order-btn {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 13px;
-        }
-        
-        .view-order-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .wishlist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-        }
-        
-        .wishlist-item {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            position: relative;
-        }
-        
-        .wishlist-item:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-        
-        .wishlist-image {
-            height: 200px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .wishlist-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        
-        .wishlist-item:hover .wishlist-image img {
-            transform: scale(1.05);
-        }
-        
-        .remove-wishlist-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: white;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            color: #dc3545;
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-        }
-        
-        .remove-wishlist-btn:hover {
-            background: #dc3545;
-            color: white;
-            transform: scale(1.1);
-        }
-        
-        .wishlist-info {
-            padding: 15px;
-        }
-        
-        .wishlist-info h4 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .wishlist-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-            margin: 10px 0;
-        }
-        
-        .wishlist-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .add-to-cart-wishlist {
-            flex: 1;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .add-to-cart-wishlist:hover {
-            background: var(--primary-dark);
-        }
-        
-        .tracking-container {
-            background: var(--bg-warm);
-            border-radius: 20px;
-            padding: 30px;
-        }
-        
-        .tracking-input-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .tracking-input-group input {
-            flex: 1;
-            padding: 14px 20px;
-            border: 2px solid transparent;
-            border-radius: 12px;
-            font-size: 14px;
-            transition: var(--transition);
-            background: white;
-        }
-        
-        .tracking-input-group input:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-        
-        .track-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 30px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-        
-        .track-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: var(--bg-warm);
-            border-radius: 20px;
-        }
-        
-        .empty-state i {
-            font-size: 64px;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-        
-        .empty-state h4 {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-        
-        .empty-state p {
-            color: var(--text-light);
-            margin-bottom: 20px;
-        }
-        
-        .empty-state .btn-primary {
-            display: inline-block;
-        }
-        
-        @media (max-width: 768px) {
-            .welcome-card {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .order-header, .order-details {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .order-info {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .tracking-input-group {
-                flex-direction: column;
-            }
-            
-            .track-btn {
-                width: 100%;
-            }
-            
-            .wishlist-grid {
-                grid-template-columns: 1fr;
-            }
-        } */
-    </style>
 </head>
 <body>
 
@@ -568,6 +67,9 @@
             </button>
             <button class="tab-btn" onclick="showTab('tracking')">
                 <i class="fas fa-truck"></i> Track Order
+            </button>
+            <button class="tab-btn" onclick="showTab('auction-history')">
+                <i class="fas fa-gavel"></i> Auction History 
             </button>
         </div>
         
@@ -647,6 +149,30 @@
                 </div>
             </div>
         </div>
+        <!-- Won Auctions Tab -->
+        <!-- <div id="won-auctions-tab" class="tab-content">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-trophy"></i> Auctions You Won</h3>
+                </div>
+                <div id="won-auctions-container">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div> -->
+        <!-- Auction History Tab (Combined Won + Lost) -->
+        <div id="auction-history-tab" class="tab-content">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-gavel"></i> Your Auction History</h3>
+                    <a href="../AUCTIONS/auction.html">View Active Auctions →</a>
+                </div>
+                <div id="auction-history-container">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -696,9 +222,14 @@
             loadWishlist();
         } else if (tabName === 'profile') {
             loadProfile();
+        } else if (tabName === 'auction-history') {
+            loadAuctionHistory();
         }
+        // } else if (tabName === 'won-auctions') {
+        //     loadWonAuctions();
+        // }
     }
-    
+        
     // Override loadOrders to use card layout
     const originalLoadOrders = window.loadOrders;
     window.loadOrders = async function() {

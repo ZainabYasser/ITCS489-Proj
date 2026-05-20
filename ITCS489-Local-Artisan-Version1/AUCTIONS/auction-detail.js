@@ -39,6 +39,7 @@ function loadCurrencyPreference() {
 
 // Load auction from API
 async function loadAuctionDetail() {
+    await fetch(AUCTION_API_URL + 'process_ended_auctions');
     const urlParams = new URLSearchParams(window.location.search);
     const auctionId = urlParams.get('id');
     
@@ -118,12 +119,79 @@ function displayAuctionDetail() {
     const minBidConverted = (minBid * rate).toFixed(2);
     const imageUrl = currentAuction.image_url || `https://placehold.co/600x500/1a4b72/white?text=${encodeURIComponent(currentAuction.title)}`;
     
+    // Check if auction has ended
+    const isEnded = currentAuction.is_ended || new Date(currentAuction.end_time) < new Date();
+    const user = getCurrentUser();
+    const isWinner = currentAuction.is_winner === true;
+    const canPurchase = currentAuction.can_purchase === true;
+    
+    // Winner/Loser message HTML
+    let winnerMessageHtml = '';
+    if (isEnded && user) {
+        if (isWinner && canPurchase) {
+            const expiryDate = new Date(currentAuction.winner_expires);
+            winnerMessageHtml = `
+                <div style="background: linear-gradient(135deg, #28a74520, #1a4b7220); border-left: 4px solid #28a745; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-trophy" style="font-size: 48px; color: #ffc107;"></i>
+                    <h2 style="color: #28a745; margin: 10px 0;">🎉 Congratulations! You won this auction! 🎉</h2>
+                    <p>You won at ${symbol} ${currentBidConverted}</p>
+                    <p style="color: #666;">You have until <strong>${expiryDate.toLocaleString()}</strong> to purchase this item.</p>
+                    <button class="add-to-cart-winner" onclick="addWinnerToCart()" style="background: #1a4b72; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px;">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
+                    </button>
+                </div>
+            `;
+            // Trigger confetti
+            triggerConfetti();
+        } else if (isWinner && !canPurchase) {
+            winnerMessageHtml = `
+                <div style="background: #dc354520; border-left: 4px solid #dc3545; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-clock" style="font-size: 48px; color: #dc3545;"></i>
+                    <h3 style="color: #dc3545;">Purchase Window Expired</h3>
+                    <p>You won this auction but your 48-hour purchase window has expired.</p>
+                    <p>This item is no longer available for purchase.</p>
+                </div>
+            `;
+        } else if (!isWinner && currentAuction.current_bidder_id) {
+            winnerMessageHtml = `
+                <div style="background: #ffc10720; border-left: 4px solid #ffc107; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-heart-broken" style="font-size: 48px; color: #ff9800;"></i>
+                    <h3 style="color: #ff9800;">Better Luck Next Time!</h3>
+                    <p>You didn't win this auction, but don't give up!</p>
+                    <a href="auction.html" class="btn-primary" style="display: inline-block; margin-top: 10px;">Browse Other Auctions →</a>
+                </div>
+            `;
+        }
+    }
+    
+    // Bid placement section (only show if auction not ended and user is not winner waiting to purchase)
+    let bidPlacementHtml = '';
+    if (!isEnded) {
+        bidPlacementHtml = `
+            <div class="bid-placement">
+                <h4>Place Your Bid</h4>
+                <input type="number" id="bid-amount" step="${minIncrement}" placeholder="Enter bid amount">
+                <div id="bid-error" class="bid-error"></div>
+                <div id="bid-success" class="bid-success"></div>
+                <button class="place-bid-btn" onclick="placeBid()">Place Bid</button>
+                <p style="font-size: 12px; margin-top: 10px; color: #666;">
+                    <i class="fas fa-info-circle"></i> Minimum bid: ${symbol} ${minBidConverted}
+                </p>
+            </div>
+        `;
+    } else if (isEnded && isWinner && canPurchase) {
+        bidPlacementHtml = ''; // No bid placement for winner, they see Add to Cart button
+    } else if (isEnded && !isWinner) {
+        bidPlacementHtml = ''; // No bid placement for losers
+    }
+    
     container.innerHTML = `
         <div class="auction-detail-layout">
             <div class="auction-gallery">
                 <img src="${imageUrl}" alt="${escapeHtml(currentAuction.title)}">
             </div>
             <div class="auction-info-detail">
+                ${winnerMessageHtml}
                 <h1>${escapeHtml(currentAuction.title)} 
                     <span class="bid-count-badge">
                         <i class="fas fa-gavel"></i> ${currentAuction.bid_count || 0} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'}
@@ -133,8 +201,8 @@ function displayAuctionDetail() {
                 <p>${escapeHtml(currentAuction.description || 'Beautiful handmade piece up for auction.')}</p>
                 
                 <div class="auction-timer-card">
-                    <h4>Time Remaining</h4>
-                    <div class="countdown-large" id="countdown-timer">--:--:--</div>
+                    <h4>${isEnded ? 'Auction Ended' : 'Time Remaining'}</h4>
+                    <div class="countdown-large" id="countdown-timer">${isEnded ? 'Ended' : '--:--:--'}</div>
                 </div>
                 
                 <div class="bid-info">
@@ -152,16 +220,7 @@ function displayAuctionDetail() {
                     </div>
                 </div>
                 
-                <div class="bid-placement">
-                    <h4>Place Your Bid</h4>
-                    <input type="number" id="bid-amount" step="${minIncrement}" placeholder="Enter bid amount">
-                    <div id="bid-error" class="bid-error"></div>
-                    <div id="bid-success" class="bid-success"></div>
-                    <button class="place-bid-btn" onclick="placeBid()">Place Bid</button>
-                    <p style="font-size: 12px; margin-top: 10px; color: #666;">
-                        <i class="fas fa-info-circle"></i> Minimum bid: ${symbol} ${minBidConverted}
-                    </p>
-                </div>
+                ${bidPlacementHtml}
                 
                 <div class="bid-history">
                     <h4>Bid History (${currentAuction.bid_count || 0} ${currentAuction.bid_count == 1 ? 'bid' : 'bids'})</h4>
@@ -174,11 +233,109 @@ function displayAuctionDetail() {
     `;
     
     const bidInput = document.getElementById('bid-amount');
-    if (bidInput) {
-    const convertedMinBid = minBid * rate; 
-    bidInput.min = convertedMinBid;
-    bidInput.value = convertedMinBid;
+    if (bidInput && !isEnded) {
+        const convertedMinBid = minBid * rate; 
+        bidInput.min = convertedMinBid;
+        bidInput.value = convertedMinBid;
+    }
 }
+
+// Confetti effect for winner
+function triggerConfetti() {
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#1a4b72', '#28a745', '#ffc107', '#ffffff']
+        });
+    } else {
+        // Simple confetti using canvas
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '9999';
+        document.body.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const particles = [];
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                size: Math.random() * 8 + 4,
+                color: `hsl(${Math.random() * 60 + 200}, 70%, 50%)`,
+                speed: Math.random() * 5 + 3,
+                rotation: Math.random() * 360
+            });
+        }
+        
+        let animationId;
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = 0;
+            for (let p of particles) {
+                p.y += p.speed;
+                if (p.y < canvas.height) {
+                    active++;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                }
+            }
+            if (active > 0) {
+                animationId = requestAnimationFrame(animate);
+            } else {
+                cancelAnimationFrame(animationId);
+                canvas.remove();
+            }
+        }
+        animate();
+        
+        setTimeout(() => {
+            if (animationId) cancelAnimationFrame(animationId);
+            if (canvas) canvas.remove();
+        }, 3000);
+    }
+}
+
+// Add winner's auction item to cart
+async function addWinnerToCart() {
+    const user = getCurrentUser();
+    if (!user) {
+        showToast('Please login to add to cart', 'error');
+        window.location.href = '../AUTH/login.html';
+        return;
+    }
+    
+    try {
+        const response = await fetch(AUCTION_API_URL + 'add_auction_to_cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ auction_id: currentAuction.id })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(data.message, 'success');
+            updateCartCount();
+            // Optionally redirect to cart
+            setTimeout(() => {
+                window.location.href = '../SHOPPING/cart.html';
+            }, 1500);
+        } else {
+            showToast(data.message || 'Failed to add to cart', 'error');
+        }
+    } catch (error) {
+        console.error('Add to cart error:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
 }
 
 function startCountdown() {
@@ -349,3 +506,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.changeCurrency = changeCurrency;
 window.placeBid = placeBid;
+window.addWinnerToCart = addWinnerToCart;

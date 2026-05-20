@@ -624,14 +624,32 @@ if ($request == 'remove_from_wishlist') {
 
 // Get all active auctions
 if ($request == 'get_auctions') {
+    $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+    
+    // Get active auctions
     $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name,
                           (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
-                          FROM auctions a
-                          JOIN users u ON a.artisan_id = u.id
-                          WHERE a.is_active = 1 AND a.end_time > NOW()
-                          ORDER BY a.end_time ASC");
+                           FROM auctions a
+                           JOIN users u ON a.artisan_id = u.id
+                           WHERE a.is_active = 1 AND a.end_time > NOW()
+                           ORDER BY a.end_time ASC");
     $stmt->execute();
     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // If user is logged in, also get their won auctions that are still within purchase window
+    if ($userId) {
+        $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name,
+                              (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                               FROM auctions a
+                               JOIN users u ON a.artisan_id = u.id
+                               WHERE a.winner_id = ? AND a.winner_expires > NOW() AND a.is_active = 0
+                               ORDER BY a.winner_expires ASC");
+        $stmt->execute([$userId]);
+        $wonAuctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Merge won auctions with active auctions
+        $auctions = array_merge($auctions, $wonAuctions);
+    }
     
     echo json_encode(['success' => true, 'auctions' => $auctions]);
     exit();
@@ -640,6 +658,7 @@ if ($request == 'get_auctions') {
 // Get single auction by ID
 if ($request == 'get_auction') {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     
     $stmt = $pdo->prepare("SELECT a.*, u.fullname as artisan_name,
                           (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
@@ -650,6 +669,23 @@ if ($request == 'get_auction') {
     $auction = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($auction) {
+        $isEnded = strtotime($auction['end_time']) < time();
+        
+        // FORCE set winner if auction ended and has a current_bidder_id
+        if ($isEnded && $auction['current_bidder_id'] > 0) {
+            // Always set/update the winner for ended auctions
+            $winnerExpires = date('Y-m-d H:i:s', strtotime('+48 hours'));
+            $updateStmt = $pdo->prepare("UPDATE auctions SET winner_id = ?, winner_expires = ? WHERE id = ? AND (winner_id IS NULL OR winner_id != ?)");
+            $updateStmt->execute([$auction['current_bidder_id'], $winnerExpires, $id, $auction['current_bidder_id']]);
+            $auction['winner_id'] = $auction['current_bidder_id'];
+            $auction['winner_expires'] = $winnerExpires;
+        }
+        
+        // SIMPLE winner check - just compare user ID with current_bidder_id
+        $auction['is_winner'] = ($userId && $auction['current_bidder_id'] == $userId);
+        $auction['can_purchase'] = ($auction['is_winner'] && $isEnded);
+        $auction['is_ended'] = $isEnded;
+        
         echo json_encode(['success' => true, 'auction' => $auction]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Auction not found']);
@@ -699,8 +735,8 @@ if ($request == 'place_bid') {
         $stmt = $pdo->prepare("INSERT INTO bids (auction_id, user_id, bid_amount) VALUES (?, ?, ?)");
         $stmt->execute([$auctionId, $userId, $bidAmount]);
         
-        // Update auction current bid
-        $stmt = $pdo->prepare("UPDATE auctions SET current_bid = ?, current_bidder_id = ? WHERE id = ?");
+        // Update auction current bid and clear any previous winner
+        $stmt = $pdo->prepare("UPDATE auctions SET current_bid = ?, current_bidder_id = ?, winner_id = NULL, winner_expires = NULL, winner_notified = 0 WHERE id = ?");
         $stmt->execute([$bidAmount, $userId, $auctionId]);
         
         $pdo->commit();
@@ -710,6 +746,86 @@ if ($request == 'place_bid') {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Failed to place bid: ' . $e->getMessage()]);
     }
+    exit();
+}
+
+
+// Add auction item to cart (for winner)
+if ($request == 'add_auction_to_cart') {
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Please login']);
+        exit();
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $auctionId = $input['auction_id'] ?? 0;
+    $userId = $_SESSION['user_id'];
+    
+    // Get auction details
+    $stmt = $pdo->prepare("SELECT * FROM auctions WHERE id = ? AND winner_id = ? AND winner_expires > NOW()");
+    $stmt->execute([$auctionId, $userId]);
+    $auction = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$auction) {
+        echo json_encode(['success' => false, 'message' => 'You are not the winner or your purchase window has expired']);
+        exit();
+    }
+    
+    // Create a temporary product from auction for cart
+    // First, check if a product already exists for this auction
+    $stmt = $pdo->prepare("SELECT id FROM products WHERE name = ? AND artisan_id = ?");
+    $tempProductName = "[Auction] " . $auction['title'];
+    $stmt->execute([$tempProductName, $auction['artisan_id']]);
+    $existingProduct = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existingProduct) {
+        $productId = $existingProduct['id'];
+    } else {
+        // Create a temporary product for this auction win
+        $stmt = $pdo->prepare("INSERT INTO products (artisan_id, name, description, price, stock, image_url, is_auction, created_at) 
+                               VALUES (?, ?, ?, ?, 1, ?, 0, NOW())");
+        $stmt->execute([
+            $auction['artisan_id'],
+            $tempProductName,
+            $auction['description'],
+            $auction['current_bid'],
+            $auction['image_url']
+        ]);
+        $productId = $pdo->lastInsertId();
+    }
+    
+    // Check if already in cart
+    $stmt = $pdo->prepare("SELECT id FROM cart WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$userId, $productId]);
+    
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Item already in cart']);
+        exit();
+    }
+    
+    // Add to cart
+    $stmt = $pdo->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, 1)");
+    $stmt->execute([$userId, $productId]);
+    
+    echo json_encode(['success' => true, 'message' => 'Item added to cart! Proceed to checkout.']);
+    exit();
+}
+
+// Check and set winners for ended auctions (call this via cron or on page load)
+if ($request == 'process_ended_auctions') {
+    $stmt = $pdo->prepare("
+        UPDATE auctions 
+        SET winner_id = current_bidder_id, 
+            winner_expires = DATE_ADD(NOW(), INTERVAL 48 HOUR),
+            winner_notified = 0
+        WHERE end_time < NOW() 
+        AND is_active = 1 
+        AND current_bidder_id IS NOT NULL
+        AND winner_id IS NULL
+    ");
+    $stmt->execute();
+    
+    echo json_encode(['success' => true, 'updated' => $stmt->rowCount()]);
     exit();
 }
 
@@ -729,8 +845,78 @@ if ($request == 'get_bid_history') {
     exit();
 }
 
+// Get user's won auctions (for account page)
+// if ($request == 'get_user_won_auctions') {
+//     if (!isLoggedIn()) {
+//         echo json_encode(['success' => false, 'message' => 'Please login']);
+//         exit();
+//     }
+    
+//     $userId = $_SESSION['user_id'];
+    
+//     $stmt = $pdo->prepare("
+//         SELECT a.*, u.fullname as artisan_name
+//         FROM auctions a
+//         JOIN users u ON a.artisan_id = u.id
+//         WHERE a.winner_id = ? AND a.winner_expires > NOW()
+//         ORDER BY a.winner_expires ASC
+//     ");
+//     $stmt->execute([$userId]);
+//     $auctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+//     echo json_encode(['success' => true, 'auctions' => $auctions]);
+//     exit();
+// }
+
+// Get user's auction history (both won and lost)
+if ($request == 'get_user_auction_history') {
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Please login']);
+        exit();
+    }
+    
+    $userId = $_SESSION['user_id'];
+    
+    // Get WON auctions (winner_id matches, within purchase window)
+    $stmt = $pdo->prepare("
+        SELECT a.*, u.fullname as artisan_name, 'won' as status,
+               a.current_bid as winning_bid
+        FROM auctions a
+        JOIN users u ON a.artisan_id = u.id
+        WHERE a.winner_id = ? AND a.winner_expires > NOW()
+        ORDER BY a.end_time DESC
+    ");
+    $stmt->execute([$userId]);
+    $wonAuctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get LOST auctions (user bid but didn't win)
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT a.*, u.fullname as artisan_name, 'lost' as status,
+               (SELECT MAX(bid_amount) FROM bids WHERE auction_id = a.id AND user_id = ?) as my_highest_bid,
+               a.current_bid as winning_bid
+        FROM auctions a
+        JOIN users u ON a.artisan_id = u.id
+        WHERE a.id IN (
+            SELECT DISTINCT auction_id FROM bids WHERE user_id = ?
+        )
+        AND a.end_time < NOW()
+        AND (a.winner_id IS NULL OR a.winner_id != ?)
+        ORDER BY a.end_time DESC
+    ");
+    $stmt->execute([$userId, $userId, $userId]);
+    $lostAuctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Combine and sort by end_time (most recent first)
+    $allAuctions = array_merge($wonAuctions, $lostAuctions);
+    usort($allAuctions, function($a, $b) {
+        return strtotime($b['end_time']) - strtotime($a['end_time']);
+    });
+    
+    echo json_encode(['success' => true, 'auctions' => $allAuctions]);
+    exit();
+}
+
 // Create auction (for artisans)
-// Create auction (artisan only) - NEW VERSION without product_id
 if ($request == 'create_auction') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
         echo json_encode(['success' => false, 'message' => 'Only artisans can create auctions']);
@@ -781,7 +967,6 @@ if ($request == 'create_auction') {
 }
 
 // Get artisan's auctions
-// Get artisan's auctions (for dashboard)
 if ($request == 'get_artisan_auctions') {
     if (!isLoggedIn() || $_SESSION['user_role'] !== 'artisan') {
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);

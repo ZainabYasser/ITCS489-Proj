@@ -73,6 +73,31 @@ function checkAuth() {
     return true;
 }
 
+// Auto-process ended auctions on every page load
+function processEndedAuctions() {
+    fetch('../api.php?request=process_ended_auctions')
+        .then(r => r.json())
+        .then(data => {
+            if (data.updated > 0) {
+        console.log('Updated ' + data.updated + ' ended auctions');
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+// Run when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', processEndedAuctions);
+} else {
+    processEndedAuctions();
+}
+
+// Check for ended auctions every 5 minutes
+setInterval(() => {
+    fetch('../api.php?request=process_ended_auctions')
+        .catch(err => console.error('Error processing auctions:', err));
+}, 5 * 60 * 1000); // 5 minutes
+
 // Make functions global
 window.updateAuthUI = updateAuthUI;
 window.logout = logout;
