@@ -58,7 +58,7 @@ async function loadAuctionsFromAPI() {
 // Sample auctions for fallback
 // function getSampleAuctions() {
 //     return [
-//         { id: 1, title: "Handmade Ceramic Vase", artisan_name: "Fatima Al Khalifa", current_bid: 45, start_bid: 30, bid_count: 8, end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/1a4b72/white?text=Ceramic+Vase" },
+//         { id: 1, title: "Handmade Ceramics Vase", artisan_name: "Fatima Al Khalifa", current_bid: 45, start_bid: 30, bid_count: 8, end_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/1a4b72/white?text=Ceramics+Vase" },
 //         { id: 2, title: "Silver Pearl Earrings", artisan_name: "Ahmed Al Zayani", current_bid: 35, start_bid: 29.99, bid_count: 12, end_time: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/1a4b72/white?text=Pearl+Earrings" },
 //         { id: 3, title: "Handwoven Wool Scarf", artisan_name: "Noor Al Awadhi", current_bid: 35, start_bid: 35, bid_count: 3, end_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), image_url: "https://placehold.co/600x400/1a4b72/white?text=Wool+Scarf" }
 //     ];
