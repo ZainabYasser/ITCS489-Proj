@@ -324,20 +324,25 @@ async function loadAuctionHistory() {
                                     </p>
                                     
                                     <div style="margin-top: 15px;">
-                                        ${auction.status === 'won' ? 
-                                            (new Date(auction.winner_expires) > new Date() ? 
-                                                `<button onclick="addWonAuctionToCart(${auction.id})" class="btn-primary" style="background: #1a4b72; padding: 10px 20px;">
-                                                    <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
-                                                </button>` :
-                                                `<span style="background: #28a745; color: white; padding: 10px 20px; border-radius: 8px; display: inline-block;">
-                                                    <i class="fas fa-check-circle"></i> Purchased / Completed
-                                                </span>`
-                                            ) :
-                                            `<a href="../AUCTIONS/auction.html" class="btn-secondary" style="background: #1a4b72; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 8px; color: white;">
-                                                <i class="fas fa-gavel"></i> Browse Active Auctions
-                                            </a>`
-                                        }
-                                    </div>
+    ${auction.status === 'won' ? 
+        (auction.already_purchased ? 
+            `<span style="background: #28a745; color: white; padding: 10px 20px; border-radius: 8px; display: inline-block;">
+                <i class="fas fa-check-circle"></i> Purchased / Added to Cart
+            </span>` :
+            (new Date(auction.winner_expires) > new Date() ? 
+                `<button onclick="addWonAuctionToCart(${auction.id})" class="btn-primary" style="background: #1a4b72; padding: 10px 20px;">
+                    <i class="fas fa-shopping-cart"></i> Add to Cart & Checkout
+                </button>` :
+                `<span style="background: #dc3545; color: white; padding: 10px 20px; border-radius: 8px; display: inline-block;">
+                    <i class="fas fa-clock"></i> Purchase Window Expired
+                </span>`
+            )
+        ) :
+        `<a href="../AUCTIONS/auction.html" class="btn-secondary" style="background: #1a4b72; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 8px; color: white;">
+            <i class="fas fa-gavel"></i> Browse Active Auctions
+        </a>`
+    }
+</div>
                                 </div>
                             </div>
                         </div>
@@ -455,6 +460,10 @@ async function addWonAuctionToCart(auctionId) {
         
         if (data.success) {
             showToast(data.message, 'success');
+            
+            // RELOAD the auction history to update the button
+            await loadAuctionHistory();
+            
             setTimeout(() => {
                 window.location.href = '../SHOPPING/cart.html';
             }, 1500);

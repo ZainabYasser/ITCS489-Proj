@@ -237,6 +237,7 @@ function displayAuctionDetail() {
         const convertedMinBid = minBid * rate; 
         bidInput.min = convertedMinBid;
         bidInput.value = convertedMinBid;
+        bidInput.value = convertedMinBid.toFixed(2);
     }
 }
 
@@ -452,7 +453,7 @@ async function placeBid() {
             // Update input field: set to the CONVERTED minimum bid amount
             const convertedMinBid = newMinBid * rate;
             bidInput.min = convertedMinBid;
-            bidInput.value = convertedMinBid;
+            bidInput.value = convertedMinBid.toFixed(2);
             bidInput.classList.remove('bid-input-error');
             
             // Update the minimum bid text below

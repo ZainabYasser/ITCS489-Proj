@@ -52,7 +52,7 @@ function displayCartItems(cart) {
     let itemsHTML = '<div class="cart-layout"><div class="cart-items-list">';
     
     for (const item of cart) {
-        const subtotalBHD = item.price * item.quantity;
+        const subtotalBHD = Number(item.price) * Number(item.quantity);
         totalBHD += subtotalBHD;
         const priceFormatted = formatPrice(item.price);
         const subtotalFormatted = formatPrice(subtotalBHD);
@@ -68,9 +68,9 @@ function displayCartItems(cart) {
                 </div>
                 <div style="min-width: 80px; font-weight: 600; color: var(--primary);">${priceFormatted}</div>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <button onclick="updateCartItem(${item.id}, ${item.quantity - 1})" style="width: 30px; height: 30px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px;">-</button>
-                    <span id="qty-${item.id}" style="min-width: 30px; text-align: center;">${item.quantity}</span>
-                    <button onclick="updateCartItem(${item.id}, ${item.quantity + 1})" style="width: 30px; height: 30px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px;">+</button>
+                    <button onclick="updateCartItem(${item.id}, ${Number(item.quantity) - 1})" style="width: 30px; height: 30px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px;">-</button>
+                    <span id="qty-${item.id}" style="min-width: 30px; text-align: center;">${Number(item.quantity)}</span>
+                    <button onclick="updateCartItem(${item.id}, ${Number(item.quantity) + 1})" style="width: 30px; height: 30px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px;">+</button>
                 </div>
                 <div style="min-width: 80px; font-weight: 700;" id="subtotal-${item.id}">${subtotalFormatted}</div>
                 <button class="remove-item" onclick="removeFromCart(${item.id})" style="color: #dc3545; cursor: pointer; background: none; border: none; font-size: 18px;"><i class="fas fa-trash"></i></button>
@@ -160,7 +160,7 @@ async function updateCartCount() {
     try {
         const response = await fetch('../api.php?request=get_cart');
         const data = await response.json();
-        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
+        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + Number(item.quantity), 0) : 0;
         
         const cartCountElements = document.querySelectorAll('.cart-count');
         cartCountElements.forEach(el => {
