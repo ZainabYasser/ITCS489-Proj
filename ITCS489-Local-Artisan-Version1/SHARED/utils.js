@@ -175,7 +175,7 @@ async function updateCartCount() {
         
         console.log('Cart API response:', data);
         
-        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
+        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0) : 0;
         console.log('Calculated cart count:', count);
         
         const cartCountElements = document.querySelectorAll('.cart-count');
