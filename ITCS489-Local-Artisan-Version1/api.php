@@ -1009,7 +1009,7 @@ if ($request == 'get_artisan_products') {
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT * FROM products WHERE artisan_id = ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM products WHERE artisan_id = ? AND is_auction = 0 ORDER BY created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
