@@ -33,7 +33,7 @@ async function loadOrders() {
                             <div class="order-details">
                                 <div class="order-info">
                                     <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
-                                    <span><i class="fas fa-box"></i> ${order.items ? order.items.length : 0} item(s)</span>
+                                    <span><i class="fas fa-box"></i> ${order.item_count || 0} item(s)</span>
                                 </div>
                                 <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
                                 <button class="view-order-btn" onclick="viewOrderDetails('${order.order_number}')">View Details →</button>
@@ -191,7 +191,7 @@ async function trackOrder() {
                 const progressPercent = (currentStep / 4) * 100;
                 
                 resultDiv.innerHTML = `
-                    <div class="tracking-info" style="background: #f9f6f3; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <div class="tracking-info" style="background: #f7f9fc; padding: 20px; border-radius: 10px; margin-top: 20px;">
                         <h4>Order: ${order.order_number}</h4>
                         <div class="tracking-steps" style="margin-top: 20px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap;">
