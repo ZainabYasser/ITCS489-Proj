@@ -230,54 +230,104 @@
         // }
     }
         
-    // Override loadOrders to use card layout
-    const originalLoadOrders = window.loadOrders;
-    window.loadOrders = async function() {
-        const container = document.getElementById('orders-container');
-        if (!container) return;
+// Override loadOrders to use expandable cards
+const originalLoadOrders = window.loadOrders;
+window.loadOrders = async function() {
+    const container = document.getElementById('orders-container');
+    if (!container) return;
+    
+    const user = getCurrentUser();
+    
+    if (!user) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    
+    try {
+        const response = await fetch('../api.php?request=get_orders');
+        const data = await response.json();
         
-        const user = getCurrentUser();
-        
-        if (!user) {
-            container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
-            return;
+        if (data.success && data.orders && data.orders.length > 0) {
+            container.innerHTML = `
+                <div class="orders-grid">
+                    ${data.orders.map(order => `
+                        <div class="order-card" onclick="toggleOrderDetails('${order.order_number}')" style="cursor: pointer;">
+                            <div class="order-header">
+                                <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
+                                <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                            </div>
+                            <div class="order-details">
+                                <div class="order-info">
+                                    <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
+                                    <span><i class="fas fa-box"></i> ${order.item_count || 0} item(s)</span>
+                                </div>
+                                <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
+                            </div>
+                            <div id="order-items-${order.order_number}" class="order-items-details">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
         }
-        
-        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-        
+    } catch (error) {
+        console.error('Error loading orders:', error);
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
+    }
+};
+
+// Toggle order details expansion
+async function toggleOrderDetails(orderNumber) {
+    const container = document.getElementById(`order-items-${orderNumber}`);
+    
+    if (!container) return;
+    
+    if (container.classList.contains('show')) {
+        container.classList.remove('show');
+        return;
+    }
+    
+    container.classList.add('show');
+    
+    if (container.innerHTML.includes('spinner')) {
         try {
-            const response = await fetch('../api.php?request=get_orders');
+            const response = await fetch(`../api.php?request=get_order&order_number=${orderNumber}`);
             const data = await response.json();
             
-            if (data.success && data.orders && data.orders.length > 0) {
+            if (data.success && data.order) {
+                const order = data.order;
+                const items = order.items || [];
+                
                 container.innerHTML = `
-                    <div class="orders-grid">
-                        ${data.orders.map(order => `
-                            <div class="order-card">
-                                <div class="order-header">
-                                    <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
-                                    <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
-                                </div>
-                                <div class="order-details">
-                                    <div class="order-info">
-                                        <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
-                                        <span><i class="fas fa-box"></i> ${order.item_count || (order.items ? order.items.length : 0)} item(s)</span>
-                                    </div>
-                                    <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
-                                    <button class="view-order-btn" onclick="viewOrderDetails('${order.order_number}')">View Details →</button>
-                                </div>
+                    <div class="order-expanded-details">
+                        <h4 style="margin-bottom: 10px;"><i class="fas fa-box-open"></i> Items Ordered:</h4>
+                        ${items.map(item => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                                <span><strong> ${escapeHtml(item.product_name)}</strong> x ${item.quantity}</span>
+                                <span>BD ${parseFloat(item.price).toFixed(2)}</span>
                             </div>
                         `).join('')}
+                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                            <p><strong><i class="fas fa-truck"></i> Status:</strong> ${order.status}</p>
+                            <p><strong><i class="fas fa-credit-card"></i> Payment:</strong> ${order.payment_method || 'Not specified'}</p>
+                            <p><strong><i class="fas fa-map-marker-alt"></i> Shipping Address:</strong> ${order.shipping_address || 'Not specified'}</p>
+                        </div>
                     </div>
                 `;
             } else {
-                container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
+                container.innerHTML = '<p style="color: red;">Error loading order details</p>';
             }
         } catch (error) {
-            console.error('Error loading orders:', error);
-            container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
+            console.error('Error loading order details:', error);
+            container.innerHTML = '<p style="color: red;">Error loading order details</p>';
         }
-    };
+    }
+}
     
     // Override loadWishlist to use card layout
     const originalLoadWishlist = window.loadWishlist;

@@ -3444,3 +3444,211 @@ footer {
     display: inline-block;
     margin-top: 10px;
 }
+
+/* ===== EXPANDABLE ORDER CARDS - MODERN STYLES ===== */
+
+.order-card {
+    background: var(--bg-white);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow);
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-light);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.order-number {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--primary);
+}
+
+.order-number i {
+    margin-right: 8px;
+    color: var(--primary);
+}
+
+.status-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fff3e0;
+    color: #ff9800;
+}
+
+.status-processing {
+    background: #e3f2fd;
+    color: #2196f3;
+}
+
+.status-shipped {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-delivered {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-cancelled {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.order-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.order-info {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.order-info span {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+.order-info i {
+    margin-right: 5px;
+    color: var(--primary);
+}
+
+.order-total {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--primary);
+}
+
+/* Expanded content */
+.order-items-details {
+    display: none;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+    animation: fadeIn 0.3s ease;
+}
+
+.order-items-details.show {
+    display: block;
+}
+
+.order-expanded-details {
+    background: var(--bg-warm);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.order-expanded-details h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+}
+
+.order-expanded-details h4 i {
+    color: var(--primary);
+    margin-right: 8px;
+}
+
+/* Order items list */
+.order-expanded-details > div {
+    background: var(--bg-white);
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+/* Add extra padding for product name row */
+.order-expanded-details > div > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+/* Make product name have more padding */
+.order-expanded-details > div > div span:first-child {
+    padding-right: 15px;
+}
+
+.order-expanded-details > div:last-child {
+    margin-bottom: 0;
+}
+
+.order-expanded-details > div > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-expanded-details strong {
+    color: var(--text-dark);
+}
+
+/* Info section at bottom */
+.order-expanded-details > div:last-child {
+    background: transparent;
+    padding: 0;
+    margin-top: 15px;
+}
+
+.order-expanded-details > div:last-child p {
+    background: var(--bg-white);
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.order-expanded-details > div:last-child p:last-child {
+    margin-bottom: 0;
+}
+
+.order-expanded-details p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-gray);
+}
+
+.order-expanded-details p i {
+    width: 24px;
+    color: var(--primary);
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
