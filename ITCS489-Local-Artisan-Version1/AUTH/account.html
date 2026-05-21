@@ -225,109 +225,117 @@
         } else if (tabName === 'auction-history') {
             loadAuctionHistory();
         }
-        // } else if (tabName === 'won-auctions') {
-        //     loadWonAuctions();
-        // }
-    }
-        
-// Override loadOrders to use expandable cards
-const originalLoadOrders = window.loadOrders;
-window.loadOrders = async function() {
-    const container = document.getElementById('orders-container');
-    if (!container) return;
-    
-    const user = getCurrentUser();
-    
-    if (!user) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
-        return;
     }
     
-    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-    
-    try {
-        const response = await fetch('../api.php?request=get_orders');
-        const data = await response.json();
+    // Override loadOrders with expandable cards
+    window.loadOrders = async function() {
+        const container = document.getElementById('orders-container');
+        if (!container) return;
         
-        if (data.success && data.orders && data.orders.length > 0) {
-            container.innerHTML = `
-                <div class="orders-grid">
-                    ${data.orders.map(order => `
-                        <div class="order-card" onclick="toggleOrderDetails('${order.order_number}')" style="cursor: pointer;">
-                            <div class="order-header">
-                                <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
-                                <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
-                            </div>
-                            <div class="order-details">
-                                <div class="order-info">
-                                    <span><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</span>
-                                    <span><i class="fas fa-box"></i> ${order.item_count || 0} item(s)</span>
-                                </div>
-                                <span class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</span>
-                            </div>
-                            <div id="order-items-${order.order_number}" class="order-items-details">
-                                <div class="loading"><div class="spinner"></div></div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else {
-            container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
+        const user = getCurrentUser();
+        
+        if (!user) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Please Login</h4><p>Login to view your orders</p><a href="login.html" class="btn-primary">Login Now</a></div>';
+            return;
         }
-    } catch (error) {
-        console.error('Error loading orders:', error);
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
-    }
-};
-
-// Toggle order details expansion
-async function toggleOrderDetails(orderNumber) {
-    const container = document.getElementById(`order-items-${orderNumber}`);
-    
-    if (!container) return;
-    
-    if (container.classList.contains('show')) {
-        container.classList.remove('show');
-        return;
-    }
-    
-    container.classList.add('show');
-    
-    if (container.innerHTML.includes('spinner')) {
+        
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        
         try {
-            const response = await fetch(`../api.php?request=get_order&order_number=${orderNumber}`);
+            const response = await fetch('../api.php?request=get_orders');
             const data = await response.json();
             
-            if (data.success && data.order) {
-                const order = data.order;
-                const items = order.items || [];
-                
+            if (data.success && data.orders && data.orders.length > 0) {
                 container.innerHTML = `
-                    <div class="order-expanded-details">
-                        <h4 style="margin-bottom: 10px;"><i class="fas fa-box-open"></i> Items Ordered:</h4>
-                        ${items.map(item => `
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
-                                <span><strong> ${escapeHtml(item.product_name)}</strong> x ${item.quantity}</span>
-                                <span>BD ${parseFloat(item.price).toFixed(2)}</span>
+                    <div class="orders-grid">
+                        ${data.orders.map(order => `
+                            <div class="order-card" onclick="toggleOrderDetails('${order.order_number}')">
+                                <div class="order-card-header">
+                                    <span class="order-number"><i class="fas fa-receipt"></i> ${order.order_number}</span>
+                                    <span class="status-badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                                </div>
+                                <div class="order-summary">
+                                    <div class="order-date"><i class="fas fa-calendar"></i> ${new Date(order.created_at).toLocaleDateString()}</div>
+                                    <div class="order-item-count"><i class="fas fa-box"></i> ${order.item_count || 0} item(s)</div>
+                                    <div class="order-total">BD ${parseFloat(order.total_amount).toFixed(2)}</div>
+                                </div>
+                                <div id="order-items-${order.order_number}" class="order-expandable">
+                                    <div class="loading"><div class="spinner"></div></div>
+                                </div>
                             </div>
                         `).join('')}
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
-                            <p><strong><i class="fas fa-truck"></i> Status:</strong> ${order.status}</p>
-                            <p><strong><i class="fas fa-credit-card"></i> Payment:</strong> ${order.payment_method || 'Not specified'}</p>
-                            <p><strong><i class="fas fa-map-marker-alt"></i> Shipping Address:</strong> ${order.shipping_address || 'Not specified'}</p>
-                        </div>
                     </div>
                 `;
             } else {
-                container.innerHTML = '<p style="color: red;">Error loading order details</p>';
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>No Orders Yet</h4><p>You haven\'t placed any orders yet.</p><a href="../SHOPPING/shop.html" class="btn-primary">Start Shopping</a></div>';
             }
         } catch (error) {
-            console.error('Error loading order details:', error);
-            container.innerHTML = '<p style="color: red;">Error loading order details</p>';
+            console.error('Error loading orders:', error);
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><h4>Error Loading Orders</h4><p>Please try again later.</p></div>';
+        }
+    };
+    
+    // Toggle order details expansion
+    async function toggleOrderDetails(orderNumber) {
+        const container = document.getElementById(`order-items-${orderNumber}`);
+        
+        if (!container) return;
+        
+        if (container.classList.contains('show')) {
+            container.classList.remove('show');
+            return;
+        }
+        
+        container.classList.add('show');
+        
+        if (container.innerHTML.includes('spinner')) {
+            try {
+                const response = await fetch(`../api.php?request=get_order&order_number=${orderNumber}`);
+                const data = await response.json();
+                
+                if (data.success && data.order) {
+                    const order = data.order;
+                    const items = order.items || [];
+                    
+                    container.innerHTML = `
+                        <div class="order-items-list">
+                            <div class="order-items-title">
+                                <i class="fas fa-box-open"></i> Items in this order
+                            </div>
+                            ${items.map(item => `
+                                <div class="order-item-row">
+                                    <div class="order-item-name">
+                                        <strong>${escapeHtml(item.product_name)}</strong>
+                                        <span class="order-item-quantity">x ${item.quantity}</span>
+                                    </div>
+                                    <div class="order-item-price">BD ${parseFloat(item.price).toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                            <div class="order-info-footer">
+                                <div class="order-info-item">
+                                    <i class="fas fa-truck"></i>
+                                    <span><strong>Status:</strong> ${order.status}</span>
+                                </div>
+                                <div class="order-info-item">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span><strong>Payment:</strong> ${order.payment_method || 'Not specified'}</span>
+                                </div>
+                                <div class="order-info-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span><strong>Shipping:</strong> ${order.shipping_address || 'Not specified'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error loading order details</div>';
+                }
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error loading order details</div>';
+            }
         }
     }
-}
     
     // Override loadWishlist to use card layout
     const originalLoadWishlist = window.loadWishlist;
@@ -413,43 +421,41 @@ async function toggleOrderDetails(orderNumber) {
         }
     };
     
-document.addEventListener('DOMContentLoaded', () => {
-    // checkAuth();  // ← COMMENT THIS OUT OR DELETE IT
-    updateHeaderButtons();  // ← ADD THIS LINE
-    updateCartCount();
-    updateWelcomeMessage();
+    document.addEventListener('DOMContentLoaded', () => {
+        updateHeaderButtons();
+        updateCartCount();
+        updateWelcomeMessage();
+        
+        loadOrders();
+        if (typeof loadWishlist === 'function') {
+            loadWishlist();
+        }
+        loadProfile();
+        
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', updateProfile);
+        }
+    });
     
-    // Use the overridden functions
-    loadOrders();
-    if (typeof loadWishlist === 'function') {
-        loadWishlist();
+    // Update header buttons based on login status
+    function updateHeaderButtons() {
+        const user = getCurrentUser();
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        if (user) {
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (registerBtn) registerBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        } else {
+            if (loginBtn) loginBtn.style.display = 'inline-block';
+            if (registerBtn) registerBtn.style.display = 'inline-block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+        }
     }
-    loadProfile();
     
-    const profileForm = document.getElementById('profile-form');
-    if (profileForm) {
-        profileForm.addEventListener('submit', updateProfile);
-    }
-});
-// Update header buttons based on login status
-function updateHeaderButtons() {
-    const user = getCurrentUser();
-    const loginBtn = document.getElementById('login-btn');
-    const registerBtn = document.getElementById('register-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (user) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-    } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (registerBtn) registerBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
-}
-</script>
-<script>
     // Override logout button directly
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
