@@ -3402,9 +3402,6 @@ footer {
 .product-info h3 {
     min-height: 48px; 
     overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
 }
 
 .product-price {
@@ -3422,7 +3419,7 @@ footer {
     padding: 60px 20px;
     background: var(--bg-warm);
     border-radius: 16px;
-    grid-column: 1 / -1; /* Takes full width of the grid */
+    grid-column: 1 / -1; 
 }
 
 .no-products-message i {
