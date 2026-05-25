@@ -9,15 +9,19 @@ const API_URL = '../api.php?request=';
 // Add THIS function:
 function getApiUrl() {
     const path = window.location.pathname;
-    // If we're in a subfolder (SHOPPING, AUTH, etc.), go up one level
-    if (path.includes('/SHOPPING/') || path.includes('/AUTH/') || path.includes('/AUCTIONS/') || path.includes('/ADMIN/') || path.includes('/ARTISAN/')) {
+    // If we're in a subfolder, go up one level to reach api.php
+    if (path.includes('/SHOPPING/') || 
+        path.includes('/AUTH/') || 
+        path.includes('/AUCTIONS/') || 
+        path.includes('/ADMIN/') || 
+        path.includes('/ARTISAN/') ||
+        path.includes('/STATIC/')) {   // ← ADD THIS LINE
         return '../api.php?request=';
     } else {
         // We're in the root folder (home page)
         return 'api.php?request=';
     }
 }
-
 // ===== CURRENCY CONFIGURATION =====
 const currencyRates = {
     BHD: { symbol: 'BD', rate: 1, code: 'BHD', name: 'Bahraini Dinar' },
@@ -175,7 +179,7 @@ async function updateCartCount() {
         
         console.log('Cart API response:', data);
         
-        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
+        const count = data.success && data.cart ? data.cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0) : 0;
         console.log('Calculated cart count:', count);
         
         const cartCountElements = document.querySelectorAll('.cart-count');

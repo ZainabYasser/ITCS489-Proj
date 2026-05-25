@@ -120,9 +120,9 @@
                 <h3>Woodwork</h3>
                 <p>Hand carved items</p>
             </div>
-            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=Ceramicss'">
+            <div class="category-card" onclick="location.href='SHOPPING/shop.html?category=Ceramics'">
                 <i class="fas fa-palette"></i>
-                <h3>Ceramicss</h3>
+                <h3>Ceramics</h3>
                 <p>Clay masterpieces</p>
             </div>
         </div>
@@ -280,7 +280,7 @@ async function loadFeaturedProducts() {
         const data = await response.json();
         
         if (data.success && data.products && data.products.length > 0) {
-            const featured = data.products.slice(0, 8); // Show up to 8 products like shop page
+            const featured = data.products.slice(0, 4); 
             
             // Use EXACT same product card HTML as shop.js
             container.innerHTML = featured.map(product => {

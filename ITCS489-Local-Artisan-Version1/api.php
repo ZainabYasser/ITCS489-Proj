@@ -343,6 +343,11 @@ if ($request == 'get_cart') {
                            WHERE c.user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $cart = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // 🔥 FIX: Convert quantity to integer for ALL cart items 🔥
+    foreach ($cart as &$item) {
+        $item['quantity'] = (int)$item['quantity'];
+        $item['price'] = (float)$item['price'];
+    }
     
     echo json_encode(['success' => true, 'cart' => $cart]);
     exit();
@@ -521,7 +526,13 @@ if ($request == 'get_orders') {
     $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+     // Add item_count for each order (does NOT remove any existing data)
+    foreach ($orders as &$order) {
+        $stmt = $pdo->prepare("SELECT SUM(quantity) as item_count FROM order_items WHERE order_id = ?");
+        $stmt->execute([$order['id']]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $order['item_count'] = $result['item_count'];
+    }
     echo json_encode(['success' => true, 'orders' => $orders]);
     exit();
 }
@@ -846,6 +857,7 @@ if ($request == 'get_bid_history') {
 }
 
 // Get user's auction history (both won and lost)
+// Get user's auction history (both won and lost)
 if ($request == 'get_user_auction_history') {
     if (!isLoggedIn()) {
         echo json_encode(['success' => false, 'message' => 'Please login']);
@@ -867,12 +879,34 @@ if ($request == 'get_user_auction_history') {
     $stmt->execute([$userId]);
     $wonAuctions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Add already_purchased check for won auctions
+    // Add already_purchased check for won auctions
+foreach ($wonAuctions as &$auction) {
+    $productName = "[Auction] " . $auction['title'];
+    
+    // Check if product is in cart OR already in an order (paid/delivered)
+    $checkStmt = $pdo->prepare("
+        SELECT 'cart' as source FROM cart c
+        JOIN products p ON c.product_id = p.id
+        WHERE c.user_id = ? AND p.name = ?
+        UNION
+        SELECT 'order' as source FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.user_id = ? AND p.name = ? AND o.status = 'delivered'
+        LIMIT 1
+    ");
+    $checkStmt->execute([$userId, $productName, $userId, $productName]);
+    $auction['already_purchased'] = $checkStmt->fetch() ? 1 : 0;
+}
+    
     // Get LOST auctions (user bid but didn't win)
     $stmt = $pdo->prepare("
         SELECT DISTINCT a.*, u.fullname as artisan_name, 'lost' as status,
                (SELECT MAX(bid_amount) FROM bids WHERE auction_id = a.id AND user_id = ?) as my_highest_bid,
                a.current_bid as winning_bid,
-               0 as can_purchase
+               0 as can_purchase,
+               0 as already_purchased
         FROM auctions a
         JOIN users u ON a.artisan_id = u.id
         WHERE a.id IN (
@@ -975,7 +1009,7 @@ if ($request == 'get_artisan_products') {
         exit();
     }
     
-    $stmt = $pdo->prepare("SELECT * FROM products WHERE artisan_id = ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM products WHERE artisan_id = ? AND is_auction = 0 ORDER BY created_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

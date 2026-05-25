@@ -35,7 +35,14 @@ function displayProducts() {
     if (!container) return;
     
     if (!filteredProducts || filteredProducts.length === 0) {
-        container.innerHTML = '<p class="text-center">No products found matching your criteria.</p>';
+        container.innerHTML = `
+            <div class="no-products-message">
+                <i class="fas fa-search"></i>
+                <h4>No Products Found</h4>
+                <p>No products match your search criteria.</p>
+                <button onclick="resetFilters()" class="btn-primary">Clear Filters</button>
+            </div>
+        `;        
         return;
     }
     
